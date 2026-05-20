@@ -11,6 +11,8 @@ const dirname = typeof __dirname !== 'undefined' ? __dirname : path.dirname(file
 
 // More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
 export default defineConfig({
+  // GitHub Pages serves the build under /<repo>/. Dev server keeps "/".
+  base: process.env.GITHUB_ACTIONS ? '/shredintel/' : '/',
   plugins: [react()],
   test: {
     projects: [{

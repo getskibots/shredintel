@@ -101,3 +101,189 @@ export interface IntentBreakdown {
   unresolved: number
   unresolvedRate: number
 }
+
+// ─────────────────────────────────────────────────────────────────────────
+// Brief: 8 new components mapping to §1–§4 of the Botscrew export.
+// All PII fields (email/phone/first_name/last_name/username/ip) are
+// deliberately absent from these types — aggregates only.
+// ─────────────────────────────────────────────────────────────────────────
+
+export interface AnalyticsDelta {
+  value: number
+  direction: 'up' | 'down' | 'flat'
+}
+
+// § 1 — OutcomeTimeline
+
+export interface OutcomeTimelinePoint {
+  date: string
+  totalConversations: number
+  solved: number
+  unengaged: number
+  failed: number
+  engagedConversations: number
+  engagementRate: number
+  resolutionRateOfEngaged: number
+}
+
+export interface OutcomeTimelineProps {
+  data: OutcomeTimelinePoint[]
+  totals: {
+    totalConversations: number
+    solved: number
+    unengaged: number
+    failed: number
+    engagementRate: number
+    resolutionRateOfEngaged: number
+    engagementRateDelta?: number
+    failedDelta?: number
+  }
+}
+
+// § 1 — ConversionPulse
+
+export interface ConversionTimelinePoint {
+  date: string
+  convertedConversations: number
+  totalConversations: number
+  engagedConversations: number
+  conversionShareOfTotal: number
+  conversionShareOfEngaged: number
+}
+
+export interface ConversionPulseProps {
+  totalConverted: number
+  conversionShareOfTotal: number
+  conversionShareOfEngaged: number
+  convertedDelta?: number
+  bestDay?: {
+    date: string
+    convertedConversations: number
+  }
+  timeline: ConversionTimelinePoint[]
+}
+
+// § 2 — KnowledgeSourceLeaderboard
+
+export interface KnowledgeSourceItem {
+  sourceName: string
+  botMessageCount: number
+  shareOfSourcedMessages: number
+  shareOfAllBotMessages: number
+  delta?: number
+}
+
+export interface KnowledgeSourceLeaderboardProps {
+  sourcedBotMessages: number
+  unsourcedBotMessages: number
+  knowledgeGapRate: number
+  topSources: KnowledgeSourceItem[]
+}
+
+// § 2 — SenderMixStack
+
+export interface SenderMixPoint {
+  date: string
+  botMessages: number
+  userMessages: number
+  supportMessages: number
+  totalMessages: number
+}
+
+export interface SenderMixStackProps {
+  totals: {
+    botMessages: number
+    userMessages: number
+    supportMessages: number
+    totalMessages: number
+    botMessageShare: number
+    supportMessageShare: number
+    avgMessagesPerEngagedConversation: number
+  }
+  data: SenderMixPoint[]
+}
+
+// § 3 — GuestIdentitySplit
+
+export interface GuestIdentitySplitProps {
+  totalConversations: number
+  knownGuests: number
+  anonymousGuests: number
+  contactableGuests: number
+  knownGuestRate: number
+  contactableGuestRate: number
+  knownGuestRateDelta?: number
+  contactableGuestRateDelta?: number
+}
+
+// § 3 — LeadCaptureFunnel
+
+export interface LeadCaptureFunnelStep {
+  label: string
+  count: number
+  shareOfStarted: number
+  shareOfPreviousStep?: number
+}
+
+export interface LeadCaptureFunnelProps {
+  steps: LeadCaptureFunnelStep[]
+  engagementRate: number
+  contactCaptureRate: number
+  supportTouchedRate: number
+}
+
+// § 4 — DeviceExperienceMix
+
+export interface DeviceItem {
+  deviceCategory: 'MOBILE' | 'DESKTOP' | 'TABLET' | 'UNKNOWN'
+  conversations: number
+  share: number
+  failedConversations?: number
+  failedRate?: number
+}
+
+export interface BrowserItem {
+  browser: string
+  conversations: number
+  share: number
+}
+
+export interface DeviceExperienceMixProps {
+  devices: DeviceItem[]
+  browsers: BrowserItem[]
+  mobileShare: number
+  desktopShare: number
+  tabletShare: number
+  mobileShareDelta?: number
+}
+
+// § 4 — DemandHeatmap
+
+export type DayOfWeek = 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat' | 'Sun'
+
+export type TimeBucket =
+  | '12AM–3AM'
+  | '3AM–6AM'
+  | '6AM–9AM'
+  | '9AM–12PM'
+  | '12PM–3PM'
+  | '3PM–6PM'
+  | '6PM–9PM'
+  | '9PM–12AM'
+
+export interface DemandHeatmapCell {
+  dayOfWeek: DayOfWeek
+  timeBucket: TimeBucket
+  conversations: number
+  userMessages: number
+  failedConversations?: number
+  supportTouchedConversations?: number
+}
+
+export interface DemandHeatmapProps {
+  cells: DemandHeatmapCell[]
+  peakCell?: DemandHeatmapCell
+  afterHoursConversations: number
+  afterHoursShare: number
+  workingHoursConversations: number
+}

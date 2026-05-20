@@ -6,15 +6,35 @@ import {
   formatNumber,
   formatPercent,
 } from '../../lib/formatters'
-import type { KnowledgeSourceLeaderboardProps } from '../../types/analytics'
+import type { KnowledgeSourceLeaderboardProps as BaseProps } from '../../types/analytics'
 
-export type { KnowledgeSourceLeaderboardProps } from '../../types/analytics'
+export type KnowledgeSourceLeaderboardProps = BaseProps & {
+  /** Override the default panel eyebrow / title / description */
+  eyebrow?: string
+  title?: string
+  description?: string
+  /** Override the labels for the metric tiles */
+  sourcedLabel?: string
+  sourcedSubLabel?: string
+  unsourcedLabel?: string
+  unsourcedSubLabel?: string
+  /** Override the "Knowledge-gap rate" action label */
+  rateLabel?: string
+}
 
 export function KnowledgeSourceLeaderboard({
   sourcedBotMessages,
   unsourcedBotMessages,
   knowledgeGapRate,
   topSources,
+  eyebrow = '§ 2 Message Intelligence',
+  title = 'Knowledge source leaderboard',
+  description = 'Which content sources are powering the bot’s answers?',
+  sourcedLabel = 'Sourced bot messages',
+  sourcedSubLabel = 'answered with a KB reference',
+  unsourcedLabel = 'Unsourced bot messages',
+  unsourcedSubLabel = 'no KB reference',
+  rateLabel = 'Knowledge-gap rate',
 }: KnowledgeSourceLeaderboardProps) {
   const totalBot = sourcedBotMessages + unsourcedBotMessages
   const empty = totalBot === 0 || topSources.length === 0
@@ -36,7 +56,7 @@ export function KnowledgeSourceLeaderboard({
           heavyGap ? 'text-amber-700' : 'text-emerald-700',
         ].join(' ')}
       >
-        Knowledge-gap rate
+        {rateLabel}
       </div>
       <div
         className={[
@@ -51,9 +71,9 @@ export function KnowledgeSourceLeaderboard({
 
   return (
     <Panel
-      eyebrow="§ 2 Message Intelligence"
-      title="Knowledge source leaderboard"
-      description="Which content sources are powering the bot’s answers?"
+      eyebrow={eyebrow}
+      title={title}
+      description={description}
       action={action}
     >
       {empty ? (
@@ -65,15 +85,15 @@ export function KnowledgeSourceLeaderboard({
         <>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <Metric
-              label="Sourced bot messages"
+              label={sourcedLabel}
               value={formatNumber(sourcedBotMessages)}
-              subValue="answered with a KB reference"
+              subValue={sourcedSubLabel}
               tone="good"
             />
             <Metric
-              label="Unsourced bot messages"
+              label={unsourcedLabel}
               value={formatNumber(unsourcedBotMessages)}
-              subValue="no KB reference"
+              subValue={unsourcedSubLabel}
               tone={heavyGap ? 'warn' : 'neutral'}
             />
             <Metric

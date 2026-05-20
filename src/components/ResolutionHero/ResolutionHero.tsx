@@ -121,7 +121,7 @@ export function ResolutionHero({
         {/* Right: Sparkline */}
         <div className="flex flex-col">
           <div className="text-xs font-medium uppercase tracking-wider text-slate-400">
-            7-day trend
+            {stats.trend.length}-day trend
           </div>
           <div className="mt-2 flex-1">
             <ResponsiveContainer width="100%" height={180}>

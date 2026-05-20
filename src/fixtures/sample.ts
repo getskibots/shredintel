@@ -502,3 +502,416 @@ export const demandHeatmapSample: DemandHeatmapProps = {
   afterHoursShare: afterHours / TOTAL_HEATMAP,
   workingHoursConversations: workingHours,
 }
+
+// ─────────────────────────────────────────────────────────────────────────
+// Period-aware fixture factory.
+// `buildPeriodFixtures('7d' | '30d')` returns a bundle of props sized to
+// the requested window. Daily series respect a weekly pattern + slight
+// growth across the period. Counts scale by days/7.
+// ─────────────────────────────────────────────────────────────────────────
+
+export type PeriodKey = '7d' | '30d'
+
+export interface PeriodFixtures {
+  period: PeriodKey
+  periodLabel: string
+  resolution: ResolutionStats
+  engagement: EngagementSummary
+  kpis: KpiTileData[]
+  outcomeTimeline: OutcomeTimelineProps
+  conversionPulse: ConversionPulseProps
+  knowledgeSourceLeaderboard: KnowledgeSourceLeaderboardProps
+  senderMixStack: SenderMixStackProps
+  guestIdentitySplit: GuestIdentitySplitProps
+  leadCaptureFunnel: LeadCaptureFunnelProps
+  frictionPages: FrictionPage[]
+  knowledgeGaps: KnowledgeGap[]
+  deviceExperienceMix: DeviceExperienceMixProps
+  demandHeatmap: DemandHeatmapProps
+}
+
+const END_DATE = '2026-05-19'
+
+function generateDates(days: number, end = END_DATE): string[] {
+  const endDate = new Date(end + 'T00:00:00Z')
+  return Array.from({ length: days }, (_, i) => {
+    const d = new Date(endDate)
+    d.setUTCDate(endDate.getUTCDate() - (days - 1 - i))
+    return d.toISOString().slice(0, 10)
+  })
+}
+
+const WEEKLY_CYCLE = [0.95, 0.92, 1.0, 1.04, 1.1, 1.18, 1.1] // Mon..Sun
+
+function weightFor(dateStr: string, dayIndexInPeriod: number, periodLen: number): number {
+  // Day-of-week cycle * mild growth across the period (later dates slightly higher)
+  const dow = (new Date(dateStr + 'T00:00:00Z').getUTCDay() + 6) % 7 // 0 = Mon
+  const cycle = WEEKLY_CYCLE[dow] ?? 1
+  const growth = 0.92 + 0.16 * (dayIndexInPeriod / Math.max(1, periodLen - 1)) // 0.92→1.08
+  return cycle * growth
+}
+
+function distributeAcrossDates(total: number, dates: string[]): number[] {
+  const weights = dates.map((d, i) => weightFor(d, i, dates.length))
+  const wsum = weights.reduce((s, w) => s + w, 0)
+  // First pass: float values, then round and fix residual on last day
+  const raw = weights.map((w) => (total * w) / wsum)
+  const rounded = raw.map((v) => Math.round(v))
+  const diff = total - rounded.reduce((s, v) => s + v, 0)
+  rounded[rounded.length - 1] += diff
+  return rounded
+}
+
+export function buildPeriodFixtures(period: PeriodKey): PeriodFixtures {
+  const days = period === '7d' ? 7 : 30
+  const scale = days / 7
+  const dates = generateDates(days)
+
+  // Period totals (scaled from the JH 7-day baseline)
+  const totalConversations = Math.round(23076 * scale)
+  const solved = Math.round(4099 * scale)
+  const unengaged = Math.round(18789 * scale)
+  const failed = totalConversations - solved - unengaged // make it sum exactly
+  const engaged = solved + failed
+  const engagementRate = engaged / totalConversations
+  const resolutionRateOfEngaged = engaged > 0 ? solved / engaged : 0
+  const converted = Math.round(870 * scale)
+  const sourcedBotMsgs = Math.round(17727 * scale)
+  const unsourcedBotMsgs = Math.round(29095 * scale)
+  const botMsgs = Math.round(46822 * scale)
+  const userMsgs = Math.round(59620 * scale)
+  const supportMsgs = Math.round(125 * scale)
+  const totalMsgs = botMsgs + userMsgs + supportMsgs
+
+  // ── Resolution stats (rate is quality, doesn't scale) ──────────────
+  const resolutionTrend = dates.map((date, i) => {
+    // Resolution rate hovers around 95.6% with small wobble
+    const wobble = ((i * 37) % 17) / 17 - 0.5
+    return { date, rate: Math.max(0.88, Math.min(0.99, 0.956 + wobble * 0.04)) }
+  })
+  const resolution: ResolutionStats = {
+    resolved: solved,
+    total: engaged,
+    rate: resolutionRateOfEngaged,
+    ratePrevious: resolutionRateOfEngaged - 0.025,
+    trend: resolutionTrend,
+  }
+
+  const engagement: EngagementSummary = {
+    totalConversations,
+    engagedConversations: engaged,
+    engagementRate,
+    unengaged,
+  }
+
+  // ── KPI strip ───────────────────────────────────────────────────────
+  const kpis: KpiTileData[] = [
+    {
+      label: 'Total conversations',
+      value: totalConversations.toLocaleString(),
+      caption: 'guests the bot greeted',
+      delta: period === '30d' ? '+11.4%' : '+8.2%',
+      deltaTone: 'positive',
+      accent: 'none',
+    },
+    {
+      label: 'Engagement rate',
+      value: `${(engagementRate * 100).toFixed(1)}%`,
+      caption: `${engaged.toLocaleString()} guests replied to the bot`,
+      delta: period === '30d' ? '+2.1 pts' : '+1.4 pts',
+      deltaTone: 'positive',
+      accent: 'summit',
+    },
+    {
+      label: 'Bot-attributed conversions',
+      value: converted.toLocaleString(),
+      caption: `${((converted / engaged) * 100).toFixed(0)}% of engaged chats → purchase`,
+      delta: period === '30d' ? '+14.3%' : '+9.7%',
+      deltaTone: 'positive',
+      accent: 'success',
+    },
+    {
+      label: 'Knowledge-gap rate',
+      value: '62%',
+      caption: 'bot answers with no KB source',
+      delta: '−4 pts',
+      deltaTone: 'positive',
+      accent: 'danger',
+    },
+  ]
+
+  // ── Outcome timeline ───────────────────────────────────────────────
+  const totalsByDay = distributeAcrossDates(totalConversations, dates)
+  const solvedByDay = distributeAcrossDates(solved, dates)
+  const failedByDay = distributeAcrossDates(failed, dates)
+  // Unengaged = total - solved - failed per day (keep dates aligned)
+  const outcomeData = dates.map((date, i) => {
+    const t = totalsByDay[i]
+    const s = solvedByDay[i]
+    const f = failedByDay[i]
+    const u = Math.max(0, t - s - f)
+    const eng = s + f
+    return {
+      date,
+      totalConversations: t,
+      solved: s,
+      unengaged: u,
+      failed: f,
+      engagedConversations: eng,
+      engagementRate: t > 0 ? eng / t : 0,
+      resolutionRateOfEngaged: eng > 0 ? s / eng : 0,
+    }
+  })
+  const outcomeTimeline: OutcomeTimelineProps = {
+    data: outcomeData,
+    totals: {
+      totalConversations,
+      solved,
+      unengaged,
+      failed,
+      engagementRate,
+      resolutionRateOfEngaged,
+      engagementRateDelta: 0.014,
+      failedDelta: -0.008,
+    },
+  }
+
+  // ── Conversion pulse ───────────────────────────────────────────────
+  const convertedByDay = distributeAcrossDates(converted, dates)
+  let bestDayIdx = 0
+  convertedByDay.forEach((v, i) => {
+    if (v > convertedByDay[bestDayIdx]) bestDayIdx = i
+  })
+  const conversionPulse: ConversionPulseProps = {
+    totalConverted: converted,
+    conversionShareOfTotal: converted / totalConversations,
+    conversionShareOfEngaged: converted / engaged,
+    convertedDelta: period === '30d' ? 0.143 : 0.097,
+    bestDay: {
+      date: dates[bestDayIdx],
+      convertedConversations: convertedByDay[bestDayIdx],
+    },
+    timeline: dates.map((date, i) => ({
+      date,
+      convertedConversations: convertedByDay[i],
+      totalConversations: totalsByDay[i],
+      engagedConversations: outcomeData[i].engagedConversations,
+      conversionShareOfTotal: convertedByDay[i] / Math.max(1, totalsByDay[i]),
+      conversionShareOfEngaged:
+        convertedByDay[i] / Math.max(1, outcomeData[i].engagedConversations),
+    })),
+  }
+
+  // ── Knowledge source leaderboard (snapshot — scale by period) ──────
+  const baselineSources = [
+    { name: 'Lift Tickets FAQ', count: 4128 },
+    { name: 'Mountain Report', count: 3210 },
+    { name: 'Season Pass Help', count: 2876 },
+    { name: 'Activities & Tram Info', count: 2415 },
+    { name: 'Refund Policy', count: 1980 },
+    { name: 'Parking & Arrival Info', count: 1632 },
+    { name: 'Mountain Sports School', count: 1486 },
+  ]
+  const knowledgeSourceLeaderboard: KnowledgeSourceLeaderboardProps = {
+    sourcedBotMessages: sourcedBotMsgs,
+    unsourcedBotMessages: unsourcedBotMsgs,
+    knowledgeGapRate: unsourcedBotMsgs / (sourcedBotMsgs + unsourcedBotMsgs),
+    topSources: baselineSources.map((s, i) => {
+      const scaled = Math.round(s.count * scale)
+      return {
+        sourceName: s.name,
+        botMessageCount: scaled,
+        shareOfSourcedMessages: scaled / sourcedBotMsgs,
+        shareOfAllBotMessages: scaled / (sourcedBotMsgs + unsourcedBotMsgs),
+        delta: [0.04, 0.02, 0.018, -0.005, -0.012, 0.001, 0.022][i],
+      }
+    }),
+  }
+
+  // ── Sender mix ──────────────────────────────────────────────────────
+  const botByDay = distributeAcrossDates(botMsgs, dates)
+  const userByDay = distributeAcrossDates(userMsgs, dates)
+  const supportByDay = distributeAcrossDates(supportMsgs, dates)
+  const senderMixStack: SenderMixStackProps = {
+    totals: {
+      botMessages: botMsgs,
+      userMessages: userMsgs,
+      supportMessages: supportMsgs,
+      totalMessages: totalMsgs,
+      botMessageShare: botMsgs / totalMsgs,
+      supportMessageShare: supportMsgs / totalMsgs,
+      avgMessagesPerEngagedConversation: totalMsgs / engaged,
+    },
+    data: dates.map((date, i) => ({
+      date,
+      botMessages: botByDay[i],
+      userMessages: userByDay[i],
+      supportMessages: supportByDay[i],
+      totalMessages: botByDay[i] + userByDay[i] + supportByDay[i],
+    })),
+  }
+
+  // ── Guest identity (aggregate counts only) ─────────────────────────
+  const known = Math.round(6800 * scale)
+  const anon = totalConversations - known
+  const contactable = Math.round(1400 * scale)
+  const guestIdentitySplit: GuestIdentitySplitProps = {
+    totalConversations,
+    knownGuests: known,
+    anonymousGuests: anon,
+    contactableGuests: contactable,
+    knownGuestRate: known / totalConversations,
+    contactableGuestRate: contactable / totalConversations,
+    knownGuestRateDelta: 0.021,
+    contactableGuestRateDelta: 0.008,
+  }
+
+  // ── Lead capture funnel ────────────────────────────────────────────
+  const supportTouched = Math.round(250 * scale)
+  const lcfStartLocal = totalConversations
+  const lcfRaw = [
+    { label: 'Conversation started', count: totalConversations },
+    { label: 'Guest engaged', count: engaged },
+    { label: 'Identity known', count: known },
+    { label: 'Contact captured', count: contactable },
+    { label: 'Support touched', count: supportTouched },
+  ]
+  const leadCaptureFunnel: LeadCaptureFunnelProps = {
+    steps: lcfRaw.map((s, i, arr) => ({
+      label: s.label,
+      count: s.count,
+      shareOfStarted: s.count / lcfStartLocal,
+      shareOfPreviousStep: i === 0 ? undefined : s.count / arr[i - 1].count,
+    })),
+    engagementRate,
+    contactCaptureRate: contactable / totalConversations,
+    supportTouchedRate: supportTouched / totalConversations,
+  }
+
+  // ── Friction pages (top 15, scaled) ────────────────────────────────
+  const baselinePages: Array<{ path: string; convs: number; checkout: boolean }> = [
+    { path: '/best-spring-break-ever', convs: 10539, checkout: false },
+    { path: '/', convs: 8935, checkout: false },
+    { path: '/live-mountain-cams', convs: 8244, checkout: false },
+    { path: 'shop/onepagecheckout', convs: 7522, checkout: true },
+    { path: 'shop/lift-tickets', convs: 5621, checkout: true },
+    { path: '/mountain-report', convs: 4654, checkout: false },
+    { path: 'shop/order/history', convs: 3221, checkout: true },
+    { path: '/kings-queens-corbets', convs: 2802, checkout: false },
+    { path: 'shop/lift-tickets-rentals', convs: 2553, checkout: true },
+    { path: 'shop/ordercomplete', convs: 2343, checkout: true },
+    { path: 'shop/cart', convs: 2144, checkout: true },
+    { path: '/maps/mountain-winter', convs: 1853, checkout: false },
+    { path: '/lift-tickets', convs: 1613, checkout: false },
+    { path: 'shop/customer/info', convs: 1561, checkout: true },
+    { path: '/season-pass', convs: 1178, checkout: false },
+  ]
+  const frictionPages: FrictionPage[] = baselinePages.map((p) => ({
+    path: p.path,
+    conversations: Math.round(p.convs * scale),
+    isCheckoutFlow: p.checkout,
+  }))
+
+  // ── Knowledge gaps (occurrences scale; questions don't change) ─────
+  const baselineGaps: Array<{ question: string; occ: number; lastSeen: string }> = [
+    { question: 'Can I get a refund on my Mountain Collective reservation?', occ: 412, lastSeen: '2026-05-19T18:42:00Z' },
+    { question: "Why can't I complete my waiver signature?", occ: 287, lastSeen: '2026-05-19T16:08:00Z' },
+    { question: 'When can Ikon pass holders reserve day use?', occ: 244, lastSeen: '2026-05-19T22:31:00Z' },
+    { question: 'Tram frequency and typical wait times?', occ: 198, lastSeen: '2026-05-19T14:55:00Z' },
+    { question: 'Can I cancel today’s reservation due to weather?', occ: 156, lastSeen: '2026-05-19T11:12:00Z' },
+    { question: 'Help processing payment for lift tickets', occ: 142, lastSeen: '2026-05-19T19:24:00Z' },
+    { question: 'How to add a friends-and-family redemption code?', occ: 118, lastSeen: '2026-05-19T15:47:00Z' },
+  ]
+  const knowledgeGaps: KnowledgeGap[] = baselineGaps.map((g) => ({
+    question: g.question,
+    occurrences: Math.round(g.occ * scale),
+    lastSeen: g.lastSeen,
+  }))
+
+  // ── Device experience mix (scale conversations) ────────────────────
+  const mobile = Math.round(15082 * scale)
+  const desktop = Math.round(7636 * scale)
+  const tablet = Math.round(287 * scale)
+  const knownDevice = mobile + desktop + tablet
+  const deviceExperienceMix: DeviceExperienceMixProps = {
+    devices: [
+      { deviceCategory: 'MOBILE', conversations: mobile, share: mobile / knownDevice, failedConversations: Math.round(121 * scale), failedRate: 0.008 },
+      { deviceCategory: 'DESKTOP', conversations: desktop, share: desktop / knownDevice, failedConversations: Math.round(58 * scale), failedRate: 0.0076 },
+      { deviceCategory: 'TABLET', conversations: tablet, share: tablet / knownDevice, failedConversations: Math.round(4 * scale), failedRate: 0.014 },
+    ],
+    browsers: [
+      { browser: 'Safari', conversations: Math.round(11150 * scale), share: 0.484 },
+      { browser: 'Chrome', conversations: Math.round(11400 * scale), share: 0.495 },
+      { browser: 'Firefox', conversations: Math.round(307 * scale), share: 0.013 },
+      { browser: 'Edge', conversations: Math.round(142 * scale), share: 0.006 },
+      { browser: 'Samsung', conversations: Math.round(41 * scale), share: 0.002 },
+      { browser: 'Other', conversations: Math.round(36 * scale), share: 0.0015 },
+    ],
+    mobileShare: mobile / knownDevice,
+    desktopShare: desktop / knownDevice,
+    tabletShare: tablet / knownDevice,
+    mobileShareDelta: 0.018,
+  }
+
+  // ── Demand heatmap (scale every cell) ──────────────────────────────
+  const HEATMAP_DAYS2: DayOfWeek[] = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+  const HEATMAP_BUCKETS2: TimeBucket[] = [
+    '12AM–3AM', '3AM–6AM', '6AM–9AM', '9AM–12PM',
+    '12PM–3PM', '3PM–6PM', '6PM–9PM', '9PM–12AM',
+  ]
+  const heatmapDayWeightSum = HEATMAP_DAYS2.reduce((s, d) => s + dayWeight[d], 0)
+  const heatmapTotal = totalConversations
+  const cells: DemandHeatmapCell[] = []
+  let peak: DemandHeatmapCell | undefined
+  for (const day of HEATMAP_DAYS2) {
+    const dayShare = dayWeight[day] / heatmapDayWeightSum
+    const dayTotal = heatmapTotal * dayShare
+    for (const bucket of HEATMAP_BUCKETS2) {
+      const v = Math.round(dayTotal * bucketBase[bucket])
+      const cell: DemandHeatmapCell = {
+        dayOfWeek: day,
+        timeBucket: bucket,
+        conversations: v,
+        userMessages: Math.round(v * 0.85),
+        failedConversations: Math.round(v * 0.008),
+        supportTouchedConversations: Math.round(v * 0.01),
+      }
+      cells.push(cell)
+      if (!peak || cell.conversations > peak.conversations) peak = cell
+    }
+  }
+  let working = 0
+  for (const c of cells) {
+    const weekend = c.dayOfWeek === 'Sat' || c.dayOfWeek === 'Sun'
+    if (!weekend && (c.timeBucket === '9AM–12PM' || c.timeBucket === '12PM–3PM' || c.timeBucket === '3PM–6PM')) {
+      working += c.conversations
+    }
+  }
+  const demandHeatmap: DemandHeatmapProps = {
+    cells,
+    peakCell: peak,
+    afterHoursConversations: heatmapTotal - working,
+    afterHoursShare: (heatmapTotal - working) / heatmapTotal,
+    workingHoursConversations: working,
+  }
+
+  const periodLabel = period === '7d' ? 'Last 7 days · vs. prior 7' : 'Last 30 days · vs. prior 30'
+
+  return {
+    period,
+    periodLabel,
+    resolution,
+    engagement,
+    kpis,
+    outcomeTimeline,
+    conversionPulse,
+    knowledgeSourceLeaderboard,
+    senderMixStack,
+    guestIdentitySplit,
+    leadCaptureFunnel,
+    frictionPages,
+    knowledgeGaps,
+    deviceExperienceMix,
+    demandHeatmap,
+  }
+}

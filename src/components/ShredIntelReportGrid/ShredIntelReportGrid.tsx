@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react'
 import { ConversionPulse } from '../ConversionPulse'
 import { DemandHeatmap } from '../DemandHeatmap'
 import { DeviceExperienceMix } from '../DeviceExperienceMix'
@@ -12,21 +13,7 @@ import { ResolutionHero } from '../ResolutionHero'
 import { SectionHeader } from '../SectionHeader'
 import { SectionNav } from '../SectionNav'
 import { SenderMixStack } from '../SenderMixStack'
-import {
-  conversionPulseSample,
-  demandHeatmapSample,
-  deviceExperienceMixSample,
-  guestIdentitySplitSample,
-  knowledgeSourceLeaderboardSample,
-  leadCaptureFunnelSample,
-  outcomeTimelineSample,
-  sampleEngagement,
-  sampleFrictionPages,
-  sampleKnowledgeGaps,
-  sampleKpis,
-  sampleResolution,
-  senderMixStackSample,
-} from '../../fixtures/sample'
+import { buildPeriodFixtures, type PeriodKey } from '../../fixtures/sample'
 
 const sections = [
   { id: 'core', number: '1', name: 'Conversation Core' },
@@ -36,6 +23,14 @@ const sections = [
 ]
 
 export function ShredIntelReportGrid() {
+  const [period, setPeriod] = useState<PeriodKey>('7d')
+  const f = useMemo(() => buildPeriodFixtures(period), [period])
+
+  const tabClass = (active: boolean) =>
+    active
+      ? 'rounded-md bg-botscrew-500 px-3 py-1.5 text-xs font-semibold text-white'
+      : 'rounded-md px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100'
+
   return (
     <div>
       {/* Page-local header — sticky beneath the dashboard top bar */}
@@ -45,14 +40,29 @@ export function ShredIntelReportGrid() {
             Analytics
           </h1>
           <div className="flex items-center gap-2">
-            <div className="flex rounded-lg border border-slate-200 bg-white p-0.5 text-slate-600">
-              <button className="rounded-md bg-botscrew-500 px-3 py-1.5 text-xs font-semibold text-white">
+            <div className="flex rounded-lg border border-slate-200 bg-white p-0.5">
+              <button
+                type="button"
+                onClick={() => setPeriod('7d')}
+                aria-pressed={period === '7d'}
+                className={tabClass(period === '7d')}
+              >
                 Last 7 days
               </button>
-              <button className="rounded-md px-3 py-1.5 text-xs font-medium hover:bg-slate-100">
+              <button
+                type="button"
+                onClick={() => setPeriod('30d')}
+                aria-pressed={period === '30d'}
+                className={tabClass(period === '30d')}
+              >
                 Last 30 days
               </button>
-              <button className="rounded-md px-3 py-1.5 text-xs font-medium hover:bg-slate-100">
+              <button
+                type="button"
+                disabled
+                title="Custom range coming soon"
+                className="cursor-not-allowed rounded-md px-3 py-1.5 text-xs font-medium text-slate-400"
+              >
                 Custom
               </button>
             </div>
@@ -73,15 +83,15 @@ export function ShredIntelReportGrid() {
             tagline="What happened?"
           />
           <ResolutionHero
-            stats={sampleResolution}
+            stats={f.resolution}
             scopeLabel="Jackson Hole Mountain Resort"
-            periodLabel="Last 7 days · vs. prior 7"
-            totalGreeted={sampleEngagement.totalConversations}
-            engagementRate={sampleEngagement.engagementRate}
+            periodLabel={f.periodLabel}
+            totalGreeted={f.engagement.totalConversations}
+            engagementRate={f.engagement.engagementRate}
           />
-          <KpiStrip tiles={sampleKpis} />
-          <OutcomeTimeline {...outcomeTimelineSample} />
-          <ConversionPulse {...conversionPulseSample} />
+          <KpiStrip tiles={f.kpis} />
+          <OutcomeTimeline {...f.outcomeTimeline} />
+          <ConversionPulse {...f.conversionPulse} />
         </section>
 
         {/* ── § 2 Message Intelligence ────────────────────────────── */}
@@ -92,10 +102,10 @@ export function ShredIntelReportGrid() {
             tagline="How did the bot perform?"
           />
           <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
-            <KnowledgeSourceLeaderboard {...knowledgeSourceLeaderboardSample} />
-            <KnowledgeGaps gaps={sampleKnowledgeGaps} gapRate={0.621} />
+            <KnowledgeSourceLeaderboard {...f.knowledgeSourceLeaderboard} />
+            <KnowledgeGaps gaps={f.knowledgeGaps} gapRate={f.knowledgeSourceLeaderboard.knowledgeGapRate} />
           </div>
-          <SenderMixStack {...senderMixStackSample} />
+          <SenderMixStack {...f.senderMixStack} />
         </section>
 
         {/* ── § 3 User Identity ───────────────────────────────────── */}
@@ -106,8 +116,8 @@ export function ShredIntelReportGrid() {
             tagline="Who's chatting?"
           />
           <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
-            <GuestIdentitySplit {...guestIdentitySplitSample} />
-            <LeadCaptureFunnel {...leadCaptureFunnelSample} />
+            <GuestIdentitySplit {...f.guestIdentitySplit} />
+            <LeadCaptureFunnel {...f.leadCaptureFunnel} />
           </div>
         </section>
 
@@ -118,15 +128,15 @@ export function ShredIntelReportGrid() {
             name="Behavioral Context"
             tagline="Where, how, when?"
           />
-          <FrictionMap pages={sampleFrictionPages} />
+          <FrictionMap pages={f.frictionPages} />
           <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
-            <DeviceExperienceMix {...deviceExperienceMixSample} />
+            <DeviceExperienceMix {...f.deviceExperienceMix} />
             <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-5 text-sm text-slate-500">
               Geography &amp; language breakdown is the next §4 component
               (ip_address_country · browser_language).
             </div>
           </div>
-          <DemandHeatmap {...demandHeatmapSample} />
+          <DemandHeatmap {...f.demandHeatmap} />
         </section>
 
         <footer className="pt-2 text-xs text-slate-400">

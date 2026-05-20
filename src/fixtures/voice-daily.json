@@ -1,0 +1,3039 @@
+{
+  "generatedAt": "2026-05-20T06:21:13.569Z",
+  "totalCalls": 20582,
+  "dailyTimeline": [
+    {
+      "date": "2025-07-09",
+      "calls": 11,
+      "solved": 10,
+      "unengaged": 1,
+      "totalTalkSeconds": 636,
+      "avgTalkSeconds": 57.8,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-07-10",
+      "calls": 7,
+      "solved": 7,
+      "unengaged": 0,
+      "totalTalkSeconds": 1603,
+      "avgTalkSeconds": 229,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-07-11",
+      "calls": 59,
+      "solved": 50,
+      "unengaged": 9,
+      "totalTalkSeconds": 2895,
+      "avgTalkSeconds": 49.1,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-07-12",
+      "calls": 21,
+      "solved": 17,
+      "unengaged": 4,
+      "totalTalkSeconds": 1228,
+      "avgTalkSeconds": 58.5,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-07-13",
+      "calls": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "totalTalkSeconds": 0,
+      "avgTalkSeconds": 0,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-07-14",
+      "calls": 3,
+      "solved": 1,
+      "unengaged": 2,
+      "totalTalkSeconds": 17,
+      "avgTalkSeconds": 5.7,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-07-15",
+      "calls": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "totalTalkSeconds": 0,
+      "avgTalkSeconds": 0,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-07-16",
+      "calls": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "totalTalkSeconds": 0,
+      "avgTalkSeconds": 0,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-07-17",
+      "calls": 11,
+      "solved": 8,
+      "unengaged": 3,
+      "totalTalkSeconds": 697,
+      "avgTalkSeconds": 63.4,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-07-18",
+      "calls": 4,
+      "solved": 4,
+      "unengaged": 0,
+      "totalTalkSeconds": 654,
+      "avgTalkSeconds": 163.5,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-07-19",
+      "calls": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "totalTalkSeconds": 0,
+      "avgTalkSeconds": 0,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-07-20",
+      "calls": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "totalTalkSeconds": 24,
+      "avgTalkSeconds": 24,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-07-21",
+      "calls": 19,
+      "solved": 14,
+      "unengaged": 5,
+      "totalTalkSeconds": 549,
+      "avgTalkSeconds": 28.9,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-07-22",
+      "calls": 3,
+      "solved": 3,
+      "unengaged": 0,
+      "totalTalkSeconds": 190,
+      "avgTalkSeconds": 63.3,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-07-23",
+      "calls": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "totalTalkSeconds": 0,
+      "avgTalkSeconds": 0,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-07-24",
+      "calls": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "totalTalkSeconds": 0,
+      "avgTalkSeconds": 0,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-07-25",
+      "calls": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "totalTalkSeconds": 0,
+      "avgTalkSeconds": 0,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-07-26",
+      "calls": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "totalTalkSeconds": 21,
+      "avgTalkSeconds": 21,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-07-27",
+      "calls": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "totalTalkSeconds": 0,
+      "avgTalkSeconds": 0,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-07-28",
+      "calls": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "totalTalkSeconds": 0,
+      "avgTalkSeconds": 0,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-07-29",
+      "calls": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "totalTalkSeconds": 0,
+      "avgTalkSeconds": 0,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-07-30",
+      "calls": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "totalTalkSeconds": 0,
+      "avgTalkSeconds": 0,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-07-31",
+      "calls": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "totalTalkSeconds": 0,
+      "avgTalkSeconds": 0,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-08-01",
+      "calls": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "totalTalkSeconds": 0,
+      "avgTalkSeconds": 0,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-08-02",
+      "calls": 15,
+      "solved": 15,
+      "unengaged": 0,
+      "totalTalkSeconds": 669,
+      "avgTalkSeconds": 44.6,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-08-03",
+      "calls": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "totalTalkSeconds": 0,
+      "avgTalkSeconds": 0,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-08-04",
+      "calls": 4,
+      "solved": 4,
+      "unengaged": 0,
+      "totalTalkSeconds": 127,
+      "avgTalkSeconds": 31.8,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-08-05",
+      "calls": 5,
+      "solved": 5,
+      "unengaged": 0,
+      "totalTalkSeconds": 183,
+      "avgTalkSeconds": 36.6,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-08-06",
+      "calls": 10,
+      "solved": 10,
+      "unengaged": 0,
+      "totalTalkSeconds": 476,
+      "avgTalkSeconds": 47.6,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-08-07",
+      "calls": 4,
+      "solved": 4,
+      "unengaged": 0,
+      "totalTalkSeconds": 153,
+      "avgTalkSeconds": 38.3,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-08-08",
+      "calls": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "totalTalkSeconds": 40,
+      "avgTalkSeconds": 40,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-08-09",
+      "calls": 2,
+      "solved": 2,
+      "unengaged": 0,
+      "totalTalkSeconds": 128,
+      "avgTalkSeconds": 64,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-08-10",
+      "calls": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "totalTalkSeconds": 0,
+      "avgTalkSeconds": 0,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-08-11",
+      "calls": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "totalTalkSeconds": 0,
+      "avgTalkSeconds": 0,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-08-12",
+      "calls": 4,
+      "solved": 2,
+      "unengaged": 2,
+      "totalTalkSeconds": 117,
+      "avgTalkSeconds": 29.3,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-08-13",
+      "calls": 13,
+      "solved": 11,
+      "unengaged": 2,
+      "totalTalkSeconds": 311,
+      "avgTalkSeconds": 23.9,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-08-14",
+      "calls": 3,
+      "solved": 3,
+      "unengaged": 0,
+      "totalTalkSeconds": 152,
+      "avgTalkSeconds": 50.7,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-08-15",
+      "calls": 4,
+      "solved": 4,
+      "unengaged": 0,
+      "totalTalkSeconds": 269,
+      "avgTalkSeconds": 67.3,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-08-16",
+      "calls": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "totalTalkSeconds": 0,
+      "avgTalkSeconds": 0,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-08-17",
+      "calls": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "totalTalkSeconds": 0,
+      "avgTalkSeconds": 0,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-08-18",
+      "calls": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "totalTalkSeconds": 0,
+      "avgTalkSeconds": 0,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-08-19",
+      "calls": 4,
+      "solved": 3,
+      "unengaged": 1,
+      "totalTalkSeconds": 136,
+      "avgTalkSeconds": 34,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-08-20",
+      "calls": 8,
+      "solved": 7,
+      "unengaged": 1,
+      "totalTalkSeconds": 249,
+      "avgTalkSeconds": 31.1,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-08-21",
+      "calls": 3,
+      "solved": 3,
+      "unengaged": 0,
+      "totalTalkSeconds": 163,
+      "avgTalkSeconds": 54.3,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-08-22",
+      "calls": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "totalTalkSeconds": 43,
+      "avgTalkSeconds": 43,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-08-23",
+      "calls": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "totalTalkSeconds": 0,
+      "avgTalkSeconds": 0,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-08-24",
+      "calls": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "totalTalkSeconds": 0,
+      "avgTalkSeconds": 0,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-08-25",
+      "calls": 2,
+      "solved": 2,
+      "unengaged": 0,
+      "totalTalkSeconds": 366,
+      "avgTalkSeconds": 183,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-08-26",
+      "calls": 6,
+      "solved": 5,
+      "unengaged": 1,
+      "totalTalkSeconds": 335,
+      "avgTalkSeconds": 55.8,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-08-27",
+      "calls": 7,
+      "solved": 7,
+      "unengaged": 0,
+      "totalTalkSeconds": 495,
+      "avgTalkSeconds": 70.7,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-08-28",
+      "calls": 9,
+      "solved": 8,
+      "unengaged": 1,
+      "totalTalkSeconds": 423,
+      "avgTalkSeconds": 47,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-08-29",
+      "calls": 15,
+      "solved": 14,
+      "unengaged": 1,
+      "totalTalkSeconds": 2176,
+      "avgTalkSeconds": 145.1,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-08-30",
+      "calls": 2,
+      "solved": 1,
+      "unengaged": 1,
+      "totalTalkSeconds": 64,
+      "avgTalkSeconds": 32,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-08-31",
+      "calls": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "totalTalkSeconds": 0,
+      "avgTalkSeconds": 0,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-09-01",
+      "calls": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "totalTalkSeconds": 0,
+      "avgTalkSeconds": 0,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-09-02",
+      "calls": 4,
+      "solved": 4,
+      "unengaged": 0,
+      "totalTalkSeconds": 167,
+      "avgTalkSeconds": 41.8,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-09-03",
+      "calls": 7,
+      "solved": 7,
+      "unengaged": 0,
+      "totalTalkSeconds": 787,
+      "avgTalkSeconds": 112.4,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-09-04",
+      "calls": 9,
+      "solved": 8,
+      "unengaged": 1,
+      "totalTalkSeconds": 483,
+      "avgTalkSeconds": 53.7,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-09-05",
+      "calls": 4,
+      "solved": 4,
+      "unengaged": 0,
+      "totalTalkSeconds": 117,
+      "avgTalkSeconds": 29.3,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-09-06",
+      "calls": 6,
+      "solved": 6,
+      "unengaged": 0,
+      "totalTalkSeconds": 389,
+      "avgTalkSeconds": 64.8,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-09-07",
+      "calls": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "totalTalkSeconds": 0,
+      "avgTalkSeconds": 0,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-09-08",
+      "calls": 8,
+      "solved": 5,
+      "unengaged": 3,
+      "totalTalkSeconds": 323,
+      "avgTalkSeconds": 40.4,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-09-09",
+      "calls": 8,
+      "solved": 8,
+      "unengaged": 0,
+      "totalTalkSeconds": 272,
+      "avgTalkSeconds": 34,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-09-10",
+      "calls": 33,
+      "solved": 30,
+      "unengaged": 3,
+      "totalTalkSeconds": 1647,
+      "avgTalkSeconds": 49.9,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-09-11",
+      "calls": 8,
+      "solved": 7,
+      "unengaged": 1,
+      "totalTalkSeconds": 513,
+      "avgTalkSeconds": 64.1,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-09-12",
+      "calls": 29,
+      "solved": 28,
+      "unengaged": 1,
+      "totalTalkSeconds": 1621,
+      "avgTalkSeconds": 55.9,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-09-13",
+      "calls": 32,
+      "solved": 26,
+      "unengaged": 6,
+      "totalTalkSeconds": 1970,
+      "avgTalkSeconds": 61.6,
+      "humanInvolvedCalls": 1
+    },
+    {
+      "date": "2025-09-14",
+      "calls": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "totalTalkSeconds": 0,
+      "avgTalkSeconds": 0,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-09-15",
+      "calls": 20,
+      "solved": 19,
+      "unengaged": 1,
+      "totalTalkSeconds": 617,
+      "avgTalkSeconds": 30.9,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-09-16",
+      "calls": 61,
+      "solved": 56,
+      "unengaged": 5,
+      "totalTalkSeconds": 3524,
+      "avgTalkSeconds": 57.8,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-09-17",
+      "calls": 21,
+      "solved": 19,
+      "unengaged": 2,
+      "totalTalkSeconds": 636,
+      "avgTalkSeconds": 30.3,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-09-18",
+      "calls": 27,
+      "solved": 26,
+      "unengaged": 1,
+      "totalTalkSeconds": 1135,
+      "avgTalkSeconds": 42,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-09-19",
+      "calls": 12,
+      "solved": 11,
+      "unengaged": 1,
+      "totalTalkSeconds": 864,
+      "avgTalkSeconds": 72,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-09-20",
+      "calls": 15,
+      "solved": 14,
+      "unengaged": 1,
+      "totalTalkSeconds": 1709,
+      "avgTalkSeconds": 113.9,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-09-21",
+      "calls": 5,
+      "solved": 3,
+      "unengaged": 2,
+      "totalTalkSeconds": 924,
+      "avgTalkSeconds": 184.8,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-09-22",
+      "calls": 9,
+      "solved": 8,
+      "unengaged": 1,
+      "totalTalkSeconds": 587,
+      "avgTalkSeconds": 65.2,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-09-23",
+      "calls": 29,
+      "solved": 28,
+      "unengaged": 1,
+      "totalTalkSeconds": 901,
+      "avgTalkSeconds": 31.1,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-09-24",
+      "calls": 12,
+      "solved": 12,
+      "unengaged": 0,
+      "totalTalkSeconds": 824,
+      "avgTalkSeconds": 68.7,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-09-25",
+      "calls": 15,
+      "solved": 14,
+      "unengaged": 1,
+      "totalTalkSeconds": 2121,
+      "avgTalkSeconds": 141.4,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-09-26",
+      "calls": 17,
+      "solved": 17,
+      "unengaged": 0,
+      "totalTalkSeconds": 897,
+      "avgTalkSeconds": 52.8,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-09-27",
+      "calls": 8,
+      "solved": 7,
+      "unengaged": 1,
+      "totalTalkSeconds": 729,
+      "avgTalkSeconds": 91.1,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-09-28",
+      "calls": 2,
+      "solved": 2,
+      "unengaged": 0,
+      "totalTalkSeconds": 1887,
+      "avgTalkSeconds": 943.5,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-09-29",
+      "calls": 11,
+      "solved": 10,
+      "unengaged": 1,
+      "totalTalkSeconds": 469,
+      "avgTalkSeconds": 42.6,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-09-30",
+      "calls": 25,
+      "solved": 24,
+      "unengaged": 1,
+      "totalTalkSeconds": 1935,
+      "avgTalkSeconds": 77.4,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-10-01",
+      "calls": 14,
+      "solved": 14,
+      "unengaged": 0,
+      "totalTalkSeconds": 599,
+      "avgTalkSeconds": 42.8,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-10-02",
+      "calls": 16,
+      "solved": 16,
+      "unengaged": 0,
+      "totalTalkSeconds": 1243,
+      "avgTalkSeconds": 77.7,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-10-03",
+      "calls": 17,
+      "solved": 17,
+      "unengaged": 0,
+      "totalTalkSeconds": 926,
+      "avgTalkSeconds": 54.5,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-10-04",
+      "calls": 11,
+      "solved": 11,
+      "unengaged": 0,
+      "totalTalkSeconds": 1220,
+      "avgTalkSeconds": 110.9,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-10-05",
+      "calls": 4,
+      "solved": 3,
+      "unengaged": 1,
+      "totalTalkSeconds": 79,
+      "avgTalkSeconds": 19.8,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-10-06",
+      "calls": 18,
+      "solved": 18,
+      "unengaged": 0,
+      "totalTalkSeconds": 1612,
+      "avgTalkSeconds": 89.6,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-10-07",
+      "calls": 24,
+      "solved": 23,
+      "unengaged": 1,
+      "totalTalkSeconds": 1254,
+      "avgTalkSeconds": 52.3,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-10-08",
+      "calls": 21,
+      "solved": 19,
+      "unengaged": 2,
+      "totalTalkSeconds": 3142,
+      "avgTalkSeconds": 149.6,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-10-09",
+      "calls": 16,
+      "solved": 15,
+      "unengaged": 1,
+      "totalTalkSeconds": 1162,
+      "avgTalkSeconds": 72.6,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-10-10",
+      "calls": 28,
+      "solved": 28,
+      "unengaged": 0,
+      "totalTalkSeconds": 1694,
+      "avgTalkSeconds": 60.5,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-10-11",
+      "calls": 11,
+      "solved": 11,
+      "unengaged": 0,
+      "totalTalkSeconds": 1654,
+      "avgTalkSeconds": 150.4,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-10-12",
+      "calls": 3,
+      "solved": 3,
+      "unengaged": 0,
+      "totalTalkSeconds": 91,
+      "avgTalkSeconds": 30.3,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-10-13",
+      "calls": 8,
+      "solved": 8,
+      "unengaged": 0,
+      "totalTalkSeconds": 469,
+      "avgTalkSeconds": 58.6,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-10-14",
+      "calls": 26,
+      "solved": 25,
+      "unengaged": 1,
+      "totalTalkSeconds": 1518,
+      "avgTalkSeconds": 58.4,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-10-15",
+      "calls": 35,
+      "solved": 33,
+      "unengaged": 2,
+      "totalTalkSeconds": 2297,
+      "avgTalkSeconds": 65.6,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-10-16",
+      "calls": 46,
+      "solved": 35,
+      "unengaged": 11,
+      "totalTalkSeconds": 3366,
+      "avgTalkSeconds": 73.2,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-10-17",
+      "calls": 50,
+      "solved": 31,
+      "unengaged": 19,
+      "totalTalkSeconds": 2516,
+      "avgTalkSeconds": 50.3,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-10-18",
+      "calls": 34,
+      "solved": 23,
+      "unengaged": 11,
+      "totalTalkSeconds": 1306,
+      "avgTalkSeconds": 38.4,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-10-19",
+      "calls": 15,
+      "solved": 10,
+      "unengaged": 5,
+      "totalTalkSeconds": 363,
+      "avgTalkSeconds": 24.2,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-10-20",
+      "calls": 62,
+      "solved": 41,
+      "unengaged": 21,
+      "totalTalkSeconds": 4089,
+      "avgTalkSeconds": 66,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-10-21",
+      "calls": 153,
+      "solved": 97,
+      "unengaged": 56,
+      "totalTalkSeconds": 12638,
+      "avgTalkSeconds": 82.6,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-10-22",
+      "calls": 45,
+      "solved": 29,
+      "unengaged": 16,
+      "totalTalkSeconds": 2787,
+      "avgTalkSeconds": 61.9,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-10-23",
+      "calls": 40,
+      "solved": 25,
+      "unengaged": 15,
+      "totalTalkSeconds": 4740,
+      "avgTalkSeconds": 118.5,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-10-24",
+      "calls": 31,
+      "solved": 17,
+      "unengaged": 14,
+      "totalTalkSeconds": 2412,
+      "avgTalkSeconds": 77.8,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-10-25",
+      "calls": 32,
+      "solved": 21,
+      "unengaged": 11,
+      "totalTalkSeconds": 1151,
+      "avgTalkSeconds": 36,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-10-26",
+      "calls": 2,
+      "solved": 2,
+      "unengaged": 0,
+      "totalTalkSeconds": 148,
+      "avgTalkSeconds": 74,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-10-27",
+      "calls": 31,
+      "solved": 19,
+      "unengaged": 12,
+      "totalTalkSeconds": 1372,
+      "avgTalkSeconds": 44.3,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-10-28",
+      "calls": 61,
+      "solved": 39,
+      "unengaged": 22,
+      "totalTalkSeconds": 5722,
+      "avgTalkSeconds": 93.8,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-10-29",
+      "calls": 44,
+      "solved": 27,
+      "unengaged": 17,
+      "totalTalkSeconds": 3116,
+      "avgTalkSeconds": 70.8,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-10-30",
+      "calls": 33,
+      "solved": 21,
+      "unengaged": 12,
+      "totalTalkSeconds": 2023,
+      "avgTalkSeconds": 61.3,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-10-31",
+      "calls": 54,
+      "solved": 35,
+      "unengaged": 19,
+      "totalTalkSeconds": 3927,
+      "avgTalkSeconds": 72.7,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-11-01",
+      "calls": 28,
+      "solved": 20,
+      "unengaged": 8,
+      "totalTalkSeconds": 1395,
+      "avgTalkSeconds": 49.8,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-11-02",
+      "calls": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "totalTalkSeconds": 81,
+      "avgTalkSeconds": 81,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-11-03",
+      "calls": 25,
+      "solved": 14,
+      "unengaged": 11,
+      "totalTalkSeconds": 1059,
+      "avgTalkSeconds": 42.4,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-11-04",
+      "calls": 110,
+      "solved": 75,
+      "unengaged": 35,
+      "totalTalkSeconds": 8655,
+      "avgTalkSeconds": 78.7,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-11-05",
+      "calls": 99,
+      "solved": 59,
+      "unengaged": 40,
+      "totalTalkSeconds": 6939,
+      "avgTalkSeconds": 70.1,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-11-06",
+      "calls": 47,
+      "solved": 33,
+      "unengaged": 14,
+      "totalTalkSeconds": 5046,
+      "avgTalkSeconds": 107.4,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-11-07",
+      "calls": 40,
+      "solved": 23,
+      "unengaged": 17,
+      "totalTalkSeconds": 1631,
+      "avgTalkSeconds": 40.8,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-11-08",
+      "calls": 34,
+      "solved": 23,
+      "unengaged": 11,
+      "totalTalkSeconds": 1011,
+      "avgTalkSeconds": 29.7,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-11-09",
+      "calls": 15,
+      "solved": 9,
+      "unengaged": 6,
+      "totalTalkSeconds": 1188,
+      "avgTalkSeconds": 79.2,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-11-10",
+      "calls": 49,
+      "solved": 30,
+      "unengaged": 19,
+      "totalTalkSeconds": 5760,
+      "avgTalkSeconds": 117.6,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-11-11",
+      "calls": 59,
+      "solved": 38,
+      "unengaged": 21,
+      "totalTalkSeconds": 3378,
+      "avgTalkSeconds": 57.3,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-11-12",
+      "calls": 82,
+      "solved": 51,
+      "unengaged": 31,
+      "totalTalkSeconds": 6071,
+      "avgTalkSeconds": 74,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-11-13",
+      "calls": 73,
+      "solved": 44,
+      "unengaged": 29,
+      "totalTalkSeconds": 5056,
+      "avgTalkSeconds": 69.3,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-11-14",
+      "calls": 74,
+      "solved": 45,
+      "unengaged": 29,
+      "totalTalkSeconds": 6863,
+      "avgTalkSeconds": 92.7,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-11-15",
+      "calls": 94,
+      "solved": 60,
+      "unengaged": 34,
+      "totalTalkSeconds": 8426,
+      "avgTalkSeconds": 89.6,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-11-16",
+      "calls": 37,
+      "solved": 23,
+      "unengaged": 14,
+      "totalTalkSeconds": 2749,
+      "avgTalkSeconds": 74.3,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-11-17",
+      "calls": 46,
+      "solved": 30,
+      "unengaged": 16,
+      "totalTalkSeconds": 2648,
+      "avgTalkSeconds": 57.6,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-11-18",
+      "calls": 152,
+      "solved": 91,
+      "unengaged": 61,
+      "totalTalkSeconds": 8415,
+      "avgTalkSeconds": 55.4,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-11-19",
+      "calls": 129,
+      "solved": 82,
+      "unengaged": 47,
+      "totalTalkSeconds": 8372,
+      "avgTalkSeconds": 64.9,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-11-20",
+      "calls": 77,
+      "solved": 52,
+      "unengaged": 25,
+      "totalTalkSeconds": 5435,
+      "avgTalkSeconds": 70.6,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-11-21",
+      "calls": 84,
+      "solved": 55,
+      "unengaged": 29,
+      "totalTalkSeconds": 6913,
+      "avgTalkSeconds": 82.3,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-11-22",
+      "calls": 61,
+      "solved": 37,
+      "unengaged": 24,
+      "totalTalkSeconds": 4545,
+      "avgTalkSeconds": 74.5,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-11-23",
+      "calls": 28,
+      "solved": 18,
+      "unengaged": 10,
+      "totalTalkSeconds": 1855,
+      "avgTalkSeconds": 66.3,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-11-24",
+      "calls": 37,
+      "solved": 24,
+      "unengaged": 13,
+      "totalTalkSeconds": 2586,
+      "avgTalkSeconds": 69.9,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-11-25",
+      "calls": 113,
+      "solved": 68,
+      "unengaged": 45,
+      "totalTalkSeconds": 7744,
+      "avgTalkSeconds": 68.5,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-11-26",
+      "calls": 67,
+      "solved": 42,
+      "unengaged": 25,
+      "totalTalkSeconds": 4100,
+      "avgTalkSeconds": 61.2,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-11-27",
+      "calls": 56,
+      "solved": 32,
+      "unengaged": 24,
+      "totalTalkSeconds": 2172,
+      "avgTalkSeconds": 38.8,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-11-28",
+      "calls": 91,
+      "solved": 61,
+      "unengaged": 30,
+      "totalTalkSeconds": 9961,
+      "avgTalkSeconds": 109.5,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-11-29",
+      "calls": 103,
+      "solved": 64,
+      "unengaged": 39,
+      "totalTalkSeconds": 6295,
+      "avgTalkSeconds": 61.1,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-11-30",
+      "calls": 31,
+      "solved": 18,
+      "unengaged": 13,
+      "totalTalkSeconds": 1303,
+      "avgTalkSeconds": 42,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-12-01",
+      "calls": 54,
+      "solved": 34,
+      "unengaged": 20,
+      "totalTalkSeconds": 4312,
+      "avgTalkSeconds": 79.9,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-12-02",
+      "calls": 155,
+      "solved": 100,
+      "unengaged": 55,
+      "totalTalkSeconds": 7417,
+      "avgTalkSeconds": 47.9,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-12-03",
+      "calls": 113,
+      "solved": 66,
+      "unengaged": 47,
+      "totalTalkSeconds": 4706,
+      "avgTalkSeconds": 41.6,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-12-04",
+      "calls": 99,
+      "solved": 59,
+      "unengaged": 40,
+      "totalTalkSeconds": 6916,
+      "avgTalkSeconds": 69.9,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-12-05",
+      "calls": 111,
+      "solved": 74,
+      "unengaged": 37,
+      "totalTalkSeconds": 10185,
+      "avgTalkSeconds": 91.8,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-12-06",
+      "calls": 134,
+      "solved": 92,
+      "unengaged": 42,
+      "totalTalkSeconds": 9472,
+      "avgTalkSeconds": 70.7,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-12-07",
+      "calls": 91,
+      "solved": 55,
+      "unengaged": 36,
+      "totalTalkSeconds": 4197,
+      "avgTalkSeconds": 46.1,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-12-08",
+      "calls": 76,
+      "solved": 47,
+      "unengaged": 29,
+      "totalTalkSeconds": 3891,
+      "avgTalkSeconds": 51.2,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-12-09",
+      "calls": 173,
+      "solved": 116,
+      "unengaged": 57,
+      "totalTalkSeconds": 14506,
+      "avgTalkSeconds": 83.8,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-12-10",
+      "calls": 151,
+      "solved": 93,
+      "unengaged": 58,
+      "totalTalkSeconds": 8705,
+      "avgTalkSeconds": 57.6,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-12-11",
+      "calls": 176,
+      "solved": 116,
+      "unengaged": 60,
+      "totalTalkSeconds": 11226,
+      "avgTalkSeconds": 63.8,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-12-12",
+      "calls": 254,
+      "solved": 168,
+      "unengaged": 86,
+      "totalTalkSeconds": 24982,
+      "avgTalkSeconds": 98.4,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-12-13",
+      "calls": 391,
+      "solved": 257,
+      "unengaged": 134,
+      "totalTalkSeconds": 30139,
+      "avgTalkSeconds": 77.1,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-12-14",
+      "calls": 138,
+      "solved": 83,
+      "unengaged": 55,
+      "totalTalkSeconds": 6808,
+      "avgTalkSeconds": 49.3,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-12-15",
+      "calls": 125,
+      "solved": 83,
+      "unengaged": 42,
+      "totalTalkSeconds": 7362,
+      "avgTalkSeconds": 58.9,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-12-16",
+      "calls": 152,
+      "solved": 96,
+      "unengaged": 56,
+      "totalTalkSeconds": 7632,
+      "avgTalkSeconds": 50.2,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-12-17",
+      "calls": 140,
+      "solved": 85,
+      "unengaged": 55,
+      "totalTalkSeconds": 10777,
+      "avgTalkSeconds": 77,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-12-18",
+      "calls": 127,
+      "solved": 80,
+      "unengaged": 47,
+      "totalTalkSeconds": 8116,
+      "avgTalkSeconds": 63.9,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-12-19",
+      "calls": 163,
+      "solved": 112,
+      "unengaged": 51,
+      "totalTalkSeconds": 11594,
+      "avgTalkSeconds": 71.1,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-12-20",
+      "calls": 146,
+      "solved": 95,
+      "unengaged": 51,
+      "totalTalkSeconds": 8160,
+      "avgTalkSeconds": 55.9,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-12-21",
+      "calls": 122,
+      "solved": 79,
+      "unengaged": 43,
+      "totalTalkSeconds": 9016,
+      "avgTalkSeconds": 73.9,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-12-22",
+      "calls": 145,
+      "solved": 109,
+      "unengaged": 36,
+      "totalTalkSeconds": 11991,
+      "avgTalkSeconds": 82.7,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-12-23",
+      "calls": 191,
+      "solved": 124,
+      "unengaged": 67,
+      "totalTalkSeconds": 9699,
+      "avgTalkSeconds": 50.8,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-12-24",
+      "calls": 151,
+      "solved": 94,
+      "unengaged": 57,
+      "totalTalkSeconds": 7793,
+      "avgTalkSeconds": 51.6,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-12-25",
+      "calls": 52,
+      "solved": 34,
+      "unengaged": 18,
+      "totalTalkSeconds": 2095,
+      "avgTalkSeconds": 40.3,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-12-26",
+      "calls": 60,
+      "solved": 40,
+      "unengaged": 20,
+      "totalTalkSeconds": 3255,
+      "avgTalkSeconds": 54.3,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-12-27",
+      "calls": 76,
+      "solved": 51,
+      "unengaged": 25,
+      "totalTalkSeconds": 2442,
+      "avgTalkSeconds": 32.1,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-12-28",
+      "calls": 97,
+      "solved": 63,
+      "unengaged": 34,
+      "totalTalkSeconds": 5454,
+      "avgTalkSeconds": 56.2,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-12-29",
+      "calls": 114,
+      "solved": 78,
+      "unengaged": 36,
+      "totalTalkSeconds": 6204,
+      "avgTalkSeconds": 54.4,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-12-30",
+      "calls": 183,
+      "solved": 117,
+      "unengaged": 66,
+      "totalTalkSeconds": 10410,
+      "avgTalkSeconds": 56.9,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2025-12-31",
+      "calls": 143,
+      "solved": 101,
+      "unengaged": 42,
+      "totalTalkSeconds": 8666,
+      "avgTalkSeconds": 60.6,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-01-01",
+      "calls": 47,
+      "solved": 27,
+      "unengaged": 20,
+      "totalTalkSeconds": 1147,
+      "avgTalkSeconds": 24.4,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-01-02",
+      "calls": 78,
+      "solved": 55,
+      "unengaged": 23,
+      "totalTalkSeconds": 4294,
+      "avgTalkSeconds": 55.1,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-01-03",
+      "calls": 142,
+      "solved": 89,
+      "unengaged": 53,
+      "totalTalkSeconds": 7595,
+      "avgTalkSeconds": 53.5,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-01-04",
+      "calls": 58,
+      "solved": 37,
+      "unengaged": 21,
+      "totalTalkSeconds": 2426,
+      "avgTalkSeconds": 41.8,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-01-05",
+      "calls": 113,
+      "solved": 78,
+      "unengaged": 35,
+      "totalTalkSeconds": 5142,
+      "avgTalkSeconds": 45.5,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-01-06",
+      "calls": 133,
+      "solved": 87,
+      "unengaged": 46,
+      "totalTalkSeconds": 7054,
+      "avgTalkSeconds": 53,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-01-07",
+      "calls": 100,
+      "solved": 67,
+      "unengaged": 33,
+      "totalTalkSeconds": 11285,
+      "avgTalkSeconds": 112.8,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-01-08",
+      "calls": 75,
+      "solved": 42,
+      "unengaged": 33,
+      "totalTalkSeconds": 3595,
+      "avgTalkSeconds": 47.9,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-01-09",
+      "calls": 106,
+      "solved": 74,
+      "unengaged": 32,
+      "totalTalkSeconds": 6871,
+      "avgTalkSeconds": 64.8,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-01-10",
+      "calls": 105,
+      "solved": 69,
+      "unengaged": 36,
+      "totalTalkSeconds": 3679,
+      "avgTalkSeconds": 35,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-01-11",
+      "calls": 49,
+      "solved": 31,
+      "unengaged": 18,
+      "totalTalkSeconds": 1694,
+      "avgTalkSeconds": 34.6,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-01-12",
+      "calls": 96,
+      "solved": 58,
+      "unengaged": 38,
+      "totalTalkSeconds": 5163,
+      "avgTalkSeconds": 53.8,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-01-13",
+      "calls": 115,
+      "solved": 72,
+      "unengaged": 43,
+      "totalTalkSeconds": 6197,
+      "avgTalkSeconds": 53.9,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-01-14",
+      "calls": 97,
+      "solved": 60,
+      "unengaged": 37,
+      "totalTalkSeconds": 5412,
+      "avgTalkSeconds": 55.8,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-01-15",
+      "calls": 86,
+      "solved": 60,
+      "unengaged": 26,
+      "totalTalkSeconds": 8390,
+      "avgTalkSeconds": 97.6,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-01-16",
+      "calls": 130,
+      "solved": 91,
+      "unengaged": 39,
+      "totalTalkSeconds": 10079,
+      "avgTalkSeconds": 77.5,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-01-17",
+      "calls": 69,
+      "solved": 45,
+      "unengaged": 24,
+      "totalTalkSeconds": 7129,
+      "avgTalkSeconds": 103.3,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-01-18",
+      "calls": 54,
+      "solved": 33,
+      "unengaged": 21,
+      "totalTalkSeconds": 3218,
+      "avgTalkSeconds": 59.6,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-01-19",
+      "calls": 58,
+      "solved": 33,
+      "unengaged": 25,
+      "totalTalkSeconds": 2282,
+      "avgTalkSeconds": 39.3,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-01-20",
+      "calls": 73,
+      "solved": 51,
+      "unengaged": 22,
+      "totalTalkSeconds": 4470,
+      "avgTalkSeconds": 61.2,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-01-21",
+      "calls": 85,
+      "solved": 53,
+      "unengaged": 32,
+      "totalTalkSeconds": 4253,
+      "avgTalkSeconds": 50,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-01-22",
+      "calls": 93,
+      "solved": 63,
+      "unengaged": 30,
+      "totalTalkSeconds": 8260,
+      "avgTalkSeconds": 88.8,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-01-23",
+      "calls": 75,
+      "solved": 52,
+      "unengaged": 23,
+      "totalTalkSeconds": 5226,
+      "avgTalkSeconds": 69.7,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-01-24",
+      "calls": 55,
+      "solved": 39,
+      "unengaged": 16,
+      "totalTalkSeconds": 3310,
+      "avgTalkSeconds": 60.2,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-01-25",
+      "calls": 58,
+      "solved": 38,
+      "unengaged": 20,
+      "totalTalkSeconds": 1920,
+      "avgTalkSeconds": 33.1,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-01-26",
+      "calls": 37,
+      "solved": 25,
+      "unengaged": 12,
+      "totalTalkSeconds": 1595,
+      "avgTalkSeconds": 43.1,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-01-27",
+      "calls": 83,
+      "solved": 50,
+      "unengaged": 33,
+      "totalTalkSeconds": 5997,
+      "avgTalkSeconds": 72.3,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-01-28",
+      "calls": 59,
+      "solved": 42,
+      "unengaged": 17,
+      "totalTalkSeconds": 2574,
+      "avgTalkSeconds": 43.6,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-01-29",
+      "calls": 54,
+      "solved": 37,
+      "unengaged": 17,
+      "totalTalkSeconds": 2339,
+      "avgTalkSeconds": 43.3,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-01-30",
+      "calls": 18,
+      "solved": 10,
+      "unengaged": 8,
+      "totalTalkSeconds": 914,
+      "avgTalkSeconds": 50.8,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-01-31",
+      "calls": 20,
+      "solved": 11,
+      "unengaged": 9,
+      "totalTalkSeconds": 1757,
+      "avgTalkSeconds": 87.8,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-02-01",
+      "calls": 5,
+      "solved": 3,
+      "unengaged": 2,
+      "totalTalkSeconds": 79,
+      "avgTalkSeconds": 15.8,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-02-02",
+      "calls": 65,
+      "solved": 46,
+      "unengaged": 19,
+      "totalTalkSeconds": 4165,
+      "avgTalkSeconds": 64.1,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-02-03",
+      "calls": 94,
+      "solved": 64,
+      "unengaged": 30,
+      "totalTalkSeconds": 5270,
+      "avgTalkSeconds": 56.1,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-02-04",
+      "calls": 61,
+      "solved": 37,
+      "unengaged": 24,
+      "totalTalkSeconds": 2102,
+      "avgTalkSeconds": 34.5,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-02-05",
+      "calls": 87,
+      "solved": 56,
+      "unengaged": 31,
+      "totalTalkSeconds": 4610,
+      "avgTalkSeconds": 53,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-02-06",
+      "calls": 63,
+      "solved": 41,
+      "unengaged": 22,
+      "totalTalkSeconds": 4704,
+      "avgTalkSeconds": 74.7,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-02-07",
+      "calls": 79,
+      "solved": 53,
+      "unengaged": 26,
+      "totalTalkSeconds": 5990,
+      "avgTalkSeconds": 75.8,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-02-08",
+      "calls": 37,
+      "solved": 22,
+      "unengaged": 15,
+      "totalTalkSeconds": 869,
+      "avgTalkSeconds": 23.5,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-02-09",
+      "calls": 32,
+      "solved": 23,
+      "unengaged": 9,
+      "totalTalkSeconds": 1913,
+      "avgTalkSeconds": 59.8,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-02-10",
+      "calls": 77,
+      "solved": 49,
+      "unengaged": 28,
+      "totalTalkSeconds": 3547,
+      "avgTalkSeconds": 46.1,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-02-11",
+      "calls": 103,
+      "solved": 74,
+      "unengaged": 29,
+      "totalTalkSeconds": 7947,
+      "avgTalkSeconds": 77.2,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-02-12",
+      "calls": 91,
+      "solved": 59,
+      "unengaged": 32,
+      "totalTalkSeconds": 4288,
+      "avgTalkSeconds": 47.1,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-02-13",
+      "calls": 90,
+      "solved": 58,
+      "unengaged": 32,
+      "totalTalkSeconds": 6934,
+      "avgTalkSeconds": 77,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-02-14",
+      "calls": 72,
+      "solved": 46,
+      "unengaged": 26,
+      "totalTalkSeconds": 4611,
+      "avgTalkSeconds": 64,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-02-15",
+      "calls": 63,
+      "solved": 45,
+      "unengaged": 18,
+      "totalTalkSeconds": 5192,
+      "avgTalkSeconds": 82.4,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-02-16",
+      "calls": 78,
+      "solved": 51,
+      "unengaged": 27,
+      "totalTalkSeconds": 3111,
+      "avgTalkSeconds": 39.9,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-02-17",
+      "calls": 88,
+      "solved": 55,
+      "unengaged": 33,
+      "totalTalkSeconds": 3455,
+      "avgTalkSeconds": 39.3,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-02-18",
+      "calls": 64,
+      "solved": 42,
+      "unengaged": 22,
+      "totalTalkSeconds": 2064,
+      "avgTalkSeconds": 32.3,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-02-19",
+      "calls": 89,
+      "solved": 60,
+      "unengaged": 29,
+      "totalTalkSeconds": 6638,
+      "avgTalkSeconds": 74.6,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-02-20",
+      "calls": 83,
+      "solved": 58,
+      "unengaged": 25,
+      "totalTalkSeconds": 4440,
+      "avgTalkSeconds": 53.5,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-02-21",
+      "calls": 96,
+      "solved": 65,
+      "unengaged": 31,
+      "totalTalkSeconds": 8007,
+      "avgTalkSeconds": 83.4,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-02-22",
+      "calls": 51,
+      "solved": 34,
+      "unengaged": 17,
+      "totalTalkSeconds": 2202,
+      "avgTalkSeconds": 43.2,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-02-23",
+      "calls": 52,
+      "solved": 38,
+      "unengaged": 14,
+      "totalTalkSeconds": 5171,
+      "avgTalkSeconds": 99.4,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-02-24",
+      "calls": 84,
+      "solved": 54,
+      "unengaged": 30,
+      "totalTalkSeconds": 3416,
+      "avgTalkSeconds": 40.7,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-02-25",
+      "calls": 98,
+      "solved": 63,
+      "unengaged": 35,
+      "totalTalkSeconds": 9199,
+      "avgTalkSeconds": 93.9,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-02-26",
+      "calls": 115,
+      "solved": 82,
+      "unengaged": 33,
+      "totalTalkSeconds": 12866,
+      "avgTalkSeconds": 111.9,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-02-27",
+      "calls": 89,
+      "solved": 56,
+      "unengaged": 33,
+      "totalTalkSeconds": 5463,
+      "avgTalkSeconds": 61.4,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-02-28",
+      "calls": 72,
+      "solved": 50,
+      "unengaged": 22,
+      "totalTalkSeconds": 6041,
+      "avgTalkSeconds": 83.9,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-03-01",
+      "calls": 73,
+      "solved": 44,
+      "unengaged": 29,
+      "totalTalkSeconds": 3450,
+      "avgTalkSeconds": 47.3,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-03-02",
+      "calls": 50,
+      "solved": 35,
+      "unengaged": 15,
+      "totalTalkSeconds": 4205,
+      "avgTalkSeconds": 84.1,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-03-03",
+      "calls": 101,
+      "solved": 70,
+      "unengaged": 31,
+      "totalTalkSeconds": 10789,
+      "avgTalkSeconds": 106.8,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-03-04",
+      "calls": 87,
+      "solved": 58,
+      "unengaged": 29,
+      "totalTalkSeconds": 3479,
+      "avgTalkSeconds": 40,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-03-05",
+      "calls": 182,
+      "solved": 119,
+      "unengaged": 63,
+      "totalTalkSeconds": 13811,
+      "avgTalkSeconds": 75.9,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-03-06",
+      "calls": 207,
+      "solved": 137,
+      "unengaged": 70,
+      "totalTalkSeconds": 15251,
+      "avgTalkSeconds": 73.7,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-03-07",
+      "calls": 128,
+      "solved": 74,
+      "unengaged": 54,
+      "totalTalkSeconds": 5479,
+      "avgTalkSeconds": 42.8,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-03-08",
+      "calls": 89,
+      "solved": 57,
+      "unengaged": 32,
+      "totalTalkSeconds": 8817,
+      "avgTalkSeconds": 99.1,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-03-09",
+      "calls": 80,
+      "solved": 51,
+      "unengaged": 29,
+      "totalTalkSeconds": 4643,
+      "avgTalkSeconds": 58,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-03-10",
+      "calls": 133,
+      "solved": 87,
+      "unengaged": 46,
+      "totalTalkSeconds": 6425,
+      "avgTalkSeconds": 48.3,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-03-11",
+      "calls": 146,
+      "solved": 96,
+      "unengaged": 50,
+      "totalTalkSeconds": 11317,
+      "avgTalkSeconds": 77.5,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-03-12",
+      "calls": 118,
+      "solved": 76,
+      "unengaged": 42,
+      "totalTalkSeconds": 3412,
+      "avgTalkSeconds": 28.9,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-03-13",
+      "calls": 81,
+      "solved": 52,
+      "unengaged": 29,
+      "totalTalkSeconds": 5077,
+      "avgTalkSeconds": 62.7,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-03-14",
+      "calls": 98,
+      "solved": 62,
+      "unengaged": 36,
+      "totalTalkSeconds": 4362,
+      "avgTalkSeconds": 44.5,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-03-15",
+      "calls": 125,
+      "solved": 83,
+      "unengaged": 42,
+      "totalTalkSeconds": 6438,
+      "avgTalkSeconds": 51.5,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-03-16",
+      "calls": 86,
+      "solved": 54,
+      "unengaged": 32,
+      "totalTalkSeconds": 5707,
+      "avgTalkSeconds": 66.4,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-03-17",
+      "calls": 127,
+      "solved": 83,
+      "unengaged": 44,
+      "totalTalkSeconds": 9142,
+      "avgTalkSeconds": 72,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-03-18",
+      "calls": 109,
+      "solved": 71,
+      "unengaged": 38,
+      "totalTalkSeconds": 6883,
+      "avgTalkSeconds": 63.1,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-03-19",
+      "calls": 161,
+      "solved": 102,
+      "unengaged": 59,
+      "totalTalkSeconds": 13124,
+      "avgTalkSeconds": 81.5,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-03-20",
+      "calls": 105,
+      "solved": 67,
+      "unengaged": 38,
+      "totalTalkSeconds": 5122,
+      "avgTalkSeconds": 48.8,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-03-21",
+      "calls": 87,
+      "solved": 54,
+      "unengaged": 33,
+      "totalTalkSeconds": 3603,
+      "avgTalkSeconds": 41.4,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-03-22",
+      "calls": 56,
+      "solved": 40,
+      "unengaged": 16,
+      "totalTalkSeconds": 3242,
+      "avgTalkSeconds": 57.9,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-03-23",
+      "calls": 98,
+      "solved": 62,
+      "unengaged": 36,
+      "totalTalkSeconds": 7582,
+      "avgTalkSeconds": 77.4,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-03-24",
+      "calls": 124,
+      "solved": 81,
+      "unengaged": 43,
+      "totalTalkSeconds": 5669,
+      "avgTalkSeconds": 45.7,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-03-25",
+      "calls": 104,
+      "solved": 69,
+      "unengaged": 35,
+      "totalTalkSeconds": 6752,
+      "avgTalkSeconds": 64.9,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-03-26",
+      "calls": 118,
+      "solved": 75,
+      "unengaged": 43,
+      "totalTalkSeconds": 6426,
+      "avgTalkSeconds": 54.5,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-03-27",
+      "calls": 84,
+      "solved": 53,
+      "unengaged": 31,
+      "totalTalkSeconds": 3992,
+      "avgTalkSeconds": 47.5,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-03-28",
+      "calls": 92,
+      "solved": 60,
+      "unengaged": 32,
+      "totalTalkSeconds": 7048,
+      "avgTalkSeconds": 76.6,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-03-29",
+      "calls": 60,
+      "solved": 38,
+      "unengaged": 22,
+      "totalTalkSeconds": 4480,
+      "avgTalkSeconds": 74.7,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-03-30",
+      "calls": 78,
+      "solved": 51,
+      "unengaged": 27,
+      "totalTalkSeconds": 4464,
+      "avgTalkSeconds": 57.2,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-03-31",
+      "calls": 114,
+      "solved": 76,
+      "unengaged": 38,
+      "totalTalkSeconds": 8012,
+      "avgTalkSeconds": 70.3,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-04-01",
+      "calls": 132,
+      "solved": 92,
+      "unengaged": 40,
+      "totalTalkSeconds": 10992,
+      "avgTalkSeconds": 83.3,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-04-02",
+      "calls": 117,
+      "solved": 77,
+      "unengaged": 40,
+      "totalTalkSeconds": 8781,
+      "avgTalkSeconds": 75.1,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-04-03",
+      "calls": 124,
+      "solved": 81,
+      "unengaged": 43,
+      "totalTalkSeconds": 6488,
+      "avgTalkSeconds": 52.3,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-04-04",
+      "calls": 92,
+      "solved": 63,
+      "unengaged": 29,
+      "totalTalkSeconds": 12126,
+      "avgTalkSeconds": 131.8,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-04-05",
+      "calls": 35,
+      "solved": 24,
+      "unengaged": 11,
+      "totalTalkSeconds": 1997,
+      "avgTalkSeconds": 57.1,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-04-06",
+      "calls": 69,
+      "solved": 48,
+      "unengaged": 21,
+      "totalTalkSeconds": 5659,
+      "avgTalkSeconds": 82,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-04-07",
+      "calls": 88,
+      "solved": 55,
+      "unengaged": 33,
+      "totalTalkSeconds": 3514,
+      "avgTalkSeconds": 39.9,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-04-08",
+      "calls": 70,
+      "solved": 43,
+      "unengaged": 27,
+      "totalTalkSeconds": 6209,
+      "avgTalkSeconds": 88.7,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-04-09",
+      "calls": 77,
+      "solved": 48,
+      "unengaged": 29,
+      "totalTalkSeconds": 8030,
+      "avgTalkSeconds": 104.3,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-04-10",
+      "calls": 90,
+      "solved": 56,
+      "unengaged": 34,
+      "totalTalkSeconds": 3985,
+      "avgTalkSeconds": 44.3,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-04-11",
+      "calls": 79,
+      "solved": 58,
+      "unengaged": 21,
+      "totalTalkSeconds": 6859,
+      "avgTalkSeconds": 86.8,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-04-12",
+      "calls": 54,
+      "solved": 34,
+      "unengaged": 20,
+      "totalTalkSeconds": 3643,
+      "avgTalkSeconds": 67.5,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-04-13",
+      "calls": 130,
+      "solved": 85,
+      "unengaged": 45,
+      "totalTalkSeconds": 9745,
+      "avgTalkSeconds": 75,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-04-14",
+      "calls": 147,
+      "solved": 96,
+      "unengaged": 51,
+      "totalTalkSeconds": 13926,
+      "avgTalkSeconds": 94.7,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-04-15",
+      "calls": 107,
+      "solved": 69,
+      "unengaged": 38,
+      "totalTalkSeconds": 7243,
+      "avgTalkSeconds": 67.7,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-04-16",
+      "calls": 107,
+      "solved": 73,
+      "unengaged": 34,
+      "totalTalkSeconds": 10965,
+      "avgTalkSeconds": 102.5,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-04-17",
+      "calls": 124,
+      "solved": 84,
+      "unengaged": 40,
+      "totalTalkSeconds": 8135,
+      "avgTalkSeconds": 65.6,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-04-18",
+      "calls": 129,
+      "solved": 84,
+      "unengaged": 45,
+      "totalTalkSeconds": 15625,
+      "avgTalkSeconds": 121.1,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-04-19",
+      "calls": 51,
+      "solved": 33,
+      "unengaged": 18,
+      "totalTalkSeconds": 3533,
+      "avgTalkSeconds": 69.3,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-04-20",
+      "calls": 84,
+      "solved": 52,
+      "unengaged": 32,
+      "totalTalkSeconds": 3832,
+      "avgTalkSeconds": 45.6,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-04-21",
+      "calls": 175,
+      "solved": 111,
+      "unengaged": 64,
+      "totalTalkSeconds": 9038,
+      "avgTalkSeconds": 51.6,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-04-22",
+      "calls": 149,
+      "solved": 101,
+      "unengaged": 48,
+      "totalTalkSeconds": 10896,
+      "avgTalkSeconds": 73.1,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-04-23",
+      "calls": 233,
+      "solved": 148,
+      "unengaged": 85,
+      "totalTalkSeconds": 15133,
+      "avgTalkSeconds": 64.9,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-04-24",
+      "calls": 184,
+      "solved": 119,
+      "unengaged": 65,
+      "totalTalkSeconds": 12610,
+      "avgTalkSeconds": 68.5,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-04-25",
+      "calls": 281,
+      "solved": 192,
+      "unengaged": 89,
+      "totalTalkSeconds": 24237,
+      "avgTalkSeconds": 86.3,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-04-26",
+      "calls": 166,
+      "solved": 118,
+      "unengaged": 48,
+      "totalTalkSeconds": 17001,
+      "avgTalkSeconds": 102.4,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-04-27",
+      "calls": 490,
+      "solved": 338,
+      "unengaged": 152,
+      "totalTalkSeconds": 45336,
+      "avgTalkSeconds": 92.5,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-04-28",
+      "calls": 918,
+      "solved": 616,
+      "unengaged": 302,
+      "totalTalkSeconds": 91394,
+      "avgTalkSeconds": 99.6,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-04-29",
+      "calls": 207,
+      "solved": 130,
+      "unengaged": 77,
+      "totalTalkSeconds": 20784,
+      "avgTalkSeconds": 100.4,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-04-30",
+      "calls": 103,
+      "solved": 66,
+      "unengaged": 37,
+      "totalTalkSeconds": 10243,
+      "avgTalkSeconds": 99.4,
+      "humanInvolvedCalls": 0
+    },
+    {
+      "date": "2026-05-01",
+      "calls": 41,
+      "solved": 28,
+      "unengaged": 13,
+      "totalTalkSeconds": 3870,
+      "avgTalkSeconds": 94.4,
+      "humanInvolvedCalls": 0
+    }
+  ],
+  "callLengthHistogram": [
+    {
+      "label": "0–10s",
+      "lo": 0,
+      "hi": 10,
+      "count": 9420,
+      "share": 0.45768146924497133
+    },
+    {
+      "label": "10–30s",
+      "lo": 10,
+      "hi": 30,
+      "count": 3257,
+      "share": 0.15824506850646194
+    },
+    {
+      "label": "30s–1m",
+      "lo": 30,
+      "hi": 60,
+      "count": 2476,
+      "share": 0.12029929064230882
+    },
+    {
+      "label": "1–2m",
+      "lo": 60,
+      "hi": 120,
+      "count": 2758,
+      "share": 0.13400058303371878
+    },
+    {
+      "label": "2–5m",
+      "lo": 120,
+      "hi": 300,
+      "count": 1730,
+      "share": 0.08405402779127392
+    },
+    {
+      "label": "5–10m",
+      "lo": 300,
+      "hi": 600,
+      "count": 468,
+      "share": 0.022738315032552716
+    },
+    {
+      "label": "10m+",
+      "lo": 600,
+      "hi": null,
+      "count": 473,
+      "share": 0.022981245748712468
+    }
+  ],
+  "perCall": {
+    "avgTalkSeconds": 69.5,
+    "medianTalkSeconds": 14,
+    "longestCallSeconds": 3476,
+    "under30sCount": 12677,
+    "under30sShare": 0.6159265377514332,
+    "over2minCount": 2651,
+    "over2minShare": 0.12880186570790012,
+    "over5minCount": 937,
+    "over5minShare": 0.04552521620833738
+  },
+  "workload": {
+    "totalTalkSeconds": 1429646,
+    "totalAiSeconds": 1429571,
+    "totalHumanSeconds": 75,
+    "aiTalkShare": 0.9999475394608176,
+    "humanTalkShare": 0.00005246053918242698,
+    "aiOnlyCalls": 20581,
+    "humanInvolvedCalls": 1,
+    "humanInvolvedWithoutTimestamp": 0,
+    "handoffRate": 0.000048586143231950245,
+    "avgAiSeconds": 69.5,
+    "medianAiSeconds": 14,
+    "avgHumanSecondsPerHumanCall": 75,
+    "medianHumanSecondsPerHumanCall": 75
+  },
+  "userMessages": 98404,
+  "heatmap": [
+    {
+      "dayOfWeek": "Sun",
+      "timeBucket": "12AM–3AM",
+      "conversations": 84
+    },
+    {
+      "dayOfWeek": "Sun",
+      "timeBucket": "3AM–6AM",
+      "conversations": 56
+    },
+    {
+      "dayOfWeek": "Sun",
+      "timeBucket": "6AM–9AM",
+      "conversations": 8
+    },
+    {
+      "dayOfWeek": "Sun",
+      "timeBucket": "9AM–12PM",
+      "conversations": 4
+    },
+    {
+      "dayOfWeek": "Sun",
+      "timeBucket": "12PM–3PM",
+      "conversations": 188
+    },
+    {
+      "dayOfWeek": "Sun",
+      "timeBucket": "3PM–6PM",
+      "conversations": 612
+    },
+    {
+      "dayOfWeek": "Sun",
+      "timeBucket": "6PM–9PM",
+      "conversations": 422
+    },
+    {
+      "dayOfWeek": "Sun",
+      "timeBucket": "9PM–12AM",
+      "conversations": 214
+    },
+    {
+      "dayOfWeek": "Mon",
+      "timeBucket": "12AM–3AM",
+      "conversations": 101
+    },
+    {
+      "dayOfWeek": "Mon",
+      "timeBucket": "3AM–6AM",
+      "conversations": 91
+    },
+    {
+      "dayOfWeek": "Mon",
+      "timeBucket": "6AM–9AM",
+      "conversations": 6
+    },
+    {
+      "dayOfWeek": "Mon",
+      "timeBucket": "9AM–12PM",
+      "conversations": 16
+    },
+    {
+      "dayOfWeek": "Mon",
+      "timeBucket": "12PM–3PM",
+      "conversations": 535
+    },
+    {
+      "dayOfWeek": "Mon",
+      "timeBucket": "3PM–6PM",
+      "conversations": 1448
+    },
+    {
+      "dayOfWeek": "Mon",
+      "timeBucket": "6PM–9PM",
+      "conversations": 1249
+    },
+    {
+      "dayOfWeek": "Mon",
+      "timeBucket": "9PM–12AM",
+      "conversations": 850
+    },
+    {
+      "dayOfWeek": "Tue",
+      "timeBucket": "12AM–3AM",
+      "conversations": 234
+    },
+    {
+      "dayOfWeek": "Tue",
+      "timeBucket": "3AM–6AM",
+      "conversations": 342
+    },
+    {
+      "dayOfWeek": "Tue",
+      "timeBucket": "6AM–9AM",
+      "conversations": 14
+    },
+    {
+      "dayOfWeek": "Tue",
+      "timeBucket": "9AM–12PM",
+      "conversations": 10
+    },
+    {
+      "dayOfWeek": "Tue",
+      "timeBucket": "12PM–3PM",
+      "conversations": 465
+    },
+    {
+      "dayOfWeek": "Tue",
+      "timeBucket": "3PM–6PM",
+      "conversations": 1048
+    },
+    {
+      "dayOfWeek": "Tue",
+      "timeBucket": "6PM–9PM",
+      "conversations": 892
+    },
+    {
+      "dayOfWeek": "Tue",
+      "timeBucket": "9PM–12AM",
+      "conversations": 629
+    },
+    {
+      "dayOfWeek": "Wed",
+      "timeBucket": "12AM–3AM",
+      "conversations": 190
+    },
+    {
+      "dayOfWeek": "Wed",
+      "timeBucket": "3AM–6AM",
+      "conversations": 72
+    },
+    {
+      "dayOfWeek": "Wed",
+      "timeBucket": "6AM–9AM",
+      "conversations": 15
+    },
+    {
+      "dayOfWeek": "Wed",
+      "timeBucket": "9AM–12PM",
+      "conversations": 6
+    },
+    {
+      "dayOfWeek": "Wed",
+      "timeBucket": "12PM–3PM",
+      "conversations": 340
+    },
+    {
+      "dayOfWeek": "Wed",
+      "timeBucket": "3PM–6PM",
+      "conversations": 976
+    },
+    {
+      "dayOfWeek": "Wed",
+      "timeBucket": "6PM–9PM",
+      "conversations": 877
+    },
+    {
+      "dayOfWeek": "Wed",
+      "timeBucket": "9PM–12AM",
+      "conversations": 550
+    },
+    {
+      "dayOfWeek": "Thu",
+      "timeBucket": "12AM–3AM",
+      "conversations": 205
+    },
+    {
+      "dayOfWeek": "Thu",
+      "timeBucket": "3AM–6AM",
+      "conversations": 63
+    },
+    {
+      "dayOfWeek": "Thu",
+      "timeBucket": "6AM–9AM",
+      "conversations": 15
+    },
+    {
+      "dayOfWeek": "Thu",
+      "timeBucket": "9AM–12PM",
+      "conversations": 13
+    },
+    {
+      "dayOfWeek": "Thu",
+      "timeBucket": "12PM–3PM",
+      "conversations": 362
+    },
+    {
+      "dayOfWeek": "Thu",
+      "timeBucket": "3PM–6PM",
+      "conversations": 828
+    },
+    {
+      "dayOfWeek": "Thu",
+      "timeBucket": "6PM–9PM",
+      "conversations": 783
+    },
+    {
+      "dayOfWeek": "Thu",
+      "timeBucket": "9PM–12AM",
+      "conversations": 622
+    },
+    {
+      "dayOfWeek": "Fri",
+      "timeBucket": "12AM–3AM",
+      "conversations": 192
+    },
+    {
+      "dayOfWeek": "Fri",
+      "timeBucket": "3AM–6AM",
+      "conversations": 76
+    },
+    {
+      "dayOfWeek": "Fri",
+      "timeBucket": "6AM–9AM",
+      "conversations": 28
+    },
+    {
+      "dayOfWeek": "Fri",
+      "timeBucket": "9AM–12PM",
+      "conversations": 16
+    },
+    {
+      "dayOfWeek": "Fri",
+      "timeBucket": "12PM–3PM",
+      "conversations": 331
+    },
+    {
+      "dayOfWeek": "Fri",
+      "timeBucket": "3PM–6PM",
+      "conversations": 942
+    },
+    {
+      "dayOfWeek": "Fri",
+      "timeBucket": "6PM–9PM",
+      "conversations": 910
+    },
+    {
+      "dayOfWeek": "Fri",
+      "timeBucket": "9PM–12AM",
+      "conversations": 692
+    },
+    {
+      "dayOfWeek": "Sat",
+      "timeBucket": "12AM–3AM",
+      "conversations": 187
+    },
+    {
+      "dayOfWeek": "Sat",
+      "timeBucket": "3AM–6AM",
+      "conversations": 112
+    },
+    {
+      "dayOfWeek": "Sat",
+      "timeBucket": "6AM–9AM",
+      "conversations": 94
+    },
+    {
+      "dayOfWeek": "Sat",
+      "timeBucket": "9AM–12PM",
+      "conversations": 17
+    },
+    {
+      "dayOfWeek": "Sat",
+      "timeBucket": "12PM–3PM",
+      "conversations": 159
+    },
+    {
+      "dayOfWeek": "Sat",
+      "timeBucket": "3PM–6PM",
+      "conversations": 700
+    },
+    {
+      "dayOfWeek": "Sat",
+      "timeBucket": "6PM–9PM",
+      "conversations": 448
+    },
+    {
+      "dayOfWeek": "Sat",
+      "timeBucket": "9PM–12AM",
+      "conversations": 243
+    }
+  ]
+}

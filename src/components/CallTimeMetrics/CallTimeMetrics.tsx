@@ -3,6 +3,7 @@ import {
   clampPercent,
   formatNumber,
   formatPercent,
+  formatPercentSmart,
 } from '../../lib/formatters'
 import type { CallTimeMetrics as CallTimeMetricsData } from '../../fixtures/voice'
 
@@ -32,12 +33,6 @@ function fmtHours(hours: number): string {
 export function CallTimeMetrics({ data }: CallTimeMetricsProps) {
   const {
     totalCalls,
-    under30sCount,
-    under30sShare,
-    over2minCount,
-    over2minShare,
-    over5minCount,
-    over5minShare,
     longestCallSeconds,
     totalTalkHours,
     avgTalkSeconds,
@@ -49,7 +44,9 @@ export function CallTimeMetrics({ data }: CallTimeMetricsProps) {
     humanHandoffRate,
     aiTalkShare,
     humanTalkShare,
+    histogram,
   } = data
+  const maxHist = Math.max(1, ...histogram.map((h) => h.share))
 
   return (
     <Panel
@@ -89,44 +86,57 @@ export function CallTimeMetrics({ data }: CallTimeMetricsProps) {
         />
         <Metric
           label="AI talk-time share"
-          value={formatPercent(aiTalkShare)}
+          value={formatPercentSmart(aiTalkShare)}
           subValue={`${fmtHours(totalAiHours)} of ${fmtHours(totalTalkHours)}`}
           tone="good"
         />
       </div>
 
-      {/* ── Length distribution ─────────────────────────────────────── */}
+      {/* ── Full length histogram (7 buckets, real distribution) ────── */}
       <div className="mt-6 rounded-2xl border border-slate-100 bg-slate-50/60 p-5">
-        <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
-          Call-length distribution
+        <div className="flex items-baseline justify-between">
+          <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+            Call-length distribution
+          </div>
+          <div className="text-[10px] tabular-nums text-slate-500">
+            {formatNumber(histogram.reduce((s, h) => s + h.count, 0))} calls
+          </div>
         </div>
-        <div className="mt-3 space-y-2.5">
-          {[
-            { label: 'Under 30 seconds', count: under30sCount, share: under30sShare, color: 'from-slate-400 to-slate-300', note: 'caller greeted, hung up' },
-            { label: 'Over 2 minutes', count: over2minCount, share: over2minShare, color: 'from-sky-500 to-sky-400', note: 'real conversation' },
-            { label: 'Over 5 minutes', count: over5minCount, share: over5minShare, color: 'from-emerald-500 to-emerald-400', note: 'deep problem-solve' },
-          ].map((row) => (
-            <div
-              key={row.label}
-              className="grid grid-cols-[10rem_1fr_auto] items-center gap-3"
-            >
-              <div className="flex flex-col text-sm">
-                <span className="font-medium text-slate-700">{row.label}</span>
-                <span className="text-[10px] text-slate-500">{row.note}</span>
+        <div className="mt-3 space-y-1.5">
+          {histogram.map((h, i) => {
+            // Color graduates from gray (short) → emerald (long)
+            const colorClasses = [
+              'from-slate-400 to-slate-300',
+              'from-slate-400 to-slate-300',
+              'from-sky-400 to-sky-300',
+              'from-sky-500 to-sky-400',
+              'from-emerald-400 to-emerald-300',
+              'from-emerald-500 to-emerald-400',
+              'from-emerald-600 to-emerald-500',
+            ]
+            return (
+              <div
+                key={h.label}
+                className="grid grid-cols-[5rem_1fr_auto] items-center gap-3"
+              >
+                <span className="text-xs font-medium text-slate-700">{h.label}</span>
+                <div className="relative h-3 overflow-hidden rounded-full bg-slate-200/70">
+                  <div
+                    className={`absolute left-0 top-0 h-full rounded-full bg-gradient-to-r ${colorClasses[i] ?? colorClasses[colorClasses.length - 1]}`}
+                    style={{ width: `${clampPercent((h.share / maxHist) * 100)}%` }}
+                  />
+                </div>
+                <div className="text-right text-xs tabular-nums">
+                  <span className="font-semibold text-slate-800">{formatPercent(h.share)}</span>
+                  <span className="ml-2 text-slate-500">{formatNumber(h.count)}</span>
+                </div>
               </div>
-              <div className="relative h-3 overflow-hidden rounded-full bg-slate-200/70">
-                <div
-                  className={`absolute left-0 top-0 h-full rounded-full bg-gradient-to-r ${row.color}`}
-                  style={{ width: `${clampPercent(row.share * 100)}%` }}
-                />
-              </div>
-              <div className="text-right text-xs tabular-nums">
-                <div className="font-semibold text-slate-800">{formatPercent(row.share)}</div>
-                <div className="text-slate-500">{formatNumber(row.count)}</div>
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
+        <p className="mt-3 text-[10px] text-slate-400">
+          ~46% of calls end within 10 seconds — likely caller greeted + immediate hang-up. Real conversations (over 30 seconds) account for {formatPercent(histogram.slice(2).reduce((s, h) => s + h.share, 0))} of volume.
+        </p>
       </div>
 
       {/* ── AI vs Human workload split ──────────────────────────────── */}
@@ -141,7 +151,7 @@ export function CallTimeMetrics({ data }: CallTimeMetricsProps) {
             </span>{' '}
             total calls · handoff rate{' '}
             <span className="font-semibold text-slate-700 tabular-nums">
-              {formatPercent(humanHandoffRate, 3)}
+              {formatPercentSmart(humanHandoffRate)}
             </span>
           </div>
         </div>
@@ -166,25 +176,25 @@ export function CallTimeMetrics({ data }: CallTimeMetricsProps) {
           <Metric
             label="AI-only calls"
             value={formatNumber(aiOnlyCalls)}
-            subValue={formatPercent(aiOnlyCalls / Math.max(1, totalCalls))}
+            subValue={formatPercentSmart(aiOnlyCalls / Math.max(1, totalCalls))}
             tone="good"
           />
           <Metric
             label="Human-involved calls"
             value={formatNumber(humanInvolvedCalls)}
-            subValue={formatPercent(humanInvolvedCalls / Math.max(1, totalCalls), 3)}
+            subValue={formatPercentSmart(humanInvolvedCalls / Math.max(1, totalCalls))}
             tone="default"
           />
           <Metric
             label="AI talk-time"
             value={fmtHours(totalAiHours)}
-            subValue={`${formatPercent(aiTalkShare)} of total`}
+            subValue={`${formatPercentSmart(aiTalkShare)} of total`}
             tone="good"
           />
           <Metric
             label="Human talk-time"
             value={fmtDuration(totalHumanSeconds)}
-            subValue={`${formatPercent(humanTalkShare, 3)} of total`}
+            subValue={`${formatPercentSmart(humanTalkShare)} of total`}
             tone="default"
           />
         </div>

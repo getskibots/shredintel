@@ -23,6 +23,35 @@ export function formatPercent(value: number, digits = 1): string {
 }
 
 /**
+ * Smart percent: avoids rounding non-zero values to 0% or non-100 values
+ * to 100%. Useful for AI-vs-human shares where the difference is tiny but
+ * meaningful.
+ */
+export function formatPercentSmart(value: number): string {
+  if (!Number.isFinite(value)) return '—'
+  const pct = Math.abs(value) <= 1 ? value * 100 : value
+  if (pct === 0) return '0%'
+  if (pct === 100) return '100%'
+  // Values >99.95 would round to 100.0 with 1 decimal — go further
+  if (pct > 99.95 && pct < 100) {
+    // Find enough decimals to show the gap (max 4)
+    for (let d = 2; d <= 4; d++) {
+      const rounded = Number(pct.toFixed(d))
+      if (rounded < 100) return `${rounded.toFixed(d)}%`
+    }
+    return '>99.99%'
+  }
+  if (pct > 0 && pct < 0.05) {
+    for (let d = 2; d <= 4; d++) {
+      const rounded = Number(pct.toFixed(d))
+      if (rounded > 0) return `${rounded.toFixed(d)}%`
+    }
+    return '<0.01%'
+  }
+  return `${pct.toFixed(1)}%`
+}
+
+/**
  * Signed delta in percentage points or a percent change.
  * +12.1% / −3.4% / 0.0%
  */

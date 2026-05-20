@@ -1,12 +1,14 @@
 import type { ReactNode } from 'react'
+import { Link } from 'react-router-dom'
 
 /**
  * Faithful re-creation of the Botscrew admin chrome:
- *  - Left rail (navy) with stacked icon nav and a logo header/footer
+ *  - Left rail (Botscrew blue) with stacked icon nav and a logo header/footer
  *  - Top bar (white) with breadcrumb, bot selector, "Test in Messenger / AI / widget", profile
  *  - Main content area (light-gray) for the analytics page
  *
- * Icons are inline SVGs to avoid adding a dependency. Single-purpose, no theme switching.
+ * The first two nav items (Chat, Voice) are real shredintel routes.
+ * The rest mirror Botscrew's existing structure and are inert/decorative.
  */
 
 export interface DashboardShellProps {
@@ -14,14 +16,15 @@ export interface DashboardShellProps {
   botLabel?: string
   /** User name shown top-right */
   userName?: string
-  /** Active nav item key */
-  activeNav?: NavKey
+  /** Active channel — drives sidebar highlight */
+  activeChannel?: 'chat' | 'voice'
   /** Page content */
   children: ReactNode
 }
 
 type NavKey =
-  | 'analytics'
+  | 'chat'
+  | 'voice'
   | 'knowledge'
   | 'ai-messages'
   | 'flows'
@@ -36,6 +39,8 @@ interface NavItem {
   key: NavKey
   label: string
   icon: ReactNode
+  /** If present, item is a real route; otherwise inert (Botscrew chrome) */
+  to?: string
   badge?: number
 }
 
@@ -46,7 +51,8 @@ const icon = (path: string) => (
 )
 
 const NAV: NavItem[] = [
-  { key: 'analytics', label: 'Analytics', icon: icon('M3 17l6-6 4 4 8-8M14 7h7v7') },
+  { key: 'chat', label: 'Chat', to: '/chat', icon: icon('M21 11.5a8.38 8.38 0 01-8.5 8.5 8.5 8.5 0 01-3.6-.8L3 21l1.8-5.9A8.5 8.5 0 1121 11.5z') },
+  { key: 'voice', label: 'Voice', to: '/voice', icon: icon('M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3zM19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8') },
   { key: 'knowledge', label: 'Knowledge', icon: icon('M12 2a3 3 0 00-3 3v1H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V8a2 2 0 00-2-2h-2V5a3 3 0 00-3-3zM9 13h6M9 17h6') },
   { key: 'ai-messages', label: 'AI Messages', icon: icon('M21 11.5a8.38 8.38 0 01-8.5 8.5 8.5 8.5 0 01-3.6-.8L3 21l1.8-5.9A8.5 8.5 0 1121 11.5z') },
   { key: 'flows', label: 'Flows', icon: icon('M7 7l4 4-4 4M17 7l-4 4 4 4') },
@@ -59,7 +65,6 @@ const NAV: NavItem[] = [
 ]
 
 function MountainLogo({ className = '' }: { className?: string }) {
-  // Simplified GSB mark — three peaks
   return (
     <svg viewBox="0 0 64 36" className={className} aria-hidden>
       <path d="M2 32 L20 8 L30 22 L40 6 L62 32 Z" fill="white" />
@@ -71,7 +76,7 @@ function MountainLogo({ className = '' }: { className?: string }) {
 export function DashboardShell({
   botLabel = 'Get Ski Tickets — ACTIVE',
   userName = 'Brandon Quinn',
-  activeNav = 'analytics',
+  activeChannel = 'chat',
   children,
 }: DashboardShellProps) {
   return (
@@ -88,32 +93,49 @@ export function DashboardShell({
         <nav className="flex-1 overflow-y-auto py-3">
           <ul className="flex flex-col items-stretch gap-1 px-2">
             {NAV.map((item) => {
-              const isActive = item.key === activeNav
+              const isActive = item.key === activeChannel
+              const className = [
+                'group relative flex flex-col items-center gap-1 rounded-lg py-2 text-[10px] font-medium transition',
+                isActive
+                  ? 'bg-white/10 text-white'
+                  : 'text-white/70 hover:bg-white/5 hover:text-white',
+              ].join(' ')
+              const inner = (
+                <>
+                  {isActive && (
+                    <span className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-r bg-white" />
+                  )}
+                  <div className="relative">
+                    {item.icon}
+                    {item.badge !== undefined && (
+                      <span className="absolute -right-2 -top-2 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-bold text-white">
+                        {item.badge}
+                      </span>
+                    )}
+                  </div>
+                  <span className="leading-tight">{item.label}</span>
+                </>
+              )
               return (
                 <li key={item.key}>
-                  <a
-                    href="#"
-                    aria-current={isActive ? 'page' : undefined}
-                    className={[
-                      'group relative flex flex-col items-center gap-1 rounded-lg py-2 text-[10px] font-medium transition',
-                      isActive
-                        ? 'bg-white/10 text-white'
-                        : 'text-white/70 hover:bg-white/5 hover:text-white',
-                    ].join(' ')}
-                  >
-                    {isActive && (
-                      <span className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-r bg-white" />
-                    )}
-                    <div className="relative">
-                      {item.icon}
-                      {item.badge !== undefined && (
-                        <span className="absolute -right-2 -top-2 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-bold text-white">
-                          {item.badge}
-                        </span>
-                      )}
-                    </div>
-                    <span className="leading-tight">{item.label}</span>
-                  </a>
+                  {item.to ? (
+                    <Link
+                      to={item.to}
+                      aria-current={isActive ? 'page' : undefined}
+                      className={className}
+                    >
+                      {inner}
+                    </Link>
+                  ) : (
+                    <a
+                      href="#"
+                      aria-disabled
+                      onClick={(e) => e.preventDefault()}
+                      className={className}
+                    >
+                      {inner}
+                    </a>
+                  )}
                 </li>
               )
             })}
@@ -130,12 +152,12 @@ export function DashboardShell({
         {/* Top bar */}
         <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b border-slate-200 bg-white px-5">
           <div className="flex items-center gap-4">
-            <a
-              href="#"
+            <Link
+              to="/chat"
               className="text-sm font-semibold text-botscrew-500 hover:text-botscrew-600"
             >
               Home
-            </a>
+            </Link>
           </div>
           <div className="text-sm font-semibold tracking-tight text-slate-900">
             {botLabel}

@@ -8,7 +8,22 @@ export default {
         display: ['Inter', 'system-ui', 'sans-serif'],
       },
       colors: {
-        // Alpine palette: deep navy base, glacier accent, summit highlight
+        // Botscrew dashboard palette (matches the existing admin shell).
+        // Medium-blue chrome + bright cobalt CTAs.
+        botscrew: {
+          50: '#EEF5FB',
+          100: '#D6E7F3',
+          400: '#3F92CE',
+          500: '#2A7DC0',   // sidebar / active tab background
+          600: '#236AA8',   // hover
+          700: '#1B5689',   // pressed / active state
+        },
+        // Action-button blue — slightly brighter than the chrome
+        action: {
+          500: '#2196F3',
+          600: '#1976D2',
+        },
+        // Alpine palette retained for the hero only (deep navy base + glacier accent)
         ink: {
           900: '#0B1220',
           800: '#111A2E',

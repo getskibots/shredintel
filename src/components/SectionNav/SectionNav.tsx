@@ -21,7 +21,7 @@ export function SectionNav({ items }: SectionNavProps) {
             href={`#${s.id}`}
             className="group inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
           >
-            <span className="font-mono text-[10px] font-semibold tracking-wider text-glacier-600">
+            <span className="font-mono text-[10px] font-semibold tracking-wider text-botscrew-500">
               §{s.number}
             </span>
             <span className="whitespace-nowrap">{s.name}</span>

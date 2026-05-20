@@ -78,7 +78,7 @@ export function DashboardShell({
     <div className="flex min-h-screen bg-slate-50 text-slate-900">
       {/* ── Left rail ──────────────────────────────────────────────── */}
       <aside
-        className="flex w-[72px] flex-col bg-gradient-to-b from-[#1e3a5f] to-[#16273e] text-white"
+        className="flex w-[72px] flex-col bg-botscrew-500 text-white"
         aria-label="Primary navigation"
       >
         <div className="flex h-14 items-center justify-center border-b border-white/10">
@@ -102,7 +102,7 @@ export function DashboardShell({
                     ].join(' ')}
                   >
                     {isActive && (
-                      <span className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-r bg-sky-400" />
+                      <span className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-r bg-white" />
                     )}
                     <div className="relative">
                       {item.icon}
@@ -132,7 +132,7 @@ export function DashboardShell({
           <div className="flex items-center gap-4">
             <a
               href="#"
-              className="text-sm font-semibold text-sky-600 hover:text-sky-700"
+              className="text-sm font-semibold text-botscrew-500 hover:text-botscrew-600"
             >
               Home
             </a>
@@ -141,13 +141,13 @@ export function DashboardShell({
             {botLabel}
           </div>
           <div className="flex items-center gap-2">
-            <button className="hidden rounded-lg bg-sky-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-sky-600 md:inline-flex">
+            <button className="hidden rounded-lg bg-botscrew-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-botscrew-600 md:inline-flex">
               Test in Messenger ▾
             </button>
-            <button className="rounded-lg bg-sky-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-sky-600">
+            <button className="rounded-lg bg-botscrew-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-botscrew-600">
               Test AI chat
             </button>
-            <button className="rounded-lg bg-sky-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-sky-600">
+            <button className="rounded-lg bg-botscrew-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-botscrew-600">
               Test widget
             </button>
             <div className="ml-2 flex items-center gap-2 rounded-lg border border-slate-200 px-2 py-1">

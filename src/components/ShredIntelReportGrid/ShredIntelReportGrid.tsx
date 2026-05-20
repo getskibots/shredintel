@@ -46,7 +46,7 @@ export function ShredIntelReportGrid() {
           </h1>
           <div className="flex items-center gap-2">
             <div className="flex rounded-lg border border-slate-200 bg-white p-0.5 text-slate-600">
-              <button className="rounded-md bg-sky-500 px-3 py-1.5 text-xs font-semibold text-white">
+              <button className="rounded-md bg-botscrew-500 px-3 py-1.5 text-xs font-semibold text-white">
                 Last 7 days
               </button>
               <button className="rounded-md px-3 py-1.5 text-xs font-medium hover:bg-slate-100">
@@ -56,7 +56,7 @@ export function ShredIntelReportGrid() {
                 Custom
               </button>
             </div>
-            <button className="rounded-lg bg-sky-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-sky-600">
+            <button className="rounded-lg bg-botscrew-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-botscrew-600">
               Export chats
             </button>
           </div>

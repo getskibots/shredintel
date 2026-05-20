@@ -30,7 +30,7 @@ export function Panel({
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           {eyebrow && (
-            <div className="font-mono text-[10px] font-semibold uppercase tracking-widest text-glacier-600">
+            <div className="font-mono text-[10px] font-semibold uppercase tracking-widest text-botscrew-500">
               {eyebrow}
             </div>
           )}

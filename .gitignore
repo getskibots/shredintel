@@ -25,3 +25,7 @@ dist-ssr
 
 *storybook.log
 storybook-static
+
+# Analysis outputs from real customer data — keep local only
+scripts/*.json
+scripts/*.csv

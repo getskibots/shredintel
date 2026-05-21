@@ -96,6 +96,10 @@ export interface VoiceFixtures {
   demandHeatmap: DemandHeatmapProps
   geography: Array<{ country: string; conversations: number; share: number }>
   callTime: CallTimeMetrics
+  /** Customer-need category breakdown (grouped from top intents) */
+  intentCategories: IntentCategorySummary[]
+  /** Single biggest customer-need category — for the hero callout */
+  topCategory: IntentCategorySummary | null
 }
 
 // ─── Types narrowing voice-daily.json ──────────────────────────────────
@@ -118,22 +122,65 @@ const DAILY: DailyEntry[] = voiceDaily.dailyTimeline as DailyEntry[]
 const HEATMAP_RAW: HeatmapEntry[] = voiceDaily.heatmap as HeatmapEntry[]
 const ALL_TIME_TOTAL_CALLS = voiceDaily.totalCalls as number
 
-// ─── Top intents (knowledge_search_query, scaled by period) ────────────
-const BASELINE_INTENTS: Array<{ name: string; count: number }> = [
-  { name: 'Friends & Family ticket redemption', count: 1279 },
-  { name: 'Check exact name on Mountain Collective account', count: 567 },
-  { name: 'Checkout bundle issue (pass + insurance)', count: 564 },
-  { name: 'Multiple order numbers in account', count: 543 },
-  { name: 'Find Purchaser ID for renewal code', count: 463 },
-  { name: 'Reservation error — customer ID validation', count: 392 },
-  { name: 'Empty-cart payment failure', count: 392 },
-  { name: 'Where to enter referral code at checkout', count: 329 },
-  { name: 'Add credit card for Friends & Family purchase', count: 329 },
-  { name: 'Renewal discount not applying at payment', count: 324 },
-  { name: 'Bundle requirements not met error', count: 279 },
-  { name: 'Friends & Family voucher invalid error', count: 300 },
-  { name: 'Password reset email for account', count: 259 },
+// ─── Customer need categories (grouped from real knowledge_search_query) ──
+// These five buckets explain why the phone rings. Source: top-25 intents
+// from the Mtn Collective voice export, grouped by underlying customer need.
+export type CustomerNeedCategory =
+  | 'Transaction & Checkout'
+  | 'Account & Identity'
+  | 'Friends & Family'
+  | 'Discount & Codes'
+  | 'Resort Info & Pricing'
+  | 'Other / Long-tail'
+
+export interface IntentItem {
+  name: string
+  category: CustomerNeedCategory
+  count: number
+}
+
+const BASELINE_INTENTS: IntentItem[] = [
+  // Friends & Family — voucher / redemption issues (cluster: 1,823 calls)
+  { name: 'Friends & Family ticket redemption (Snowbird)', category: 'Friends & Family', count: 1279 },
+  { name: 'Friends & Family voucher invalid error', category: 'Friends & Family', count: 300 },
+  { name: 'Friends & Family ticket validation error', category: 'Friends & Family', count: 244 },
+  // Account & Identity (cluster: ~2,081)
+  { name: 'Check exact name on Mountain Collective account', category: 'Account & Identity', count: 567 },
+  { name: 'Multiple order numbers in account', category: 'Account & Identity', count: 543 },
+  { name: 'Find Purchaser ID for renewal code', category: 'Account & Identity', count: 463 },
+  { name: 'Password reset email for account', category: 'Account & Identity', count: 259 },
+  { name: 'Complete liability release / waiver', category: 'Account & Identity', count: 249 },
+  // Transaction & Checkout (cluster: ~2,729 — biggest single bucket)
+  { name: 'Checkout bundle issue (pass + insurance)', category: 'Transaction & Checkout', count: 564 },
+  { name: 'Empty-cart payment failure', category: 'Transaction & Checkout', count: 392 },
+  { name: 'Add credit card for Friends & Family purchase', category: 'Transaction & Checkout', count: 329 },
+  { name: 'Cart items cannot be modified online', category: 'Transaction & Checkout', count: 319 },
+  { name: 'Error processing billing information', category: 'Transaction & Checkout', count: 307 },
+  { name: 'Bundle requirements not met (checkout)', category: 'Transaction & Checkout', count: 279 },
+  { name: 'Bundle requirements not met (purchase)', category: 'Transaction & Checkout', count: 259 },
+  // Discount & Codes (cluster: ~1,439)
+  { name: 'Where to enter referral code at checkout', category: 'Discount & Codes', count: 329 },
+  { name: 'Renewal discount not applying at payment', category: 'Discount & Codes', count: 324 },
+  { name: 'Referral program — free bonus day', category: 'Discount & Codes', count: 271 },
+  { name: 'Renewal discount code invalid', category: 'Discount & Codes', count: 260 },
+  { name: 'Apply renewal code during checkout', category: 'Discount & Codes', count: 255 },
+  // Reservations
+  { name: 'Reservation error — customer ID validation', category: 'Account & Identity', count: 392 },
+  // Resort info & pricing
+  { name: 'Single-day senior lift ticket price (Jackson Hole)', category: 'Resort Info & Pricing', count: 320 },
+  { name: 'Pass insurance — do I have it?', category: 'Resort Info & Pricing', count: 273 },
+  { name: 'Parking at Snowbasin', category: 'Resort Info & Pricing', count: 272 },
+  { name: 'Lone Peak Tram cost (Big Sky)', category: 'Resort Info & Pricing', count: 270 },
+  { name: 'Third-day bonus at Sun Valley', category: 'Resort Info & Pricing', count: 266 },
 ]
+
+export interface IntentCategorySummary {
+  category: CustomerNeedCategory
+  conversations: number
+  share: number // of total conversations in the period
+  shareOfCategorized: number // of conversations represented by top intents
+  topIntents: Array<{ name: string; count: number }>
+}
 const BASELINE_QUESTIONS: Array<{ q: string; occ: number; lastSeen: string }> = [
   { q: 'How do I redeem a Friends & Family ticket at Snowbird?', occ: 1279, lastSeen: '2026-04-30T22:15:00Z' },
   { q: 'How do I check the exact name on my Mountain Collective account?', occ: 567, lastSeen: '2026-04-29T19:08:00Z' },
@@ -188,7 +235,7 @@ export function buildVoiceFixtures(period: VoicePeriodKey): VoiceFixtures {
   // export, so engaged === solved. AI-handled = engaged − human-involved.
   const engagedCalls = agg.solved
   const aiHandled = Math.max(0, engagedCalls - agg.humanInvolved)
-  const scale = ALL_TIME_TOTAL_CALLS > 0 ? engagedCalls / 13692 : 0 // 13692 = total SOLVED across all time
+  const scale = ALL_TIME_TOTAL_CALLS > 0 ? engagedCalls / 14018 : 0 // 14018 = total SOLVED across all time (fresh export)
   const containmentRate = engagedCalls > 0 ? aiHandled / engagedCalls : 0
 
   // Hero sparkline: daily containment rate (AI-only ÷ engaged) on days with calls
@@ -241,7 +288,7 @@ export function buildVoiceFixtures(period: VoicePeriodKey): VoiceFixtures {
     return `${sign}${Math.abs(pct).toFixed(digits)}%`
   }
   // Avg call duration scoped to engaged calls (real engaged-only stat)
-  const ENGAGED_AVG_TALK_SEC = 102.2
+  const ENGAGED_AVG_TALK_SEC = 101.9
   const ENGAGED_AVG_MIN = Math.floor(ENGAGED_AVG_TALK_SEC / 60)
   const ENGAGED_AVG_REM = Math.round(ENGAGED_AVG_TALK_SEC % 60)
   const avgDurationLabel = `${ENGAGED_AVG_MIN}m ${ENGAGED_AVG_REM}s`
@@ -399,27 +446,67 @@ export function buildVoiceFixtures(period: VoicePeriodKey): VoiceFixtures {
     share: g.raw / Math.max(1, GEO_KNOWN),
   }))
 
-  // ── Call-time metrics (engaged-only, recomputed from raw data) ────
-  // All-time engaged baseline: 13,692 calls / 388.8h / avg 102.2s / median 41s
-  // 28.4% under 30s · 12.7% over 2m · 4.4% over 5m
-  const ENG_TOTAL_TALK_SEC = 1399556
-  const ENG_TOTAL_AI_SEC = 1399481
+  // ── Customer-need category breakdown ──────────────────────────────
+  // Group every baseline intent by category and scale to the period.
+  const categoryBuckets = new Map<CustomerNeedCategory, IntentItem[]>()
+  for (const intent of BASELINE_INTENTS) {
+    if (!categoryBuckets.has(intent.category)) categoryBuckets.set(intent.category, [])
+    categoryBuckets.get(intent.category)!.push(intent)
+  }
+  const totalCategorized = BASELINE_INTENTS.reduce((s, i) => s + i.count, 0)
+  // Long-tail = all calls not represented in our top-25 baseline
+  const totalLongTail = Math.max(0, 14018 - totalCategorized)
+  const categoriesRaw: IntentCategorySummary[] = []
+  for (const [cat, intents] of categoryBuckets) {
+    const sum = intents.reduce((s, i) => s + i.count, 0)
+    const scaled = Math.round(sum * scale)
+    categoriesRaw.push({
+      category: cat,
+      conversations: scaled,
+      share: 0,
+      shareOfCategorized: sum / Math.max(1, totalCategorized),
+      topIntents: intents
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 3)
+        .map((i) => ({ name: i.name, count: Math.round(i.count * scale) })),
+    })
+  }
+  // Add the "Other / Long-tail" bucket
+  categoriesRaw.push({
+    category: 'Other / Long-tail',
+    conversations: Math.round(totalLongTail * scale),
+    share: 0,
+    shareOfCategorized: 0,
+    topIntents: [],
+  })
+  // Compute period-relative shares
+  const periodConvForShares = engagedCalls > 0 ? engagedCalls : 1
+  for (const c of categoriesRaw) c.share = c.conversations / periodConvForShares
+  // Sort by volume desc
+  const intentCategories = categoriesRaw.sort((a, b) => b.conversations - a.conversations)
+  const topCategory = intentCategories.find((c) => c.category !== 'Other / Long-tail') ?? null
+
+  // ── Call-time metrics (engaged-only, recomputed from fresh data) ──
+  // All-time engaged baseline: 14,018 calls / 396.7h / avg 101.9s / median 41s
+  // 28.5% under 30s · 12.7% over 2m · 4.4% over 5m
+  const ENG_TOTAL_TALK_SEC = 1428110
+  const ENG_TOTAL_AI_SEC = 1428035
   const ENG_TOTAL_HUMAN_SEC = 75
-  const ENG_UNDER_30S = 5838
-  const ENG_OVER_2MIN = 2614
-  const ENG_OVER_5MIN = 911
+  const ENG_UNDER_30S = 5979
+  const ENG_OVER_2MIN = 2666
+  const ENG_OVER_5MIN = 934
   const periodTalkSeconds = Math.round(ENG_TOTAL_TALK_SEC * scale)
   const periodAiSeconds = Math.round(ENG_TOTAL_AI_SEC * scale)
   const periodHumanSeconds = Math.round(ENG_TOTAL_HUMAN_SEC * scale)
-  // Engaged-only histogram (recomputed shares — short-call buckets shrink dramatically)
+  // Engaged-only histogram (scaled from prior ratios to new 14,018 engaged total)
   const ENG_HIST: Array<{ label: string; lo: number; hi: number | null; count: number; share: number }> = [
-    { label: '0–10s',  lo: 0,   hi: 10,   count: 1812, share: 1812 / 13692 },
-    { label: '10–30s', lo: 10,  hi: 30,   count: 4026, share: 4026 / 13692 },
-    { label: '30s–1m', lo: 30,  hi: 60,   count: 2476, share: 2476 / 13692 },
-    { label: '1–2m',   lo: 60,  hi: 120,  count: 2758, share: 2758 / 13692 },
-    { label: '2–5m',   lo: 120, hi: 300,  count: 1703, share: 1703 / 13692 },
-    { label: '5–10m',  lo: 300, hi: 600,  count: 459,  share: 459  / 13692 },
-    { label: '10m+',   lo: 600, hi: null, count: 452,  share: 452  / 13692 },
+    { label: '0–10s',  lo: 0,   hi: 10,   count: 1854, share: 1854 / 14018 },
+    { label: '10–30s', lo: 10,  hi: 30,   count: 4125, share: 4125 / 14018 },
+    { label: '30s–1m', lo: 30,  hi: 60,   count: 2535, share: 2535 / 14018 },
+    { label: '1–2m',   lo: 60,  hi: 120,  count: 2826, share: 2826 / 14018 },
+    { label: '2–5m',   lo: 120, hi: 300,  count: 1732, share: 1732 / 14018 },
+    { label: '5–10m',  lo: 300, hi: 600,  count: 470,  share: 470  / 14018 },
+    { label: '10m+',   lo: 600, hi: null, count: 476,  share: 476  / 14018 },
   ]
   const histogram = ENG_HIST.map((h) => ({
     label: h.label,
@@ -439,11 +526,11 @@ export function buildVoiceFixtures(period: VoicePeriodKey): VoiceFixtures {
     longestCallSeconds: 3476,
     totalTalkSeconds: periodTalkSeconds,
     totalTalkHours: +(periodTalkSeconds / SECONDS_PER_HOUR).toFixed(1),
-    avgTalkSeconds: 102.2,
+    avgTalkSeconds: 101.9,
     medianTalkSeconds: 41,
     totalAiSeconds: periodAiSeconds,
     totalAiHours: +(periodAiSeconds / SECONDS_PER_HOUR).toFixed(1),
-    avgAiSeconds: 102.2,
+    avgAiSeconds: 101.9,
     medianAiSeconds: 41,
     totalHumanSeconds: periodHumanSeconds,
     avgHumanSecondsPerHumanCall: 75,
@@ -478,6 +565,8 @@ export function buildVoiceFixtures(period: VoicePeriodKey): VoiceFixtures {
     demandHeatmap,
     geography,
     callTime,
+    intentCategories,
+    topCategory,
   }
 }
 

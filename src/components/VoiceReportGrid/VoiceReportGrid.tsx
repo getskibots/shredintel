@@ -1,22 +1,21 @@
 import { useMemo, useState } from 'react'
 import { CallTimeMetrics } from '../CallTimeMetrics'
 import { DemandHeatmap } from '../DemandHeatmap'
+import { IntentCategoryBreakdown } from '../IntentCategoryBreakdown'
 import { KnowledgeGaps } from '../KnowledgeGaps'
 import { KnowledgeSourceLeaderboard } from '../KnowledgeSourceLeaderboard'
-import { KpiStrip } from '../KpiStrip'
-import { OutcomeTimeline } from '../OutcomeTimeline'
 import { SectionHeader } from '../SectionHeader'
 import { SectionNav } from '../SectionNav'
-import { SenderMixStack } from '../SenderMixStack'
 import { VoiceGeography } from '../VoiceGeography'
-import { VoiceHero } from '../VoiceHero'
+import { VoiceIntentHero } from '../VoiceIntentHero'
 import { buildVoiceFixtures, type VoicePeriodKey } from '../../fixtures/voice'
+import { formatNumber, formatPercent } from '../../lib/formatters'
 
 const sections = [
-  { id: 'call-core', number: '1', name: 'Call Core' },
-  { id: 'conversation-intelligence', number: '2', name: 'Conversation Intelligence' },
-  { id: 'caller-context', number: '3', name: 'Caller Context' },
-  { id: 'demand', number: '4', name: 'Demand & Coverage' },
+  { id: 'guest-intent', number: '1', name: 'Guest Intent' },
+  { id: 'customer-needs', number: '2', name: 'Customer Needs' },
+  { id: 'audience', number: '3', name: 'Audience' },
+  { id: 'demand', number: '4', name: 'Demand Patterns' },
 ]
 
 const PERIODS: Array<{ key: VoicePeriodKey; label: string }> = [
@@ -35,6 +34,11 @@ export function VoiceReportGrid() {
       ? 'rounded-md bg-botscrew-500 px-3 py-1.5 text-xs font-semibold text-white'
       : 'rounded-md px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100'
 
+  // Quick efficiency stats for the operator footnote
+  const aiHandled = f.callTime.aiOnlyCalls
+  const aiHours = f.callTime.totalAiHours
+  const handoffRate = f.callTime.humanHandoffRate
+
   return (
     <div>
       <div className="sticky top-14 z-20 border-b border-slate-200 bg-white">
@@ -44,7 +48,8 @@ export function VoiceReportGrid() {
               Voice
             </h1>
             <p className="mt-0.5 text-xs text-slate-500">
-              Mountain Collective inbound voice AI — {f.daysInWindow}-day window.
+              Mountain Collective — what your guests called about over{' '}
+              {f.daysInWindow} days.
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -70,81 +75,123 @@ export function VoiceReportGrid() {
       </div>
 
       <div className="space-y-12 px-6 py-8">
-        {/* ── § 1 Call Core ───────────────────────────────────────────── */}
-        <section id="call-core" className="scroll-mt-40 space-y-5">
+        {/* ── § 1 Guest Intent ───────────────────────────────────────── */}
+        <section id="guest-intent" className="scroll-mt-40 space-y-5">
           <SectionHeader
             number="1"
-            name="Call Core"
-            tagline="What happened on the line?"
+            name="Guest Intent"
+            tagline="What are your guests trying to do?"
           />
-          <VoiceHero
+          <VoiceIntentHero
             stats={f.resolution}
+            topCategory={f.topCategory}
             scopeLabel="Mountain Collective Voice"
             periodLabel={f.periodLabel}
-            humanHandoffs={f.engagement.humanHandoffs}
-            totalCalls={f.engagement.totalCalls}
           />
-          <KpiStrip tiles={f.kpis} />
-          <CallTimeMetrics data={f.callTime} />
-          <OutcomeTimeline {...f.outcomeTimeline} />
+          <IntentCategoryBreakdown categories={f.intentCategories} />
         </section>
 
-        {/* ── § 2 Conversation Intelligence ───────────────────────────── */}
-        <section id="conversation-intelligence" className="scroll-mt-40 space-y-5">
+        {/* ── § 2 Customer Needs ─────────────────────────────────────── */}
+        <section id="customer-needs" className="scroll-mt-40 space-y-5">
           <SectionHeader
             number="2"
-            name="Conversation Intelligence"
-            tagline="What did callers actually ask about?"
+            name="Customer Needs"
+            tagline="What answers are they looking for?"
           />
           <KnowledgeSourceLeaderboard
             sourcedBotMessages={f.intentTotalCalls}
             unsourcedBotMessages={Math.round(f.intentTotalCalls * 0.18)}
             knowledgeGapRate={0.18}
             topSources={f.topIntents}
-            eyebrow="§ 2 Conversation Intelligence"
-            title="Top call intents"
-            description="Which questions are driving voice volume — pulled from the AI’s knowledge searches during calls."
+            eyebrow="§ 2 Customer Needs"
+            title="Most common reasons guests called"
+            description="The top recurring intents from the AI's knowledge searches during calls. Each row is a question pattern guests bring to the phone."
             sourcedLabel="Calls with classified intent"
-            sourcedSubLabel="resolved with a known answer"
+            sourcedSubLabel="recognized as a known need"
             unsourcedLabel="Novel / unmatched queries"
-            unsourcedSubLabel="new patterns to add to playbook"
+            unsourcedSubLabel="new patterns worth scripting"
             rateLabel="Unmatched query rate"
           />
           <KnowledgeGaps
             gaps={f.topQuestions}
             gapRate={0.18}
-            eyebrow="§ 2 Conversation Intelligence"
-            title="Top spoken issues to add to the AI playbook"
-            description="Real callers’ words — these are the exact moments to script better AI answers or escalation rules."
-            rateLabel="Coverage opportunity"
+            eyebrow="§ 2 Customer Needs"
+            title="What guests are saying — in their own words"
+            description="Verbatim caller questions, ranked by frequency. These are the exact moments to script better answers, fix the website, or update the FAQ."
             ctaLabel="Open transcripts →"
             hideRate
           />
-          <SenderMixStack {...f.senderMix} />
         </section>
 
-        {/* ── § 3 Caller Context ──────────────────────────────────────── */}
-        <section id="caller-context" className="scroll-mt-40 space-y-5">
+        {/* ── § 3 Audience ───────────────────────────────────────────── */}
+        <section id="audience" className="scroll-mt-40 space-y-5">
           <SectionHeader
             number="3"
-            name="Caller Context"
-            tagline="Where are the calls coming from?"
+            name="Audience"
+            tagline="Who's calling you?"
           />
           <VoiceGeography rows={f.geography} />
         </section>
 
-        {/* ── § 4 Demand & Coverage ───────────────────────────────────── */}
+        {/* ── § 4 Demand Patterns ────────────────────────────────────── */}
         <section id="demand" className="scroll-mt-40 space-y-5">
           <SectionHeader
             number="4"
-            name="Demand & Coverage"
-            tagline="When are callers calling — and is your AI covering it?"
+            name="Demand Patterns"
+            tagline="When are they calling?"
           />
           <DemandHeatmap {...f.demandHeatmap} />
         </section>
 
+        {/* ── Operator efficiency (small, demoted) ────────────────────── */}
+        <section className="space-y-3 pt-6">
+          <div className="text-[10px] font-mono font-semibold uppercase tracking-widest text-slate-400">
+            For the operators
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="grid grid-cols-1 gap-x-6 gap-y-3 text-sm text-slate-600 sm:grid-cols-3">
+              <div>
+                <span className="text-slate-900 font-semibold tabular-nums">
+                  {formatNumber(aiHandled)}
+                </span>{' '}
+                of {formatNumber(f.engagement.totalCalls)} engaged calls handled by the AI alone
+                {' '}<span className="text-slate-400">·</span>{' '}
+                <span className="text-emerald-700 font-semibold">{formatPercent(aiHandled / Math.max(1, f.engagement.totalCalls))}</span>
+              </div>
+              <div>
+                AI talk-time absorbed:{' '}
+                <span className="text-slate-900 font-semibold tabular-nums">
+                  {aiHours}h
+                </span>
+              </div>
+              <div>
+                Live-agent handoffs:{' '}
+                <span className="text-slate-900 font-semibold tabular-nums">
+                  {formatNumber(f.engagement.humanHandoffs)}
+                </span>{' '}
+                <span className="text-slate-400">({formatPercent(handoffRate, 3)})</span>
+              </div>
+            </div>
+            <p className="mt-3 text-[11px] text-slate-400">
+              Note: handoff signal in the export is currently limited (Botscrew
+              field <code className="rounded bg-slate-100 px-1">is_redirect_phone_number_provided</code>
+              {' '}is not populated yet). Numbers above reflect{' '}
+              <code className="rounded bg-slate-100 px-1">sender_type=SUPPORT</code>{' '}
+              only and may undercount.
+            </p>
+            <details className="mt-3">
+              <summary className="cursor-pointer text-[11px] font-medium text-slate-500 hover:text-slate-700">
+                More efficiency detail
+              </summary>
+              <div className="mt-3 border-t border-slate-100 pt-3">
+                <CallTimeMetrics data={f.callTime} />
+              </div>
+            </details>
+          </div>
+        </section>
+
         <footer className="pt-2 text-xs text-slate-400">
-          shredintel · Voice channel · grounded in 20,582 real Mountain Collective calls (Jul 2025 → May 2026)
+          shredintel · Voice channel · grounded in {formatNumber(f.engagement.totalCalls)} real Mountain Collective engaged calls
         </footer>
       </div>
     </div>

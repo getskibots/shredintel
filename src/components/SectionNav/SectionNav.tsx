@@ -14,7 +14,7 @@ export function SectionNav({ items }: SectionNavProps) {
       className="sticky top-[57px] z-[9] border-b border-slate-200 bg-white/80 backdrop-blur"
       aria-label="Analytics sections"
     >
-      <div className="mx-auto flex max-w-7xl items-center gap-1 overflow-x-auto px-6 py-2">
+      <div className="flex items-center gap-1 overflow-x-auto px-6 py-2">
         {items.map((s) => (
           <a
             key={s.id}

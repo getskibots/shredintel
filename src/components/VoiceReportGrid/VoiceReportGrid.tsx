@@ -38,7 +38,7 @@ export function VoiceReportGrid() {
   return (
     <div>
       <div className="sticky top-14 z-20 border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-6 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
           <div>
             <h1 className="text-xl font-semibold tracking-tight text-slate-900">
               Voice
@@ -69,7 +69,7 @@ export function VoiceReportGrid() {
         <SectionNav items={sections} />
       </div>
 
-      <div className="mx-auto max-w-7xl space-y-12 px-6 py-8">
+      <div className="space-y-12 px-6 py-8">
         {/* ── § 1 Call Core ───────────────────────────────────────────── */}
         <section id="call-core" className="scroll-mt-40 space-y-5">
           <SectionHeader

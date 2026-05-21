@@ -35,7 +35,7 @@ export function ShredIntelReportGrid() {
     <div>
       {/* Page-local header — sticky beneath the dashboard top bar */}
       <div className="sticky top-14 z-20 border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-6 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
           <h1 className="text-xl font-semibold tracking-tight text-slate-900">
             Analytics
           </h1>
@@ -74,7 +74,7 @@ export function ShredIntelReportGrid() {
         <SectionNav items={sections} />
       </div>
 
-      <div className="mx-auto max-w-7xl space-y-12 px-6 py-8">
+      <div className="space-y-12 px-6 py-8">
         {/* ── § 1 Conversation Core ───────────────────────────────── */}
         <section id="core" className="scroll-mt-40 space-y-5">
           <SectionHeader

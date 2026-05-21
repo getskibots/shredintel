@@ -163,15 +163,6 @@ export function DashboardShell({
             {botLabel}
           </div>
           <div className="flex items-center gap-2">
-            <button className="hidden rounded-lg bg-botscrew-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-botscrew-600 md:inline-flex">
-              Test in Messenger ▾
-            </button>
-            <button className="rounded-lg bg-botscrew-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-botscrew-600">
-              Test AI chat
-            </button>
-            <button className="rounded-lg bg-botscrew-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-botscrew-600">
-              Test widget
-            </button>
             <div className="ml-2 flex items-center gap-2 rounded-lg border border-slate-200 px-2 py-1">
               <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-200 text-[11px] font-semibold text-slate-700">
                 {userName

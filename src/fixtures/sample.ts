@@ -604,28 +604,28 @@ export function buildPeriodFixtures(period: PeriodKey): PeriodFixtures {
     unengaged,
   }
 
-  // ── KPI strip ───────────────────────────────────────────────────────
+  // ── KPI strip (engaged-only scope) ──────────────────────────────────
   const kpis: KpiTileData[] = [
     {
-      label: 'Total conversations',
-      value: totalConversations.toLocaleString(),
-      caption: 'guests the bot greeted',
-      delta: period === '30d' ? '+11.4%' : '+8.2%',
+      label: 'Engaged conversations',
+      value: engaged.toLocaleString(),
+      caption: 'guests who replied to the bot',
+      delta: period === '30d' ? '+9.6%' : '+5.4%',
       deltaTone: 'positive',
       accent: 'none',
     },
     {
-      label: 'Engagement rate',
-      value: `${(engagementRate * 100).toFixed(1)}%`,
-      caption: `${engaged.toLocaleString()} guests replied to the bot`,
-      delta: period === '30d' ? '+2.1 pts' : '+1.4 pts',
+      label: 'Resolved',
+      value: solved.toLocaleString(),
+      caption: `${((solved / engaged) * 100).toFixed(1)}% of engaged`,
+      delta: period === '30d' ? '+11.2%' : '+7.8%',
       deltaTone: 'positive',
-      accent: 'summit',
+      accent: 'success',
     },
     {
       label: 'Bot-attributed conversions',
       value: converted.toLocaleString(),
-      caption: `${((converted / engaged) * 100).toFixed(0)}% of engaged chats → purchase`,
+      caption: `${((converted / engaged) * 100).toFixed(0)}% of engaged → purchase`,
       delta: period === '30d' ? '+14.3%' : '+9.7%',
       deltaTone: 'positive',
       accent: 'success',
@@ -640,38 +640,34 @@ export function buildPeriodFixtures(period: PeriodKey): PeriodFixtures {
     },
   ]
 
-  // ── Outcome timeline ───────────────────────────────────────────────
-  const totalsByDay = distributeAcrossDates(totalConversations, dates)
+  // ── Outcome timeline (engaged-only — drops UNENGAGED) ──────────────
   const solvedByDay = distributeAcrossDates(solved, dates)
   const failedByDay = distributeAcrossDates(failed, dates)
-  // Unengaged = total - solved - failed per day (keep dates aligned)
   const outcomeData = dates.map((date, i) => {
-    const t = totalsByDay[i]
     const s = solvedByDay[i]
     const f = failedByDay[i]
-    const u = Math.max(0, t - s - f)
     const eng = s + f
     return {
       date,
-      totalConversations: t,
+      totalConversations: eng, // scope is engaged-only
       solved: s,
-      unengaged: u,
+      unengaged: 0,
       failed: f,
       engagedConversations: eng,
-      engagementRate: t > 0 ? eng / t : 0,
+      engagementRate: 1,
       resolutionRateOfEngaged: eng > 0 ? s / eng : 0,
     }
   })
   const outcomeTimeline: OutcomeTimelineProps = {
     data: outcomeData,
     totals: {
-      totalConversations,
+      totalConversations: engaged,
       solved,
-      unengaged,
+      unengaged: 0,
       failed,
-      engagementRate,
+      engagementRate: 1,
       resolutionRateOfEngaged,
-      engagementRateDelta: 0.014,
+      engagementRateDelta: undefined,
       failedDelta: -0.008,
     },
   }
@@ -694,9 +690,10 @@ export function buildPeriodFixtures(period: PeriodKey): PeriodFixtures {
     timeline: dates.map((date, i) => ({
       date,
       convertedConversations: convertedByDay[i],
-      totalConversations: totalsByDay[i],
+      totalConversations: outcomeData[i].engagedConversations,
       engagedConversations: outcomeData[i].engagedConversations,
-      conversionShareOfTotal: convertedByDay[i] / Math.max(1, totalsByDay[i]),
+      conversionShareOfTotal:
+        convertedByDay[i] / Math.max(1, outcomeData[i].engagedConversations),
       conversionShareOfEngaged:
         convertedByDay[i] / Math.max(1, outcomeData[i].engagedConversations),
     })),

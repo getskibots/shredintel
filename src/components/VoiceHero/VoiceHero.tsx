@@ -1,6 +1,6 @@
 import { Area, AreaChart, ResponsiveContainer } from 'recharts'
 import type { ResolutionStats } from '../../types/analytics'
-import { formatNumber, formatPercent } from '../../lib/formatters'
+import { formatNumber, formatPercent, formatPercentSmart } from '../../lib/formatters'
 
 export interface VoiceHeroProps {
   stats: ResolutionStats
@@ -55,13 +55,13 @@ export function VoiceHero({
           </div>
 
           <h2 className="mt-3 text-sm font-medium text-slate-300">
-            AI resolution rate{' '}
-            <span className="text-slate-500">· of all calls</span>
+            AI containment rate{' '}
+            <span className="text-slate-500">· of engaged calls</span>
           </h2>
 
           <div className="mt-2 flex items-baseline gap-4">
             <span className="font-display text-7xl font-semibold tracking-tight text-white tabular-nums">
-              {formatPercent(stats.rate, 1)}
+              {formatPercentSmart(stats.rate)}
             </span>
             <span
               className={[
@@ -84,7 +84,7 @@ export function VoiceHero({
             <span className="font-semibold text-white tabular-nums">
               {formatNumber(stats.total)}
             </span>{' '}
-            calls fully resolved by the AI, without escalating to a live agent.
+            engaged calls handled by the AI alone — no live-agent escalation.
           </p>
 
           <div className="mt-5 inline-flex items-center gap-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-300">
@@ -94,8 +94,8 @@ export function VoiceHero({
               <span className="font-semibold tabular-nums text-white">
                 {formatNumber(humanHandoffs)}
               </span>{' '}
-              live-agent handoffs ({formatPercent(handoffShare, 2)} of calls).
-              The AI absorbed everything else.
+              live-agent handoffs ({formatPercent(handoffShare, 2)} of engaged
+              calls). The AI absorbed everything else.
             </span>
           </div>
 

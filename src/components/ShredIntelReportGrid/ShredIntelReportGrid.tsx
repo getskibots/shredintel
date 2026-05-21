@@ -86,8 +86,6 @@ export function ShredIntelReportGrid() {
             stats={f.resolution}
             scopeLabel="Jackson Hole Mountain Resort"
             periodLabel={f.periodLabel}
-            totalGreeted={f.engagement.totalConversations}
-            engagementRate={f.engagement.engagementRate}
           />
           <KpiStrip tiles={f.kpis} />
           <OutcomeTimeline {...f.outcomeTimeline} />

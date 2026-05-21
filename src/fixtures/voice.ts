@@ -108,13 +108,6 @@ interface DailyEntry {
   avgTalkSeconds: number
   humanInvolvedCalls: number
 }
-interface HistogramEntry {
-  label: string
-  lo: number
-  hi: number | null
-  count: number
-  share: number
-}
 interface HeatmapEntry {
   dayOfWeek: DayOfWeek
   timeBucket: TimeBucket
@@ -122,34 +115,8 @@ interface HeatmapEntry {
 }
 
 const DAILY: DailyEntry[] = voiceDaily.dailyTimeline as DailyEntry[]
-const HISTOGRAM: HistogramEntry[] = voiceDaily.callLengthHistogram as HistogramEntry[]
 const HEATMAP_RAW: HeatmapEntry[] = voiceDaily.heatmap as HeatmapEntry[]
 const ALL_TIME_TOTAL_CALLS = voiceDaily.totalCalls as number
-const PER_CALL = voiceDaily.perCall as {
-  avgTalkSeconds: number
-  medianTalkSeconds: number
-  longestCallSeconds: number
-  under30sCount: number
-  under30sShare: number
-  over2minCount: number
-  over2minShare: number
-  over5minCount: number
-  over5minShare: number
-}
-const WORKLOAD = voiceDaily.workload as {
-  totalTalkSeconds: number
-  totalAiSeconds: number
-  totalHumanSeconds: number
-  aiTalkShare: number
-  humanTalkShare: number
-  aiOnlyCalls: number
-  humanInvolvedCalls: number
-  handoffRate: number
-  avgAiSeconds: number
-  medianAiSeconds: number
-  avgHumanSecondsPerHumanCall: number
-  medianHumanSecondsPerHumanCall: number
-}
 
 // ─── Top intents (knowledge_search_query, scaled by period) ────────────
 const BASELINE_INTENTS: Array<{ name: string; count: number }> = [
@@ -217,16 +184,22 @@ export function buildVoiceFixtures(period: VoicePeriodKey): VoiceFixtures {
   const sliced = sliceTimelineByPeriod(period)
   const daysInWindow = sliced.length
   const agg = aggregate(sliced)
-  const scale = ALL_TIME_TOTAL_CALLS > 0 ? agg.calls / ALL_TIME_TOTAL_CALLS : 0
-  const resolutionRate = agg.calls > 0 ? agg.solved / agg.calls : 0
+  // Engaged-only scope: voice has SOLVED + FAILED outcomes, FAILED=0 in this
+  // export, so engaged === solved. AI-handled = engaged − human-involved.
+  const engagedCalls = agg.solved
+  const aiHandled = Math.max(0, engagedCalls - agg.humanInvolved)
+  const scale = ALL_TIME_TOTAL_CALLS > 0 ? engagedCalls / 13692 : 0 // 13692 = total SOLVED across all time
+  const containmentRate = engagedCalls > 0 ? aiHandled / engagedCalls : 0
 
-  // Hero sparkline trend (daily resolution rate, skip empty days)
+  // Hero sparkline: daily containment rate (AI-only ÷ engaged) on days with calls
   const trend = sliced
-    .filter((d) => d.calls > 0)
-    .map((d) => ({ date: d.date, rate: d.solved / d.calls }))
-  // If period had fewer than 2 active days, pad with the period rate
+    .filter((d) => d.solved > 0)
+    .map((d) => {
+      const handled = Math.max(0, d.solved - d.humanInvolvedCalls)
+      return { date: d.date, rate: handled / d.solved }
+    })
   while (trend.length < 2) {
-    trend.push({ date: sliced[sliced.length - 1]?.date ?? '2026-05-01', rate: resolutionRate })
+    trend.push({ date: sliced[sliced.length - 1]?.date ?? '2026-05-01', rate: containmentRate })
   }
 
   const previousSlice =
@@ -237,60 +210,64 @@ export function buildVoiceFixtures(period: VoicePeriodKey): VoiceFixtures {
           Math.max(0, DAILY.length - daysInWindow),
         )
   const prevAgg = aggregate(previousSlice)
-  const prevRate = prevAgg.calls > 0 ? prevAgg.solved / prevAgg.calls : resolutionRate
+  const prevEngaged = prevAgg.solved
+  const prevAiHandled = Math.max(0, prevEngaged - prevAgg.humanInvolved)
+  const prevRate = prevEngaged > 0 ? prevAiHandled / prevEngaged : containmentRate
 
   const resolution: ResolutionStats = {
-    resolved: agg.solved,
-    total: agg.calls,
-    rate: resolutionRate,
+    resolved: aiHandled,
+    total: engagedCalls,
+    rate: containmentRate,
     ratePrevious: prevRate,
     trend,
   }
 
   const engagement = {
-    totalCalls: agg.calls,
-    resolvedCalls: agg.solved,
-    unengagedCalls: agg.unengaged,
-    resolutionRate,
+    totalCalls: engagedCalls,
+    resolvedCalls: aiHandled,
+    unengagedCalls: 0,
+    resolutionRate: containmentRate,
     humanHandoffs: agg.humanInvolved,
-    handoffRate: agg.calls > 0 ? agg.humanInvolved / agg.calls : 0,
+    handoffRate: engagedCalls > 0 ? agg.humanInvolved / engagedCalls : 0,
   }
 
-  // ── KPIs (real period-over-period deltas) ─────────────────────────
-  const callsDelta = prevAgg.calls > 0 ? (agg.calls - prevAgg.calls) / prevAgg.calls : 0
-  const resolvedDelta = prevAgg.solved > 0 ? (agg.solved - prevAgg.solved) / prevAgg.solved : 0
-  const unengagedDelta = prevAgg.unengaged > 0 ? (agg.unengaged - prevAgg.unengaged) / prevAgg.unengaged : 0
-  const handoffsDelta = engagement.handoffRate - (prevAgg.calls > 0 ? prevAgg.humanInvolved / prevAgg.calls : 0)
+  // ── KPIs (engaged-only scope) ─────────────────────────────────────
+  const engagedDelta = prevEngaged > 0 ? (engagedCalls - prevEngaged) / prevEngaged : 0
+  const aiHandledDelta = prevAiHandled > 0 ? (aiHandled - prevAiHandled) / prevAiHandled : 0
   function formatDeltaPct(value: number, digits = 1): string {
     if (!Number.isFinite(value)) return '—'
     const pct = value * 100
     const sign = pct > 0 ? '+' : pct < 0 ? '−' : ''
     return `${sign}${Math.abs(pct).toFixed(digits)}%`
   }
+  // Avg call duration scoped to engaged calls (real engaged-only stat)
+  const ENGAGED_AVG_TALK_SEC = 102.2
+  const ENGAGED_AVG_MIN = Math.floor(ENGAGED_AVG_TALK_SEC / 60)
+  const ENGAGED_AVG_REM = Math.round(ENGAGED_AVG_TALK_SEC % 60)
+  const avgDurationLabel = `${ENGAGED_AVG_MIN}m ${ENGAGED_AVG_REM}s`
   const kpis: KpiTileData[] = [
     {
-      label: 'Total calls',
-      value: agg.calls.toLocaleString(),
-      caption: 'inbound voice conversations',
-      delta: prevAgg.calls > 0 ? formatDeltaPct(callsDelta) : undefined,
-      deltaTone: callsDelta >= 0 ? 'positive' : 'negative',
+      label: 'Engaged calls',
+      value: engagedCalls.toLocaleString(),
+      caption: 'callers who reached resolution',
+      delta: prevEngaged > 0 ? formatDeltaPct(engagedDelta) : undefined,
+      deltaTone: engagedDelta >= 0 ? 'positive' : 'negative',
       accent: 'none',
     },
     {
-      label: 'AI-resolved calls',
-      value: agg.solved.toLocaleString(),
-      caption: `${(resolutionRate * 100).toFixed(1)}% of all calls`,
-      delta: prevAgg.solved > 0 ? formatDeltaPct(resolvedDelta) : undefined,
-      deltaTone: resolvedDelta >= 0 ? 'positive' : 'negative',
+      label: 'AI-handled',
+      value: aiHandled.toLocaleString(),
+      caption: `${(containmentRate * 100).toFixed(2)}% of engaged`,
+      delta: prevAiHandled > 0 ? formatDeltaPct(aiHandledDelta) : undefined,
+      deltaTone: aiHandledDelta >= 0 ? 'positive' : 'negative',
       accent: 'success',
     },
     {
-      label: 'Caller drop-off',
-      value: agg.unengaged.toLocaleString(),
-      caption: 'callers who didn’t fully engage',
-      delta: prevAgg.unengaged > 0 ? formatDeltaPct(unengagedDelta) : undefined,
-      deltaTone: unengagedDelta <= 0 ? 'positive' : 'negative',
-      accent: 'summit',
+      label: 'Avg call duration',
+      value: avgDurationLabel,
+      caption: 'mean across engaged calls',
+      deltaTone: 'neutral',
+      accent: 'glacier',
     },
     {
       label: 'Live-agent handoffs',
@@ -298,36 +275,35 @@ export function buildVoiceFixtures(period: VoicePeriodKey): VoiceFixtures {
       caption:
         agg.humanInvolved === 0
           ? 'AI absorbed every call'
-          : `${(engagement.handoffRate * 100).toFixed(3)}% of calls`,
-      delta:
-        prevAgg.humanInvolved === 0 && agg.humanInvolved === 0
-          ? '0.0%'
-          : formatDeltaPct(handoffsDelta, 3),
+          : `${(engagement.handoffRate * 100).toFixed(3)}% of engaged`,
       deltaTone: 'neutral',
-      accent: 'glacier',
+      accent: 'summit',
     },
   ]
 
-  // ── Outcome timeline (real daily values) ──────────────────────────
+  // ── Outcome timeline (engaged-only, drops UNENGAGED) ──────────────
   const outcomeTimeline: OutcomeTimelineProps = {
-    data: sliced.map((d) => ({
-      date: d.date,
-      totalConversations: d.calls,
-      solved: d.solved,
-      unengaged: d.unengaged,
-      failed: 0,
-      engagedConversations: d.solved,
-      engagementRate: d.calls > 0 ? d.solved / d.calls : 0,
-      resolutionRateOfEngaged: 1,
-    })),
+    data: sliced.map((d) => {
+      const handled = Math.max(0, d.solved - d.humanInvolvedCalls)
+      return {
+        date: d.date,
+        totalConversations: d.solved,
+        solved: handled,
+        unengaged: 0,
+        failed: d.humanInvolvedCalls,
+        engagedConversations: d.solved,
+        engagementRate: 1,
+        resolutionRateOfEngaged: d.solved > 0 ? handled / d.solved : 0,
+      }
+    }),
     totals: {
-      totalConversations: agg.calls,
-      solved: agg.solved,
-      unengaged: agg.unengaged,
-      failed: 0,
-      engagementRate: resolutionRate,
-      resolutionRateOfEngaged: 1,
-      engagementRateDelta: resolutionRate - prevRate,
+      totalConversations: engagedCalls,
+      solved: aiHandled,
+      unengaged: 0,
+      failed: agg.humanInvolved,
+      engagementRate: 1,
+      resolutionRateOfEngaged: containmentRate,
+      engagementRateDelta: undefined,
       failedDelta: 0,
     },
   }
@@ -423,43 +399,60 @@ export function buildVoiceFixtures(period: VoicePeriodKey): VoiceFixtures {
     share: g.raw / Math.max(1, GEO_KNOWN),
   }))
 
-  // ── Call-time metrics (totals scale; rates/medians stable) ───────
-  const periodTalkSeconds = agg.talk
-  const periodTalkHours = +(periodTalkSeconds / SECONDS_PER_HOUR).toFixed(1)
-  const periodAiSeconds = Math.round(WORKLOAD.totalAiSeconds * scale)
-  const periodHumanSeconds = Math.round(WORKLOAD.totalHumanSeconds * scale)
-  const histogram = HISTOGRAM.map((h) => ({
+  // ── Call-time metrics (engaged-only, recomputed from raw data) ────
+  // All-time engaged baseline: 13,692 calls / 388.8h / avg 102.2s / median 41s
+  // 28.4% under 30s · 12.7% over 2m · 4.4% over 5m
+  const ENG_TOTAL_TALK_SEC = 1399556
+  const ENG_TOTAL_AI_SEC = 1399481
+  const ENG_TOTAL_HUMAN_SEC = 75
+  const ENG_UNDER_30S = 5838
+  const ENG_OVER_2MIN = 2614
+  const ENG_OVER_5MIN = 911
+  const periodTalkSeconds = Math.round(ENG_TOTAL_TALK_SEC * scale)
+  const periodAiSeconds = Math.round(ENG_TOTAL_AI_SEC * scale)
+  const periodHumanSeconds = Math.round(ENG_TOTAL_HUMAN_SEC * scale)
+  // Engaged-only histogram (recomputed shares — short-call buckets shrink dramatically)
+  const ENG_HIST: Array<{ label: string; lo: number; hi: number | null; count: number; share: number }> = [
+    { label: '0–10s',  lo: 0,   hi: 10,   count: 1812, share: 1812 / 13692 },
+    { label: '10–30s', lo: 10,  hi: 30,   count: 4026, share: 4026 / 13692 },
+    { label: '30s–1m', lo: 30,  hi: 60,   count: 2476, share: 2476 / 13692 },
+    { label: '1–2m',   lo: 60,  hi: 120,  count: 2758, share: 2758 / 13692 },
+    { label: '2–5m',   lo: 120, hi: 300,  count: 1703, share: 1703 / 13692 },
+    { label: '5–10m',  lo: 300, hi: 600,  count: 459,  share: 459  / 13692 },
+    { label: '10m+',   lo: 600, hi: null, count: 452,  share: 452  / 13692 },
+  ]
+  const histogram = ENG_HIST.map((h) => ({
     label: h.label,
     loSeconds: h.lo,
     hiSeconds: h.hi,
-    count: Math.round(h.count * scale),
+    count: Math.max(0, Math.round(h.count * scale)),
     share: h.share,
   }))
   const callTime: CallTimeMetrics = {
-    totalCalls: agg.calls,
-    under30sCount: Math.round(PER_CALL.under30sCount * scale),
-    under30sShare: PER_CALL.under30sShare,
-    over2minCount: Math.round(PER_CALL.over2minCount * scale),
-    over2minShare: PER_CALL.over2minShare,
-    over5minCount: Math.round(PER_CALL.over5minCount * scale),
-    over5minShare: PER_CALL.over5minShare,
-    longestCallSeconds: PER_CALL.longestCallSeconds,
+    totalCalls: engagedCalls,
+    under30sCount: Math.round(ENG_UNDER_30S * scale),
+    under30sShare: ENG_UNDER_30S / 13692, // 28.4%
+    over2minCount: Math.round(ENG_OVER_2MIN * scale),
+    over2minShare: ENG_OVER_2MIN / 13692, // 12.7%
+    over5minCount: Math.round(ENG_OVER_5MIN * scale),
+    over5minShare: ENG_OVER_5MIN / 13692, // 4.4%
+    longestCallSeconds: 3476,
     totalTalkSeconds: periodTalkSeconds,
-    totalTalkHours: periodTalkHours,
-    avgTalkSeconds: PER_CALL.avgTalkSeconds,
-    medianTalkSeconds: PER_CALL.medianTalkSeconds,
+    totalTalkHours: +(periodTalkSeconds / SECONDS_PER_HOUR).toFixed(1),
+    avgTalkSeconds: 102.2,
+    medianTalkSeconds: 41,
     totalAiSeconds: periodAiSeconds,
     totalAiHours: +(periodAiSeconds / SECONDS_PER_HOUR).toFixed(1),
-    avgAiSeconds: WORKLOAD.avgAiSeconds,
-    medianAiSeconds: WORKLOAD.medianAiSeconds,
+    avgAiSeconds: 102.2,
+    medianAiSeconds: 41,
     totalHumanSeconds: periodHumanSeconds,
-    avgHumanSecondsPerHumanCall: WORKLOAD.avgHumanSecondsPerHumanCall,
-    medianHumanSecondsPerHumanCall: WORKLOAD.medianHumanSecondsPerHumanCall,
-    aiOnlyCalls: Math.round(WORKLOAD.aiOnlyCalls * scale),
-    humanInvolvedCalls: Math.round(WORKLOAD.humanInvolvedCalls * scale),
-    humanHandoffRate: WORKLOAD.handoffRate,
-    aiTalkShare: WORKLOAD.aiTalkShare,
-    humanTalkShare: WORKLOAD.humanTalkShare,
+    avgHumanSecondsPerHumanCall: 75,
+    medianHumanSecondsPerHumanCall: 75,
+    aiOnlyCalls: aiHandled,
+    humanInvolvedCalls: agg.humanInvolved,
+    humanHandoffRate: engagedCalls > 0 ? agg.humanInvolved / engagedCalls : 0,
+    aiTalkShare: ENG_TOTAL_AI_SEC / ENG_TOTAL_TALK_SEC,
+    humanTalkShare: ENG_TOTAL_HUMAN_SEC / ENG_TOTAL_TALK_SEC,
     histogram,
   }
 

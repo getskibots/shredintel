@@ -22,6 +22,9 @@ export type { OutcomeTimelineProps } from '../../types/analytics'
 
 export function OutcomeTimeline({ data, totals }: OutcomeTimelineProps) {
   const empty = !data || data.length === 0 || totals.totalConversations === 0
+  // Engaged-only mode: when unengaged total is zero, drop the unengaged
+  // column from the metrics row and the stacked area from the chart.
+  const showUnengaged = totals.unengaged > 0
 
   const action = totals.engagementRateDelta !== undefined ? (
     <div className="rounded-2xl border border-sky-200 bg-sky-50/60 px-4 py-2 text-right">
@@ -48,7 +51,11 @@ export function OutcomeTimeline({ data, totals }: OutcomeTimelineProps) {
     <Panel
       eyebrow="§ 1 Conversation Core"
       title="Conversation outcome timeline"
-      description="Are guest conversations improving or degrading over time?"
+      description={
+        showUnengaged
+          ? 'Are guest conversations improving or degrading over time?'
+          : 'Engaged conversations only — solved vs. failed over time.'
+      }
       action={action}
     >
       {empty ? (
@@ -58,9 +65,16 @@ export function OutcomeTimeline({ data, totals }: OutcomeTimelineProps) {
         />
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+          <div
+            className={[
+              'grid gap-3',
+              showUnengaged
+                ? 'grid-cols-2 sm:grid-cols-5'
+                : 'grid-cols-2 sm:grid-cols-4',
+            ].join(' ')}
+          >
             <Metric
-              label="Total conversations"
+              label={showUnengaged ? 'Total conversations' : 'Engaged conversations'}
               value={formatNumber(totals.totalConversations)}
             />
             <Metric
@@ -69,12 +83,14 @@ export function OutcomeTimeline({ data, totals }: OutcomeTimelineProps) {
               subValue={formatPercent(totals.solved / totals.totalConversations)}
               tone="good"
             />
-            <Metric
-              label="Unengaged"
-              value={formatNumber(totals.unengaged)}
-              subValue={formatPercent(totals.unengaged / totals.totalConversations)}
-              tone="neutral"
-            />
+            {showUnengaged && (
+              <Metric
+                label="Unengaged"
+                value={formatNumber(totals.unengaged)}
+                subValue={formatPercent(totals.unengaged / totals.totalConversations)}
+                tone="neutral"
+              />
+            )}
             <Metric
               label="Failed"
               value={formatNumber(totals.failed)}
@@ -86,7 +102,7 @@ export function OutcomeTimeline({ data, totals }: OutcomeTimelineProps) {
               tone="risk"
             />
             <Metric
-              label="Resolution rate of engaged"
+              label="Resolution rate"
               value={formatPercent(totals.resolutionRateOfEngaged)}
               tone="accent"
             />
@@ -174,34 +190,40 @@ export function OutcomeTimeline({ data, totals }: OutcomeTimelineProps) {
                   fill="url(#ot-failed)"
                   strokeWidth={2}
                 />
-                <Area
-                  yAxisId="left"
-                  type="monotone"
-                  stackId="outcomes"
-                  dataKey="unengaged"
-                  name="Unengaged"
-                  stroke="#94A3B8"
-                  fill="url(#ot-unengaged)"
-                  strokeWidth={2}
-                />
-                <Line
-                  yAxisId="right"
-                  type="monotone"
-                  dataKey="engagementRate"
-                  name="Engagement rate"
-                  stroke="#0EA5E9"
-                  strokeWidth={2.5}
-                  dot={false}
-                />
+                {showUnengaged && (
+                  <Area
+                    yAxisId="left"
+                    type="monotone"
+                    stackId="outcomes"
+                    dataKey="unengaged"
+                    name="Unengaged"
+                    stroke="#94A3B8"
+                    fill="url(#ot-unengaged)"
+                    strokeWidth={2}
+                  />
+                )}
+                {showUnengaged && (
+                  <Line
+                    yAxisId="right"
+                    type="monotone"
+                    dataKey="engagementRate"
+                    name="Engagement rate"
+                    stroke="#0EA5E9"
+                    strokeWidth={2.5}
+                    dot={false}
+                  />
+                )}
               </ComposedChart>
             </ResponsiveContainer>
           </div>
 
-          <p className="mt-3 text-xs text-slate-500">
-            <span className="font-semibold text-slate-700">UNENGAGED</span> means the guest
-            didn’t reply — separate from <span className="font-semibold text-rose-700">FAILED</span>,
-            where the bot couldn’t resolve an engaged conversation.
-          </p>
+          {showUnengaged && (
+            <p className="mt-3 text-xs text-slate-500">
+              <span className="font-semibold text-slate-700">UNENGAGED</span> means the guest
+              didn’t reply — separate from <span className="font-semibold text-rose-700">FAILED</span>,
+              where the bot couldn’t resolve an engaged conversation.
+            </p>
+          )}
         </>
       )}
     </Panel>

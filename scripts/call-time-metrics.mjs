@@ -46,6 +46,7 @@ async function* readRecords(path) {
 
 /** Map of conversation_id -> aggregate */
 const conv = new Map()
+const ENGAGED_ONLY = process.env.ENGAGED_ONLY === 'true'
 
 for (const file of FILES) {
   process.stderr.write(`--- ${file} ---\n`)
@@ -67,6 +68,7 @@ for (const file of FILES) {
       agg = { first: ts, last: ts, firstHuman: null, outcome: null, hasHuman: false }
       conv.set(cid, agg)
     }
+    if (row.conversation_outcome) agg.outcome = row.conversation_outcome
     if (ts < agg.first) agg.first = ts
     if (ts > agg.last) agg.last = ts
 
@@ -98,6 +100,7 @@ let over5min = 0
 let longest = 0
 
 for (const [, a] of conv) {
+  if (ENGAGED_ONLY && a.outcome !== 'SOLVED') continue
   const total = Math.max(0, (a.last - a.first) / 1000)
   talkTimes.push(total)
   if (total > longest) longest = total

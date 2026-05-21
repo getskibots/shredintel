@@ -74,7 +74,7 @@ function MountainLogo({ className = '' }: { className?: string }) {
 }
 
 export function DashboardShell({
-  botLabel = 'Get Ski Tickets — ACTIVE',
+  botLabel = '',
   userName = 'Brandon Quinn',
   activeChannel = 'chat',
   children,
@@ -159,9 +159,11 @@ export function DashboardShell({
               Home
             </Link>
           </div>
-          <div className="text-sm font-semibold tracking-tight text-slate-900">
-            {botLabel}
-          </div>
+          {botLabel && (
+            <div className="text-sm font-semibold tracking-tight text-slate-900">
+              {botLabel}
+            </div>
+          )}
           <div className="flex items-center gap-2">
             <div className="ml-2 flex items-center gap-2 rounded-lg border border-slate-200 px-2 py-1">
               <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-200 text-[11px] font-semibold text-slate-700">

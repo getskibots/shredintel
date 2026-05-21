@@ -4,12 +4,20 @@ import type { ResolutionStats } from '../../types/analytics'
 import type { IntentCategorySummary } from '../../fixtures/voice'
 
 export interface VoiceIntentHeroProps {
-  /** Engaged-call totals from buildVoiceFixtures (used for volume + trend) */
+  /** Engaged totals from the fixture (used for volume + trend) */
   stats: ResolutionStats
   /** Top customer-need category — biggest bucket, used in the headline callout */
   topCategory: IntentCategorySummary | null
   scopeLabel?: string
   periodLabel?: string
+  /** Hero headline — default fits the voice page; pass override for chat */
+  headline?: string
+  /** Unit shown next to the big number — "engaged calls" by default */
+  unitLabel?: string
+  /** Top-reason verb — "called" by default; use "chatted" for chat pages */
+  reasonVerb?: string
+  /** Volume sparkline label, "Call volume" by default */
+  trendLabel?: string
 }
 
 export function VoiceIntentHero({
@@ -17,6 +25,10 @@ export function VoiceIntentHero({
   topCategory,
   scopeLabel = 'Mountain Collective Voice',
   periodLabel = 'All time',
+  headline = 'Why your phones rang',
+  unitLabel = 'engaged calls',
+  reasonVerb = 'called',
+  trendLabel = 'Call volume',
 }: VoiceIntentHeroProps) {
   const trendByVolume = stats.trend.map((t, i, arr) => {
     // The trend in stats is rate-of-resolution; for a volume hero we want
@@ -49,7 +61,7 @@ export function VoiceIntentHero({
           </div>
 
           <h2 className="mt-3 text-sm font-medium text-slate-300">
-            Why your phones rang
+            {headline}
           </h2>
 
           <div className="mt-2 flex items-baseline gap-4">
@@ -57,13 +69,13 @@ export function VoiceIntentHero({
               {formatNumber(stats.total)}
             </span>
             <span className="text-base font-medium text-slate-300">
-              engaged calls
+              {unitLabel}
             </span>
           </div>
 
           {topCategory && (
             <p className="mt-4 max-w-lg text-base leading-relaxed text-slate-300">
-              Top reason guests called:{' '}
+              Top reason guests {reasonVerb}:{' '}
               <span className="font-semibold text-white">
                 {topCategory.category}
               </span>
@@ -71,7 +83,9 @@ export function VoiceIntentHero({
               <span className="font-semibold text-white tabular-nums">
                 {formatNumber(topCategory.conversations)}
               </span>{' '}
-              calls ({formatPercent(topCategory.share)} of volume).
+              {topCategory.share > 0 && (
+                <>({formatPercent(topCategory.share)} of volume)</>
+              )}.
             </p>
           )}
 
@@ -83,7 +97,7 @@ export function VoiceIntentHero({
 
         <div className="flex flex-col">
           <div className="text-xs font-medium uppercase tracking-wider text-slate-400">
-            Call volume · {stats.trend.length} days
+            {trendLabel} · {stats.trend.length} days
           </div>
           <div className="mt-2 flex-1">
             <ResponsiveContainer width="100%" height={180}>

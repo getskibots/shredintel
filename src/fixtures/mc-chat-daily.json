@@ -1,0 +1,5649 @@
+{
+  "generatedAt": "2026-05-21T03:50:19.454Z",
+  "bots": {
+    "2 | Mountain Collective - ACTIVE": 146707
+  },
+  "totalMessages": 146707,
+  "totalConversations": 25756,
+  "dateRange": {
+    "earliest": "2024-08-30",
+    "latest": "2026-05-21",
+    "days": 630
+  },
+  "outcomes": {
+    "SOLVED": 10049,
+    "UNENGAGED": 15581,
+    "FAILED": 126
+  },
+  "engaged": 10175,
+  "supportTouchedConversations": 0,
+  "knowledgeGap": {
+    "botSourced": 38288,
+    "botUnsourced": 24878,
+    "gapRate": 0.39385112243928694
+  },
+  "topKnowledgeSources": [
+    [
+      "When will my pass be mailed out?",
+      2613
+    ],
+    [
+      "I am trying to make a purchase and I can't complete it. a window keeps popping up and going away. wh",
+      2135
+    ],
+    [
+      "https://mountaincollective.com/pass",
+      1513
+    ],
+    [
+      "https://mountaincollective.com/friends",
+      1392
+    ],
+    [
+      "https://mountaincollective.com/faqs",
+      1097
+    ],
+    [
+      "https://mountaincollective.com/support-contact",
+      995
+    ],
+    [
+      "how do I get my pass?",
+      965
+    ],
+    [
+      "https://mountaincollective.com/how-to-use-my-pass",
+      834
+    ],
+    [
+      "My pass printed incorrectly.",
+      663
+    ],
+    [
+      "https://mountaincollective.com/reservations",
+      598
+    ],
+    [
+      "Friends and Family discount",
+      566
+    ],
+    [
+      "I have been getting mountain collective for 5 years. Any chance there is a promo code for long term ",
+      564
+    ],
+    [
+      "https://mountaincollective.com/how-to-use-my-pass/",
+      544
+    ],
+    [
+      "changing my email address  does not update the login ID",
+      538
+    ],
+    [
+      "It says I can get a free third day at a resort. How?",
+      535
+    ],
+    [
+      "When will passes/card be mailed out?",
+      533
+    ],
+    [
+      "https://mountaincollective.com/insurance",
+      531
+    ],
+    [
+      "What if I do not have my previous season pass? Can I get another one sent to me?",
+      531
+    ],
+    [
+      "I need a new physical pass this year, there is damage to last years",
+      510
+    ],
+    [
+      "trying to identify my ID",
+      487
+    ],
+    [
+      "Why can’t I pick 3rd day?",
+      449
+    ],
+    [
+      "https://mountaincollective.com/category/new-for-2025-26",
+      433
+    ],
+    [
+      "https://mountaincollective.com/category/news",
+      432
+    ],
+    [
+      "https://mountaincollective.com/faqs/",
+      422
+    ],
+    [
+      "I have passes from last year. Can I use them for this year?",
+      421
+    ]
+  ],
+  "topCountries": [
+    [
+      "US",
+      17966
+    ],
+    [
+      "CA",
+      4409
+    ],
+    [
+      "AU",
+      256
+    ],
+    [
+      "GB",
+      96
+    ],
+    [
+      "FR",
+      57
+    ],
+    [
+      "NZ",
+      48
+    ],
+    [
+      "UA",
+      42
+    ],
+    [
+      "MX",
+      34
+    ],
+    [
+      "JP",
+      33
+    ],
+    [
+      "DE",
+      31
+    ],
+    [
+      "ES",
+      31
+    ],
+    [
+      "IN",
+      28
+    ],
+    [
+      "RO",
+      23
+    ],
+    [
+      "HK",
+      17
+    ],
+    [
+      "CH",
+      15
+    ]
+  ],
+  "deviceConvLevel": {
+    "DESKTOP": 12371,
+    "MOBILE": 13147,
+    "TABLET": 230
+  },
+  "topPages": [
+    [
+      "mountaincollective.com/",
+      7071
+    ],
+    [
+      "store.mountaincollective.com/ecomm/myaccount/index/12583794/en-us",
+      6179
+    ],
+    [
+      "store.mountaincollective.com/ecomm/MyAccount/Login/12583794",
+      2276
+    ],
+    [
+      "store.mountaincollective.com/ecomm/shop/merchandise/12583794/en-us",
+      2080
+    ],
+    [
+      "mountaincollective.com/how-to-use-my-pass/",
+      708
+    ],
+    [
+      "mountaincollective.com/resorts/",
+      585
+    ],
+    [
+      "store.mountaincollective.com/Ecomm/MyAccount/Login/12583794/",
+      531
+    ],
+    [
+      "mountaincollective.com/support-contact/",
+      477
+    ],
+    [
+      "store.mountaincollective.com/ecomm/shop/merchandise/12583794/en-ca",
+      394
+    ],
+    [
+      "store.mountaincollective.com/Ecomm/Checkout/Confirm/12583794/en-US",
+      391
+    ],
+    [
+      "mountaincollective.com/friends/",
+      348
+    ],
+    [
+      "mountaincollective.com/faqs/",
+      324
+    ],
+    [
+      "store.mountaincollective.com/Ecomm/MyAccount/Index/12583794/en-US",
+      238
+    ],
+    [
+      "store.mountaincollective.com/Ecomm/Checkout/Review/12583794/en-US/",
+      237
+    ],
+    [
+      "mountaincollective.com/pass/",
+      218
+    ],
+    [
+      "mountaincollective.com/resort/big-sky-resort/",
+      188
+    ],
+    [
+      "store.mountaincollective.com/ecomm/myaccount/index/12583794/en-ca",
+      162
+    ],
+    [
+      "mountaincollective.com/reservations/",
+      141
+    ],
+    [
+      "bots.getskitickets.com/widget-demo/58882109-888e-454e-aecf-75b0223e4fae",
+      140
+    ],
+    [
+      "mountaincollective.com/resort/jackson-hole-mountain-resort/",
+      126
+    ]
+  ],
+  "browsers": {
+    "CHROME": 76261,
+    "SAFARI": 64494,
+    "FIREFOX": 4124,
+    "DEFAULT": 1810,
+    "(empty)": 18
+  },
+  "languages": [
+    [
+      "ENGLISH",
+      24973
+    ],
+    [
+      "FRENCH",
+      285
+    ],
+    [
+      "SPANISH",
+      136
+    ],
+    [
+      "CHINESE",
+      117
+    ],
+    [
+      "DEFAULT",
+      74
+    ],
+    [
+      "GERMAN",
+      53
+    ],
+    [
+      "PORTUGUESE",
+      24
+    ],
+    [
+      "UKRAINIAN",
+      11
+    ],
+    [
+      "CZECH",
+      11
+    ],
+    [
+      "JAPANESE",
+      9
+    ]
+  ],
+  "dailyTimeline": [
+    {
+      "date": "2024-08-30",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2024-08-31",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-09-01",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-09-02",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-09-03",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-09-04",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-09-05",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2024-09-06",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-09-07",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-09-08",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-09-09",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2024-09-10",
+      "conversations": 3,
+      "solved": 1,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2024-09-11",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-09-12",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-09-13",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-09-14",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-09-15",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2024-09-16",
+      "conversations": 3,
+      "solved": 3,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 3
+    },
+    {
+      "date": "2024-09-17",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-09-18",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-09-19",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-09-20",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-09-21",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-09-22",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-09-23",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-09-24",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2024-09-25",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2024-09-26",
+      "conversations": 2,
+      "solved": 0,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-09-27",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-09-28",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2024-09-29",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2024-09-30",
+      "conversations": 2,
+      "solved": 1,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2024-10-01",
+      "conversations": 2,
+      "solved": 0,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-10-02",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-10-03",
+      "conversations": 3,
+      "solved": 1,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2024-10-04",
+      "conversations": 2,
+      "solved": 1,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2024-10-05",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-10-06",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-10-07",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-10-08",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-10-09",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-10-10",
+      "conversations": 1,
+      "solved": 0,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-10-11",
+      "conversations": 2,
+      "solved": 0,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-10-12",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-10-13",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-10-14",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-10-15",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-10-16",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-10-17",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-10-18",
+      "conversations": 1,
+      "solved": 0,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-10-19",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-10-20",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-10-21",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-10-22",
+      "conversations": 3,
+      "solved": 1,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2024-10-23",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-10-24",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2024-10-25",
+      "conversations": 1,
+      "solved": 0,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-10-26",
+      "conversations": 2,
+      "solved": 0,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-10-27",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2024-10-28",
+      "conversations": 1,
+      "solved": 0,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-10-29",
+      "conversations": 2,
+      "solved": 2,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 2
+    },
+    {
+      "date": "2024-10-30",
+      "conversations": 3,
+      "solved": 1,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2024-10-31",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-11-01",
+      "conversations": 4,
+      "solved": 2,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 2
+    },
+    {
+      "date": "2024-11-02",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-11-03",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-11-04",
+      "conversations": 4,
+      "solved": 1,
+      "unengaged": 3,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2024-11-05",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2024-11-06",
+      "conversations": 3,
+      "solved": 1,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2024-11-07",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-11-08",
+      "conversations": 3,
+      "solved": 1,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2024-11-09",
+      "conversations": 1,
+      "solved": 0,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-11-10",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-11-11",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2024-11-12",
+      "conversations": 2,
+      "solved": 0,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-11-13",
+      "conversations": 1,
+      "solved": 0,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-11-14",
+      "conversations": 1,
+      "solved": 0,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-11-15",
+      "conversations": 2,
+      "solved": 0,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-11-16",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-11-17",
+      "conversations": 2,
+      "solved": 2,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 2
+    },
+    {
+      "date": "2024-11-18",
+      "conversations": 3,
+      "solved": 1,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2024-11-19",
+      "conversations": 7,
+      "solved": 6,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 6
+    },
+    {
+      "date": "2024-11-20",
+      "conversations": 4,
+      "solved": 0,
+      "unengaged": 4,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-11-21",
+      "conversations": 8,
+      "solved": 5,
+      "unengaged": 3,
+      "failed": 0,
+      "engaged": 5
+    },
+    {
+      "date": "2024-11-22",
+      "conversations": 4,
+      "solved": 2,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 2
+    },
+    {
+      "date": "2024-11-23",
+      "conversations": 2,
+      "solved": 1,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2024-11-24",
+      "conversations": 3,
+      "solved": 1,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2024-11-25",
+      "conversations": 2,
+      "solved": 0,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-11-26",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-11-27",
+      "conversations": 4,
+      "solved": 3,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 3
+    },
+    {
+      "date": "2024-11-28",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2024-11-29",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2024-11-30",
+      "conversations": 3,
+      "solved": 0,
+      "unengaged": 3,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-12-01",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2024-12-02",
+      "conversations": 1,
+      "solved": 0,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-12-03",
+      "conversations": 3,
+      "solved": 2,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 2
+    },
+    {
+      "date": "2024-12-04",
+      "conversations": 2,
+      "solved": 0,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-12-05",
+      "conversations": 5,
+      "solved": 1,
+      "unengaged": 3,
+      "failed": 1,
+      "engaged": 2
+    },
+    {
+      "date": "2024-12-06",
+      "conversations": 2,
+      "solved": 1,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2024-12-07",
+      "conversations": 3,
+      "solved": 2,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 2
+    },
+    {
+      "date": "2024-12-08",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-12-09",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-12-10",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2024-12-11",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2024-12-12",
+      "conversations": 10,
+      "solved": 3,
+      "unengaged": 7,
+      "failed": 0,
+      "engaged": 3
+    },
+    {
+      "date": "2024-12-13",
+      "conversations": 24,
+      "solved": 1,
+      "unengaged": 23,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2024-12-14",
+      "conversations": 19,
+      "solved": 0,
+      "unengaged": 19,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-12-15",
+      "conversations": 26,
+      "solved": 2,
+      "unengaged": 24,
+      "failed": 0,
+      "engaged": 2
+    },
+    {
+      "date": "2024-12-16",
+      "conversations": 6,
+      "solved": 2,
+      "unengaged": 4,
+      "failed": 0,
+      "engaged": 2
+    },
+    {
+      "date": "2024-12-17",
+      "conversations": 4,
+      "solved": 1,
+      "unengaged": 3,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2024-12-18",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-12-19",
+      "conversations": 3,
+      "solved": 1,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2024-12-20",
+      "conversations": 13,
+      "solved": 3,
+      "unengaged": 10,
+      "failed": 0,
+      "engaged": 3
+    },
+    {
+      "date": "2024-12-21",
+      "conversations": 18,
+      "solved": 0,
+      "unengaged": 18,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-12-22",
+      "conversations": 9,
+      "solved": 1,
+      "unengaged": 8,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2024-12-23",
+      "conversations": 3,
+      "solved": 1,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2024-12-24",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-12-25",
+      "conversations": 1,
+      "solved": 0,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-12-26",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2024-12-27",
+      "conversations": 26,
+      "solved": 1,
+      "unengaged": 25,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2024-12-28",
+      "conversations": 22,
+      "solved": 1,
+      "unengaged": 21,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2024-12-29",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-12-30",
+      "conversations": 2,
+      "solved": 0,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2024-12-31",
+      "conversations": 1,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 1,
+      "engaged": 1
+    },
+    {
+      "date": "2025-01-01",
+      "conversations": 2,
+      "solved": 0,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-01-02",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-01-03",
+      "conversations": 2,
+      "solved": 2,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 2
+    },
+    {
+      "date": "2025-01-04",
+      "conversations": 2,
+      "solved": 1,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-01-05",
+      "conversations": 4,
+      "solved": 0,
+      "unengaged": 4,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-01-06",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-01-07",
+      "conversations": 2,
+      "solved": 2,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 2
+    },
+    {
+      "date": "2025-01-08",
+      "conversations": 6,
+      "solved": 4,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 4
+    },
+    {
+      "date": "2025-01-09",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-01-10",
+      "conversations": 3,
+      "solved": 2,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 2
+    },
+    {
+      "date": "2025-01-11",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-01-12",
+      "conversations": 3,
+      "solved": 1,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-01-13",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-01-14",
+      "conversations": 2,
+      "solved": 1,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-01-15",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-01-16",
+      "conversations": 2,
+      "solved": 1,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-01-17",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-01-18",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-01-19",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-01-20",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-01-21",
+      "conversations": 1,
+      "solved": 0,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-01-22",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-01-23",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-01-24",
+      "conversations": 1,
+      "solved": 0,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-01-25",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-01-26",
+      "conversations": 2,
+      "solved": 1,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-01-27",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-01-28",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-01-29",
+      "conversations": 3,
+      "solved": 2,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 2
+    },
+    {
+      "date": "2025-01-30",
+      "conversations": 4,
+      "solved": 2,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 2
+    },
+    {
+      "date": "2025-01-31",
+      "conversations": 3,
+      "solved": 0,
+      "unengaged": 3,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-02-01",
+      "conversations": 4,
+      "solved": 3,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 3
+    },
+    {
+      "date": "2025-02-02",
+      "conversations": 1,
+      "solved": 0,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-02-03",
+      "conversations": 1,
+      "solved": 0,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-02-04",
+      "conversations": 3,
+      "solved": 1,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-02-05",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-02-06",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-02-07",
+      "conversations": 1,
+      "solved": 0,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-02-08",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-02-09",
+      "conversations": 2,
+      "solved": 0,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-02-10",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-02-11",
+      "conversations": 1,
+      "solved": 0,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-02-12",
+      "conversations": 3,
+      "solved": 1,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-02-13",
+      "conversations": 1,
+      "solved": 0,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-02-14",
+      "conversations": 3,
+      "solved": 1,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-02-15",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-02-16",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-02-17",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-02-18",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-02-19",
+      "conversations": 5,
+      "solved": 2,
+      "unengaged": 3,
+      "failed": 0,
+      "engaged": 2
+    },
+    {
+      "date": "2025-02-20",
+      "conversations": 3,
+      "solved": 1,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-02-21",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-02-22",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-02-23",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-02-24",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-02-25",
+      "conversations": 1,
+      "solved": 0,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-02-26",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-02-27",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-02-28",
+      "conversations": 3,
+      "solved": 2,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 2
+    },
+    {
+      "date": "2025-03-01",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-03-02",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-03-03",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-03-04",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-03-05",
+      "conversations": 7,
+      "solved": 3,
+      "unengaged": 4,
+      "failed": 0,
+      "engaged": 3
+    },
+    {
+      "date": "2025-03-06",
+      "conversations": 2,
+      "solved": 2,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 2
+    },
+    {
+      "date": "2025-03-07",
+      "conversations": 5,
+      "solved": 3,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 3
+    },
+    {
+      "date": "2025-03-08",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-03-09",
+      "conversations": 4,
+      "solved": 4,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 4
+    },
+    {
+      "date": "2025-03-10",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-03-11",
+      "conversations": 2,
+      "solved": 1,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-03-12",
+      "conversations": 6,
+      "solved": 3,
+      "unengaged": 3,
+      "failed": 0,
+      "engaged": 3
+    },
+    {
+      "date": "2025-03-13",
+      "conversations": 4,
+      "solved": 1,
+      "unengaged": 3,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-03-14",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-03-15",
+      "conversations": 2,
+      "solved": 2,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 2
+    },
+    {
+      "date": "2025-03-16",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-03-17",
+      "conversations": 2,
+      "solved": 1,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-03-18",
+      "conversations": 10,
+      "solved": 5,
+      "unengaged": 5,
+      "failed": 0,
+      "engaged": 5
+    },
+    {
+      "date": "2025-03-19",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-03-20",
+      "conversations": 5,
+      "solved": 3,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 3
+    },
+    {
+      "date": "2025-03-21",
+      "conversations": 1,
+      "solved": 0,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-03-22",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-03-23",
+      "conversations": 2,
+      "solved": 2,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 2
+    },
+    {
+      "date": "2025-03-24",
+      "conversations": 6,
+      "solved": 1,
+      "unengaged": 5,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-03-25",
+      "conversations": 2,
+      "solved": 1,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-03-26",
+      "conversations": 3,
+      "solved": 1,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-03-27",
+      "conversations": 3,
+      "solved": 1,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-03-28",
+      "conversations": 2,
+      "solved": 2,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 2
+    },
+    {
+      "date": "2025-03-29",
+      "conversations": 4,
+      "solved": 0,
+      "unengaged": 4,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-03-30",
+      "conversations": 1,
+      "solved": 0,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-03-31",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-04-01",
+      "conversations": 5,
+      "solved": 1,
+      "unengaged": 4,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-04-02",
+      "conversations": 1,
+      "solved": 0,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-04-03",
+      "conversations": 3,
+      "solved": 1,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-04-04",
+      "conversations": 3,
+      "solved": 1,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-04-05",
+      "conversations": 2,
+      "solved": 1,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-04-06",
+      "conversations": 4,
+      "solved": 2,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 2
+    },
+    {
+      "date": "2025-04-07",
+      "conversations": 3,
+      "solved": 2,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 2
+    },
+    {
+      "date": "2025-04-08",
+      "conversations": 4,
+      "solved": 2,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 2
+    },
+    {
+      "date": "2025-04-09",
+      "conversations": 2,
+      "solved": 1,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-04-10",
+      "conversations": 4,
+      "solved": 2,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 2
+    },
+    {
+      "date": "2025-04-11",
+      "conversations": 6,
+      "solved": 4,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 4
+    },
+    {
+      "date": "2025-04-12",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-04-13",
+      "conversations": 4,
+      "solved": 2,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 2
+    },
+    {
+      "date": "2025-04-14",
+      "conversations": 2,
+      "solved": 0,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-04-15",
+      "conversations": 2,
+      "solved": 1,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-04-16",
+      "conversations": 4,
+      "solved": 2,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 2
+    },
+    {
+      "date": "2025-04-17",
+      "conversations": 5,
+      "solved": 4,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 4
+    },
+    {
+      "date": "2025-04-18",
+      "conversations": 5,
+      "solved": 2,
+      "unengaged": 3,
+      "failed": 0,
+      "engaged": 2
+    },
+    {
+      "date": "2025-04-19",
+      "conversations": 9,
+      "solved": 2,
+      "unengaged": 7,
+      "failed": 0,
+      "engaged": 2
+    },
+    {
+      "date": "2025-04-20",
+      "conversations": 9,
+      "solved": 1,
+      "unengaged": 8,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-04-21",
+      "conversations": 6,
+      "solved": 3,
+      "unengaged": 3,
+      "failed": 0,
+      "engaged": 3
+    },
+    {
+      "date": "2025-04-22",
+      "conversations": 16,
+      "solved": 1,
+      "unengaged": 15,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-04-23",
+      "conversations": 6,
+      "solved": 3,
+      "unengaged": 3,
+      "failed": 0,
+      "engaged": 3
+    },
+    {
+      "date": "2025-04-24",
+      "conversations": 5,
+      "solved": 2,
+      "unengaged": 3,
+      "failed": 0,
+      "engaged": 2
+    },
+    {
+      "date": "2025-04-25",
+      "conversations": 8,
+      "solved": 5,
+      "unengaged": 3,
+      "failed": 0,
+      "engaged": 5
+    },
+    {
+      "date": "2025-04-26",
+      "conversations": 5,
+      "solved": 4,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 4
+    },
+    {
+      "date": "2025-04-27",
+      "conversations": 6,
+      "solved": 3,
+      "unengaged": 3,
+      "failed": 0,
+      "engaged": 3
+    },
+    {
+      "date": "2025-04-28",
+      "conversations": 20,
+      "solved": 12,
+      "unengaged": 8,
+      "failed": 0,
+      "engaged": 12
+    },
+    {
+      "date": "2025-04-29",
+      "conversations": 38,
+      "solved": 12,
+      "unengaged": 26,
+      "failed": 0,
+      "engaged": 12
+    },
+    {
+      "date": "2025-04-30",
+      "conversations": 10,
+      "solved": 1,
+      "unengaged": 9,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-05-01",
+      "conversations": 22,
+      "solved": 3,
+      "unengaged": 19,
+      "failed": 0,
+      "engaged": 3
+    },
+    {
+      "date": "2025-05-02",
+      "conversations": 14,
+      "solved": 1,
+      "unengaged": 13,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-05-03",
+      "conversations": 12,
+      "solved": 2,
+      "unengaged": 10,
+      "failed": 0,
+      "engaged": 2
+    },
+    {
+      "date": "2025-05-04",
+      "conversations": 6,
+      "solved": 0,
+      "unengaged": 6,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-05-05",
+      "conversations": 2,
+      "solved": 1,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-05-06",
+      "conversations": 7,
+      "solved": 2,
+      "unengaged": 5,
+      "failed": 0,
+      "engaged": 2
+    },
+    {
+      "date": "2025-05-07",
+      "conversations": 2,
+      "solved": 0,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-05-08",
+      "conversations": 3,
+      "solved": 0,
+      "unengaged": 3,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-05-09",
+      "conversations": 8,
+      "solved": 5,
+      "unengaged": 3,
+      "failed": 0,
+      "engaged": 5
+    },
+    {
+      "date": "2025-05-10",
+      "conversations": 3,
+      "solved": 2,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 2
+    },
+    {
+      "date": "2025-05-11",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-05-12",
+      "conversations": 1,
+      "solved": 0,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-05-13",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-05-14",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-05-15",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-05-16",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-05-17",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-05-18",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-05-19",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-05-20",
+      "conversations": 3,
+      "solved": 1,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-05-21",
+      "conversations": 2,
+      "solved": 0,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-05-22",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-05-23",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-05-24",
+      "conversations": 2,
+      "solved": 1,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-05-25",
+      "conversations": 4,
+      "solved": 1,
+      "unengaged": 3,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-05-26",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-05-27",
+      "conversations": 4,
+      "solved": 1,
+      "unengaged": 3,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-05-28",
+      "conversations": 1,
+      "solved": 0,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-05-29",
+      "conversations": 3,
+      "solved": 2,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 2
+    },
+    {
+      "date": "2025-05-30",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-05-31",
+      "conversations": 3,
+      "solved": 1,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-06-01",
+      "conversations": 4,
+      "solved": 1,
+      "unengaged": 3,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-06-02",
+      "conversations": 1,
+      "solved": 0,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-06-03",
+      "conversations": 1,
+      "solved": 0,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-06-04",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-06-05",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-06-06",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-06-07",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-06-08",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-06-09",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-06-10",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-06-11",
+      "conversations": 2,
+      "solved": 2,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 2
+    },
+    {
+      "date": "2025-06-12",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-06-13",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-06-14",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-06-15",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-06-16",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-06-17",
+      "conversations": 2,
+      "solved": 0,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-06-18",
+      "conversations": 2,
+      "solved": 0,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-06-19",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-06-20",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-06-21",
+      "conversations": 1,
+      "solved": 0,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-06-22",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-06-23",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-06-24",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-06-25",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-06-26",
+      "conversations": 4,
+      "solved": 2,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 2
+    },
+    {
+      "date": "2025-06-27",
+      "conversations": 1,
+      "solved": 0,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-06-28",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-06-29",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-06-30",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-07-01",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-07-02",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-07-03",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-07-04",
+      "conversations": 2,
+      "solved": 1,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-07-05",
+      "conversations": 1,
+      "solved": 0,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-07-06",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-07-07",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-07-08",
+      "conversations": 2,
+      "solved": 0,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-07-09",
+      "conversations": 1,
+      "solved": 0,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-07-10",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-07-11",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-07-12",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-07-13",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-07-14",
+      "conversations": 1,
+      "solved": 0,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-07-15",
+      "conversations": 3,
+      "solved": 1,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-07-16",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-07-17",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-07-18",
+      "conversations": 4,
+      "solved": 2,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 2
+    },
+    {
+      "date": "2025-07-19",
+      "conversations": 2,
+      "solved": 0,
+      "unengaged": 2,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-07-20",
+      "conversations": 1,
+      "solved": 0,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-07-21",
+      "conversations": 1,
+      "solved": 0,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-07-22",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-07-23",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-07-24",
+      "conversations": 1,
+      "solved": 0,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-07-25",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-07-26",
+      "conversations": 1,
+      "solved": 0,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-07-27",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-07-28",
+      "conversations": 1,
+      "solved": 0,
+      "unengaged": 1,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-07-29",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-07-30",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-07-31",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-08-01",
+      "conversations": 1,
+      "solved": 1,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 1
+    },
+    {
+      "date": "2025-08-02",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-08-03",
+      "conversations": 0,
+      "solved": 0,
+      "unengaged": 0,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2025-08-04",
+      "conversations": 11,
+      "solved": 4,
+      "unengaged": 7,
+      "failed": 0,
+      "engaged": 4
+    },
+    {
+      "date": "2025-08-05",
+      "conversations": 42,
+      "solved": 24,
+      "unengaged": 17,
+      "failed": 1,
+      "engaged": 25
+    },
+    {
+      "date": "2025-08-06",
+      "conversations": 33,
+      "solved": 13,
+      "unengaged": 20,
+      "failed": 0,
+      "engaged": 13
+    },
+    {
+      "date": "2025-08-07",
+      "conversations": 35,
+      "solved": 8,
+      "unengaged": 27,
+      "failed": 0,
+      "engaged": 8
+    },
+    {
+      "date": "2025-08-08",
+      "conversations": 37,
+      "solved": 13,
+      "unengaged": 24,
+      "failed": 0,
+      "engaged": 13
+    },
+    {
+      "date": "2025-08-09",
+      "conversations": 54,
+      "solved": 17,
+      "unengaged": 37,
+      "failed": 0,
+      "engaged": 17
+    },
+    {
+      "date": "2025-08-10",
+      "conversations": 59,
+      "solved": 16,
+      "unengaged": 43,
+      "failed": 0,
+      "engaged": 16
+    },
+    {
+      "date": "2025-08-11",
+      "conversations": 39,
+      "solved": 14,
+      "unengaged": 25,
+      "failed": 0,
+      "engaged": 14
+    },
+    {
+      "date": "2025-08-12",
+      "conversations": 30,
+      "solved": 10,
+      "unengaged": 20,
+      "failed": 0,
+      "engaged": 10
+    },
+    {
+      "date": "2025-08-13",
+      "conversations": 50,
+      "solved": 20,
+      "unengaged": 30,
+      "failed": 0,
+      "engaged": 20
+    },
+    {
+      "date": "2025-08-14",
+      "conversations": 42,
+      "solved": 14,
+      "unengaged": 28,
+      "failed": 0,
+      "engaged": 14
+    },
+    {
+      "date": "2025-08-15",
+      "conversations": 28,
+      "solved": 7,
+      "unengaged": 21,
+      "failed": 0,
+      "engaged": 7
+    },
+    {
+      "date": "2025-08-16",
+      "conversations": 24,
+      "solved": 12,
+      "unengaged": 12,
+      "failed": 0,
+      "engaged": 12
+    },
+    {
+      "date": "2025-08-17",
+      "conversations": 27,
+      "solved": 7,
+      "unengaged": 20,
+      "failed": 0,
+      "engaged": 7
+    },
+    {
+      "date": "2025-08-18",
+      "conversations": 38,
+      "solved": 9,
+      "unengaged": 29,
+      "failed": 0,
+      "engaged": 9
+    },
+    {
+      "date": "2025-08-19",
+      "conversations": 55,
+      "solved": 18,
+      "unengaged": 37,
+      "failed": 0,
+      "engaged": 18
+    },
+    {
+      "date": "2025-08-20",
+      "conversations": 46,
+      "solved": 20,
+      "unengaged": 26,
+      "failed": 0,
+      "engaged": 20
+    },
+    {
+      "date": "2025-08-21",
+      "conversations": 40,
+      "solved": 18,
+      "unengaged": 22,
+      "failed": 0,
+      "engaged": 18
+    },
+    {
+      "date": "2025-08-22",
+      "conversations": 34,
+      "solved": 11,
+      "unengaged": 23,
+      "failed": 0,
+      "engaged": 11
+    },
+    {
+      "date": "2025-08-23",
+      "conversations": 36,
+      "solved": 9,
+      "unengaged": 27,
+      "failed": 0,
+      "engaged": 9
+    },
+    {
+      "date": "2025-08-24",
+      "conversations": 51,
+      "solved": 17,
+      "unengaged": 34,
+      "failed": 0,
+      "engaged": 17
+    },
+    {
+      "date": "2025-08-25",
+      "conversations": 42,
+      "solved": 21,
+      "unengaged": 21,
+      "failed": 0,
+      "engaged": 21
+    },
+    {
+      "date": "2025-08-26",
+      "conversations": 66,
+      "solved": 26,
+      "unengaged": 40,
+      "failed": 0,
+      "engaged": 26
+    },
+    {
+      "date": "2025-08-27",
+      "conversations": 84,
+      "solved": 26,
+      "unengaged": 58,
+      "failed": 0,
+      "engaged": 26
+    },
+    {
+      "date": "2025-08-28",
+      "conversations": 80,
+      "solved": 30,
+      "unengaged": 49,
+      "failed": 1,
+      "engaged": 31
+    },
+    {
+      "date": "2025-08-29",
+      "conversations": 108,
+      "solved": 53,
+      "unengaged": 55,
+      "failed": 0,
+      "engaged": 53
+    },
+    {
+      "date": "2025-08-30",
+      "conversations": 66,
+      "solved": 16,
+      "unengaged": 50,
+      "failed": 0,
+      "engaged": 16
+    },
+    {
+      "date": "2025-08-31",
+      "conversations": 71,
+      "solved": 23,
+      "unengaged": 48,
+      "failed": 0,
+      "engaged": 23
+    },
+    {
+      "date": "2025-09-01",
+      "conversations": 137,
+      "solved": 42,
+      "unengaged": 95,
+      "failed": 0,
+      "engaged": 42
+    },
+    {
+      "date": "2025-09-02",
+      "conversations": 97,
+      "solved": 36,
+      "unengaged": 61,
+      "failed": 0,
+      "engaged": 36
+    },
+    {
+      "date": "2025-09-03",
+      "conversations": 52,
+      "solved": 21,
+      "unengaged": 31,
+      "failed": 0,
+      "engaged": 21
+    },
+    {
+      "date": "2025-09-04",
+      "conversations": 54,
+      "solved": 18,
+      "unengaged": 36,
+      "failed": 0,
+      "engaged": 18
+    },
+    {
+      "date": "2025-09-05",
+      "conversations": 58,
+      "solved": 21,
+      "unengaged": 37,
+      "failed": 0,
+      "engaged": 21
+    },
+    {
+      "date": "2025-09-06",
+      "conversations": 41,
+      "solved": 7,
+      "unengaged": 33,
+      "failed": 1,
+      "engaged": 8
+    },
+    {
+      "date": "2025-09-07",
+      "conversations": 46,
+      "solved": 17,
+      "unengaged": 29,
+      "failed": 0,
+      "engaged": 17
+    },
+    {
+      "date": "2025-09-08",
+      "conversations": 71,
+      "solved": 28,
+      "unengaged": 42,
+      "failed": 1,
+      "engaged": 29
+    },
+    {
+      "date": "2025-09-09",
+      "conversations": 62,
+      "solved": 17,
+      "unengaged": 45,
+      "failed": 0,
+      "engaged": 17
+    },
+    {
+      "date": "2025-09-10",
+      "conversations": 94,
+      "solved": 42,
+      "unengaged": 52,
+      "failed": 0,
+      "engaged": 42
+    },
+    {
+      "date": "2025-09-11",
+      "conversations": 88,
+      "solved": 29,
+      "unengaged": 59,
+      "failed": 0,
+      "engaged": 29
+    },
+    {
+      "date": "2025-09-12",
+      "conversations": 73,
+      "solved": 33,
+      "unengaged": 40,
+      "failed": 0,
+      "engaged": 33
+    },
+    {
+      "date": "2025-09-13",
+      "conversations": 90,
+      "solved": 39,
+      "unengaged": 50,
+      "failed": 1,
+      "engaged": 40
+    },
+    {
+      "date": "2025-09-14",
+      "conversations": 91,
+      "solved": 36,
+      "unengaged": 55,
+      "failed": 0,
+      "engaged": 36
+    },
+    {
+      "date": "2025-09-15",
+      "conversations": 181,
+      "solved": 63,
+      "unengaged": 117,
+      "failed": 1,
+      "engaged": 64
+    },
+    {
+      "date": "2025-09-16",
+      "conversations": 274,
+      "solved": 94,
+      "unengaged": 180,
+      "failed": 0,
+      "engaged": 94
+    },
+    {
+      "date": "2025-09-17",
+      "conversations": 106,
+      "solved": 24,
+      "unengaged": 82,
+      "failed": 0,
+      "engaged": 24
+    },
+    {
+      "date": "2025-09-18",
+      "conversations": 75,
+      "solved": 18,
+      "unengaged": 57,
+      "failed": 0,
+      "engaged": 18
+    },
+    {
+      "date": "2025-09-19",
+      "conversations": 70,
+      "solved": 29,
+      "unengaged": 41,
+      "failed": 0,
+      "engaged": 29
+    },
+    {
+      "date": "2025-09-20",
+      "conversations": 42,
+      "solved": 10,
+      "unengaged": 32,
+      "failed": 0,
+      "engaged": 10
+    },
+    {
+      "date": "2025-09-21",
+      "conversations": 57,
+      "solved": 17,
+      "unengaged": 40,
+      "failed": 0,
+      "engaged": 17
+    },
+    {
+      "date": "2025-09-22",
+      "conversations": 62,
+      "solved": 19,
+      "unengaged": 43,
+      "failed": 0,
+      "engaged": 19
+    },
+    {
+      "date": "2025-09-23",
+      "conversations": 57,
+      "solved": 15,
+      "unengaged": 41,
+      "failed": 1,
+      "engaged": 16
+    },
+    {
+      "date": "2025-09-24",
+      "conversations": 56,
+      "solved": 24,
+      "unengaged": 32,
+      "failed": 0,
+      "engaged": 24
+    },
+    {
+      "date": "2025-09-25",
+      "conversations": 68,
+      "solved": 27,
+      "unengaged": 41,
+      "failed": 0,
+      "engaged": 27
+    },
+    {
+      "date": "2025-09-26",
+      "conversations": 63,
+      "solved": 24,
+      "unengaged": 39,
+      "failed": 0,
+      "engaged": 24
+    },
+    {
+      "date": "2025-09-27",
+      "conversations": 56,
+      "solved": 20,
+      "unengaged": 36,
+      "failed": 0,
+      "engaged": 20
+    },
+    {
+      "date": "2025-09-28",
+      "conversations": 34,
+      "solved": 12,
+      "unengaged": 22,
+      "failed": 0,
+      "engaged": 12
+    },
+    {
+      "date": "2025-09-29",
+      "conversations": 75,
+      "solved": 24,
+      "unengaged": 51,
+      "failed": 0,
+      "engaged": 24
+    },
+    {
+      "date": "2025-09-30",
+      "conversations": 85,
+      "solved": 31,
+      "unengaged": 54,
+      "failed": 0,
+      "engaged": 31
+    },
+    {
+      "date": "2025-10-01",
+      "conversations": 68,
+      "solved": 25,
+      "unengaged": 43,
+      "failed": 0,
+      "engaged": 25
+    },
+    {
+      "date": "2025-10-02",
+      "conversations": 57,
+      "solved": 17,
+      "unengaged": 40,
+      "failed": 0,
+      "engaged": 17
+    },
+    {
+      "date": "2025-10-03",
+      "conversations": 78,
+      "solved": 35,
+      "unengaged": 43,
+      "failed": 0,
+      "engaged": 35
+    },
+    {
+      "date": "2025-10-04",
+      "conversations": 64,
+      "solved": 16,
+      "unengaged": 48,
+      "failed": 0,
+      "engaged": 16
+    },
+    {
+      "date": "2025-10-05",
+      "conversations": 60,
+      "solved": 22,
+      "unengaged": 38,
+      "failed": 0,
+      "engaged": 22
+    },
+    {
+      "date": "2025-10-06",
+      "conversations": 80,
+      "solved": 26,
+      "unengaged": 54,
+      "failed": 0,
+      "engaged": 26
+    },
+    {
+      "date": "2025-10-07",
+      "conversations": 75,
+      "solved": 32,
+      "unengaged": 43,
+      "failed": 0,
+      "engaged": 32
+    },
+    {
+      "date": "2025-10-08",
+      "conversations": 91,
+      "solved": 43,
+      "unengaged": 48,
+      "failed": 0,
+      "engaged": 43
+    },
+    {
+      "date": "2025-10-09",
+      "conversations": 118,
+      "solved": 47,
+      "unengaged": 71,
+      "failed": 0,
+      "engaged": 47
+    },
+    {
+      "date": "2025-10-10",
+      "conversations": 125,
+      "solved": 41,
+      "unengaged": 84,
+      "failed": 0,
+      "engaged": 41
+    },
+    {
+      "date": "2025-10-11",
+      "conversations": 106,
+      "solved": 23,
+      "unengaged": 83,
+      "failed": 0,
+      "engaged": 23
+    },
+    {
+      "date": "2025-10-12",
+      "conversations": 93,
+      "solved": 16,
+      "unengaged": 77,
+      "failed": 0,
+      "engaged": 16
+    },
+    {
+      "date": "2025-10-13",
+      "conversations": 99,
+      "solved": 34,
+      "unengaged": 65,
+      "failed": 0,
+      "engaged": 34
+    },
+    {
+      "date": "2025-10-14",
+      "conversations": 95,
+      "solved": 38,
+      "unengaged": 57,
+      "failed": 0,
+      "engaged": 38
+    },
+    {
+      "date": "2025-10-15",
+      "conversations": 107,
+      "solved": 35,
+      "unengaged": 72,
+      "failed": 0,
+      "engaged": 35
+    },
+    {
+      "date": "2025-10-16",
+      "conversations": 123,
+      "solved": 46,
+      "unengaged": 76,
+      "failed": 1,
+      "engaged": 47
+    },
+    {
+      "date": "2025-10-17",
+      "conversations": 76,
+      "solved": 27,
+      "unengaged": 49,
+      "failed": 0,
+      "engaged": 27
+    },
+    {
+      "date": "2025-10-18",
+      "conversations": 106,
+      "solved": 29,
+      "unengaged": 69,
+      "failed": 8,
+      "engaged": 37
+    },
+    {
+      "date": "2025-10-19",
+      "conversations": 99,
+      "solved": 17,
+      "unengaged": 63,
+      "failed": 19,
+      "engaged": 36
+    },
+    {
+      "date": "2025-10-20",
+      "conversations": 211,
+      "solved": 85,
+      "unengaged": 126,
+      "failed": 0,
+      "engaged": 85
+    },
+    {
+      "date": "2025-10-21",
+      "conversations": 269,
+      "solved": 104,
+      "unengaged": 165,
+      "failed": 0,
+      "engaged": 104
+    },
+    {
+      "date": "2025-10-22",
+      "conversations": 99,
+      "solved": 30,
+      "unengaged": 68,
+      "failed": 1,
+      "engaged": 31
+    },
+    {
+      "date": "2025-10-23",
+      "conversations": 65,
+      "solved": 30,
+      "unengaged": 35,
+      "failed": 0,
+      "engaged": 30
+    },
+    {
+      "date": "2025-10-24",
+      "conversations": 55,
+      "solved": 23,
+      "unengaged": 32,
+      "failed": 0,
+      "engaged": 23
+    },
+    {
+      "date": "2025-10-25",
+      "conversations": 51,
+      "solved": 22,
+      "unengaged": 29,
+      "failed": 0,
+      "engaged": 22
+    },
+    {
+      "date": "2025-10-26",
+      "conversations": 59,
+      "solved": 27,
+      "unengaged": 32,
+      "failed": 0,
+      "engaged": 27
+    },
+    {
+      "date": "2025-10-27",
+      "conversations": 67,
+      "solved": 29,
+      "unengaged": 38,
+      "failed": 0,
+      "engaged": 29
+    },
+    {
+      "date": "2025-10-28",
+      "conversations": 69,
+      "solved": 32,
+      "unengaged": 37,
+      "failed": 0,
+      "engaged": 32
+    },
+    {
+      "date": "2025-10-29",
+      "conversations": 61,
+      "solved": 27,
+      "unengaged": 33,
+      "failed": 1,
+      "engaged": 28
+    },
+    {
+      "date": "2025-10-30",
+      "conversations": 79,
+      "solved": 30,
+      "unengaged": 49,
+      "failed": 0,
+      "engaged": 30
+    },
+    {
+      "date": "2025-10-31",
+      "conversations": 62,
+      "solved": 30,
+      "unengaged": 32,
+      "failed": 0,
+      "engaged": 30
+    },
+    {
+      "date": "2025-11-01",
+      "conversations": 58,
+      "solved": 24,
+      "unengaged": 34,
+      "failed": 0,
+      "engaged": 24
+    },
+    {
+      "date": "2025-11-02",
+      "conversations": 63,
+      "solved": 32,
+      "unengaged": 31,
+      "failed": 0,
+      "engaged": 32
+    },
+    {
+      "date": "2025-11-03",
+      "conversations": 83,
+      "solved": 47,
+      "unengaged": 36,
+      "failed": 0,
+      "engaged": 47
+    },
+    {
+      "date": "2025-11-04",
+      "conversations": 106,
+      "solved": 42,
+      "unengaged": 63,
+      "failed": 1,
+      "engaged": 43
+    },
+    {
+      "date": "2025-11-05",
+      "conversations": 109,
+      "solved": 45,
+      "unengaged": 64,
+      "failed": 0,
+      "engaged": 45
+    },
+    {
+      "date": "2025-11-06",
+      "conversations": 104,
+      "solved": 40,
+      "unengaged": 64,
+      "failed": 0,
+      "engaged": 40
+    },
+    {
+      "date": "2025-11-07",
+      "conversations": 75,
+      "solved": 21,
+      "unengaged": 51,
+      "failed": 3,
+      "engaged": 24
+    },
+    {
+      "date": "2025-11-08",
+      "conversations": 79,
+      "solved": 28,
+      "unengaged": 51,
+      "failed": 0,
+      "engaged": 28
+    },
+    {
+      "date": "2025-11-09",
+      "conversations": 80,
+      "solved": 29,
+      "unengaged": 51,
+      "failed": 0,
+      "engaged": 29
+    },
+    {
+      "date": "2025-11-10",
+      "conversations": 103,
+      "solved": 45,
+      "unengaged": 58,
+      "failed": 0,
+      "engaged": 45
+    },
+    {
+      "date": "2025-11-11",
+      "conversations": 133,
+      "solved": 44,
+      "unengaged": 89,
+      "failed": 0,
+      "engaged": 44
+    },
+    {
+      "date": "2025-11-12",
+      "conversations": 98,
+      "solved": 38,
+      "unengaged": 60,
+      "failed": 0,
+      "engaged": 38
+    },
+    {
+      "date": "2025-11-13",
+      "conversations": 89,
+      "solved": 42,
+      "unengaged": 47,
+      "failed": 0,
+      "engaged": 42
+    },
+    {
+      "date": "2025-11-14",
+      "conversations": 106,
+      "solved": 55,
+      "unengaged": 51,
+      "failed": 0,
+      "engaged": 55
+    },
+    {
+      "date": "2025-11-15",
+      "conversations": 102,
+      "solved": 39,
+      "unengaged": 62,
+      "failed": 1,
+      "engaged": 40
+    },
+    {
+      "date": "2025-11-16",
+      "conversations": 133,
+      "solved": 53,
+      "unengaged": 80,
+      "failed": 0,
+      "engaged": 53
+    },
+    {
+      "date": "2025-11-17",
+      "conversations": 129,
+      "solved": 41,
+      "unengaged": 88,
+      "failed": 0,
+      "engaged": 41
+    },
+    {
+      "date": "2025-11-18",
+      "conversations": 134,
+      "solved": 62,
+      "unengaged": 72,
+      "failed": 0,
+      "engaged": 62
+    },
+    {
+      "date": "2025-11-19",
+      "conversations": 139,
+      "solved": 67,
+      "unengaged": 72,
+      "failed": 0,
+      "engaged": 67
+    },
+    {
+      "date": "2025-11-20",
+      "conversations": 134,
+      "solved": 51,
+      "unengaged": 83,
+      "failed": 0,
+      "engaged": 51
+    },
+    {
+      "date": "2025-11-21",
+      "conversations": 126,
+      "solved": 41,
+      "unengaged": 85,
+      "failed": 0,
+      "engaged": 41
+    },
+    {
+      "date": "2025-11-22",
+      "conversations": 124,
+      "solved": 51,
+      "unengaged": 73,
+      "failed": 0,
+      "engaged": 51
+    },
+    {
+      "date": "2025-11-23",
+      "conversations": 108,
+      "solved": 45,
+      "unengaged": 63,
+      "failed": 0,
+      "engaged": 45
+    },
+    {
+      "date": "2025-11-24",
+      "conversations": 135,
+      "solved": 58,
+      "unengaged": 77,
+      "failed": 0,
+      "engaged": 58
+    },
+    {
+      "date": "2025-11-25",
+      "conversations": 135,
+      "solved": 34,
+      "unengaged": 91,
+      "failed": 10,
+      "engaged": 44
+    },
+    {
+      "date": "2025-11-26",
+      "conversations": 144,
+      "solved": 52,
+      "unengaged": 90,
+      "failed": 2,
+      "engaged": 54
+    },
+    {
+      "date": "2025-11-27",
+      "conversations": 129,
+      "solved": 52,
+      "unengaged": 77,
+      "failed": 0,
+      "engaged": 52
+    },
+    {
+      "date": "2025-11-28",
+      "conversations": 132,
+      "solved": 49,
+      "unengaged": 82,
+      "failed": 1,
+      "engaged": 50
+    },
+    {
+      "date": "2025-11-29",
+      "conversations": 206,
+      "solved": 76,
+      "unengaged": 111,
+      "failed": 19,
+      "engaged": 95
+    },
+    {
+      "date": "2025-11-30",
+      "conversations": 147,
+      "solved": 56,
+      "unengaged": 86,
+      "failed": 5,
+      "engaged": 61
+    },
+    {
+      "date": "2025-12-01",
+      "conversations": 186,
+      "solved": 77,
+      "unengaged": 109,
+      "failed": 0,
+      "engaged": 77
+    },
+    {
+      "date": "2025-12-02",
+      "conversations": 243,
+      "solved": 113,
+      "unengaged": 129,
+      "failed": 1,
+      "engaged": 114
+    },
+    {
+      "date": "2025-12-03",
+      "conversations": 139,
+      "solved": 58,
+      "unengaged": 81,
+      "failed": 0,
+      "engaged": 58
+    },
+    {
+      "date": "2025-12-04",
+      "conversations": 128,
+      "solved": 55,
+      "unengaged": 57,
+      "failed": 16,
+      "engaged": 71
+    },
+    {
+      "date": "2025-12-05",
+      "conversations": 135,
+      "solved": 69,
+      "unengaged": 66,
+      "failed": 0,
+      "engaged": 69
+    },
+    {
+      "date": "2025-12-06",
+      "conversations": 153,
+      "solved": 81,
+      "unengaged": 72,
+      "failed": 0,
+      "engaged": 81
+    },
+    {
+      "date": "2025-12-07",
+      "conversations": 108,
+      "solved": 53,
+      "unengaged": 55,
+      "failed": 0,
+      "engaged": 53
+    },
+    {
+      "date": "2025-12-08",
+      "conversations": 174,
+      "solved": 79,
+      "unengaged": 95,
+      "failed": 0,
+      "engaged": 79
+    },
+    {
+      "date": "2025-12-09",
+      "conversations": 178,
+      "solved": 84,
+      "unengaged": 94,
+      "failed": 0,
+      "engaged": 84
+    },
+    {
+      "date": "2025-12-10",
+      "conversations": 135,
+      "solved": 58,
+      "unengaged": 77,
+      "failed": 0,
+      "engaged": 58
+    },
+    {
+      "date": "2025-12-11",
+      "conversations": 182,
+      "solved": 91,
+      "unengaged": 90,
+      "failed": 1,
+      "engaged": 92
+    },
+    {
+      "date": "2025-12-12",
+      "conversations": 330,
+      "solved": 113,
+      "unengaged": 217,
+      "failed": 0,
+      "engaged": 113
+    },
+    {
+      "date": "2025-12-13",
+      "conversations": 353,
+      "solved": 168,
+      "unengaged": 185,
+      "failed": 0,
+      "engaged": 168
+    },
+    {
+      "date": "2025-12-14",
+      "conversations": 210,
+      "solved": 94,
+      "unengaged": 116,
+      "failed": 0,
+      "engaged": 94
+    },
+    {
+      "date": "2025-12-15",
+      "conversations": 186,
+      "solved": 76,
+      "unengaged": 110,
+      "failed": 0,
+      "engaged": 76
+    },
+    {
+      "date": "2025-12-16",
+      "conversations": 188,
+      "solved": 77,
+      "unengaged": 111,
+      "failed": 0,
+      "engaged": 77
+    },
+    {
+      "date": "2025-12-17",
+      "conversations": 196,
+      "solved": 88,
+      "unengaged": 108,
+      "failed": 0,
+      "engaged": 88
+    },
+    {
+      "date": "2025-12-18",
+      "conversations": 182,
+      "solved": 57,
+      "unengaged": 125,
+      "failed": 0,
+      "engaged": 57
+    },
+    {
+      "date": "2025-12-19",
+      "conversations": 183,
+      "solved": 85,
+      "unengaged": 97,
+      "failed": 1,
+      "engaged": 86
+    },
+    {
+      "date": "2025-12-20",
+      "conversations": 211,
+      "solved": 83,
+      "unengaged": 128,
+      "failed": 0,
+      "engaged": 83
+    },
+    {
+      "date": "2025-12-21",
+      "conversations": 226,
+      "solved": 88,
+      "unengaged": 138,
+      "failed": 0,
+      "engaged": 88
+    },
+    {
+      "date": "2025-12-22",
+      "conversations": 230,
+      "solved": 88,
+      "unengaged": 142,
+      "failed": 0,
+      "engaged": 88
+    },
+    {
+      "date": "2025-12-23",
+      "conversations": 197,
+      "solved": 98,
+      "unengaged": 99,
+      "failed": 0,
+      "engaged": 98
+    },
+    {
+      "date": "2025-12-24",
+      "conversations": 151,
+      "solved": 65,
+      "unengaged": 86,
+      "failed": 0,
+      "engaged": 65
+    },
+    {
+      "date": "2025-12-25",
+      "conversations": 123,
+      "solved": 49,
+      "unengaged": 74,
+      "failed": 0,
+      "engaged": 49
+    },
+    {
+      "date": "2025-12-26",
+      "conversations": 125,
+      "solved": 52,
+      "unengaged": 70,
+      "failed": 3,
+      "engaged": 55
+    },
+    {
+      "date": "2025-12-27",
+      "conversations": 106,
+      "solved": 38,
+      "unengaged": 67,
+      "failed": 1,
+      "engaged": 39
+    },
+    {
+      "date": "2025-12-28",
+      "conversations": 110,
+      "solved": 39,
+      "unengaged": 69,
+      "failed": 2,
+      "engaged": 41
+    },
+    {
+      "date": "2025-12-29",
+      "conversations": 124,
+      "solved": 41,
+      "unengaged": 83,
+      "failed": 0,
+      "engaged": 41
+    },
+    {
+      "date": "2025-12-30",
+      "conversations": 78,
+      "solved": 41,
+      "unengaged": 37,
+      "failed": 0,
+      "engaged": 41
+    },
+    {
+      "date": "2025-12-31",
+      "conversations": 67,
+      "solved": 17,
+      "unengaged": 40,
+      "failed": 10,
+      "engaged": 27
+    },
+    {
+      "date": "2026-01-01",
+      "conversations": 27,
+      "solved": 8,
+      "unengaged": 19,
+      "failed": 0,
+      "engaged": 8
+    },
+    {
+      "date": "2026-01-02",
+      "conversations": 83,
+      "solved": 42,
+      "unengaged": 41,
+      "failed": 0,
+      "engaged": 42
+    },
+    {
+      "date": "2026-01-03",
+      "conversations": 65,
+      "solved": 30,
+      "unengaged": 35,
+      "failed": 0,
+      "engaged": 30
+    },
+    {
+      "date": "2026-01-04",
+      "conversations": 72,
+      "solved": 31,
+      "unengaged": 37,
+      "failed": 4,
+      "engaged": 35
+    },
+    {
+      "date": "2026-01-05",
+      "conversations": 73,
+      "solved": 36,
+      "unengaged": 37,
+      "failed": 0,
+      "engaged": 36
+    },
+    {
+      "date": "2026-01-06",
+      "conversations": 75,
+      "solved": 43,
+      "unengaged": 32,
+      "failed": 0,
+      "engaged": 43
+    },
+    {
+      "date": "2026-01-07",
+      "conversations": 64,
+      "solved": 27,
+      "unengaged": 37,
+      "failed": 0,
+      "engaged": 27
+    },
+    {
+      "date": "2026-01-08",
+      "conversations": 55,
+      "solved": 18,
+      "unengaged": 37,
+      "failed": 0,
+      "engaged": 18
+    },
+    {
+      "date": "2026-01-09",
+      "conversations": 75,
+      "solved": 30,
+      "unengaged": 45,
+      "failed": 0,
+      "engaged": 30
+    },
+    {
+      "date": "2026-01-10",
+      "conversations": 67,
+      "solved": 25,
+      "unengaged": 42,
+      "failed": 0,
+      "engaged": 25
+    },
+    {
+      "date": "2026-01-11",
+      "conversations": 82,
+      "solved": 22,
+      "unengaged": 60,
+      "failed": 0,
+      "engaged": 22
+    },
+    {
+      "date": "2026-01-12",
+      "conversations": 81,
+      "solved": 33,
+      "unengaged": 48,
+      "failed": 0,
+      "engaged": 33
+    },
+    {
+      "date": "2026-01-13",
+      "conversations": 55,
+      "solved": 26,
+      "unengaged": 29,
+      "failed": 0,
+      "engaged": 26
+    },
+    {
+      "date": "2026-01-14",
+      "conversations": 51,
+      "solved": 21,
+      "unengaged": 30,
+      "failed": 0,
+      "engaged": 21
+    },
+    {
+      "date": "2026-01-15",
+      "conversations": 52,
+      "solved": 27,
+      "unengaged": 25,
+      "failed": 0,
+      "engaged": 27
+    },
+    {
+      "date": "2026-01-16",
+      "conversations": 67,
+      "solved": 32,
+      "unengaged": 35,
+      "failed": 0,
+      "engaged": 32
+    },
+    {
+      "date": "2026-01-17",
+      "conversations": 54,
+      "solved": 24,
+      "unengaged": 30,
+      "failed": 0,
+      "engaged": 24
+    },
+    {
+      "date": "2026-01-18",
+      "conversations": 62,
+      "solved": 27,
+      "unengaged": 35,
+      "failed": 0,
+      "engaged": 27
+    },
+    {
+      "date": "2026-01-19",
+      "conversations": 66,
+      "solved": 22,
+      "unengaged": 44,
+      "failed": 0,
+      "engaged": 22
+    },
+    {
+      "date": "2026-01-20",
+      "conversations": 56,
+      "solved": 23,
+      "unengaged": 33,
+      "failed": 0,
+      "engaged": 23
+    },
+    {
+      "date": "2026-01-21",
+      "conversations": 69,
+      "solved": 26,
+      "unengaged": 43,
+      "failed": 0,
+      "engaged": 26
+    },
+    {
+      "date": "2026-01-22",
+      "conversations": 57,
+      "solved": 23,
+      "unengaged": 33,
+      "failed": 1,
+      "engaged": 24
+    },
+    {
+      "date": "2026-01-23",
+      "conversations": 43,
+      "solved": 16,
+      "unengaged": 27,
+      "failed": 0,
+      "engaged": 16
+    },
+    {
+      "date": "2026-01-24",
+      "conversations": 38,
+      "solved": 17,
+      "unengaged": 20,
+      "failed": 1,
+      "engaged": 18
+    },
+    {
+      "date": "2026-01-25",
+      "conversations": 43,
+      "solved": 14,
+      "unengaged": 29,
+      "failed": 0,
+      "engaged": 14
+    },
+    {
+      "date": "2026-01-26",
+      "conversations": 33,
+      "solved": 14,
+      "unengaged": 19,
+      "failed": 0,
+      "engaged": 14
+    },
+    {
+      "date": "2026-01-27",
+      "conversations": 34,
+      "solved": 17,
+      "unengaged": 17,
+      "failed": 0,
+      "engaged": 17
+    },
+    {
+      "date": "2026-01-28",
+      "conversations": 84,
+      "solved": 17,
+      "unengaged": 67,
+      "failed": 0,
+      "engaged": 17
+    },
+    {
+      "date": "2026-01-29",
+      "conversations": 40,
+      "solved": 20,
+      "unengaged": 20,
+      "failed": 0,
+      "engaged": 20
+    },
+    {
+      "date": "2026-01-30",
+      "conversations": 23,
+      "solved": 12,
+      "unengaged": 11,
+      "failed": 0,
+      "engaged": 12
+    },
+    {
+      "date": "2026-01-31",
+      "conversations": 53,
+      "solved": 31,
+      "unengaged": 22,
+      "failed": 0,
+      "engaged": 31
+    },
+    {
+      "date": "2026-02-01",
+      "conversations": 33,
+      "solved": 18,
+      "unengaged": 15,
+      "failed": 0,
+      "engaged": 18
+    },
+    {
+      "date": "2026-02-02",
+      "conversations": 52,
+      "solved": 29,
+      "unengaged": 23,
+      "failed": 0,
+      "engaged": 29
+    },
+    {
+      "date": "2026-02-03",
+      "conversations": 52,
+      "solved": 24,
+      "unengaged": 28,
+      "failed": 0,
+      "engaged": 24
+    },
+    {
+      "date": "2026-02-04",
+      "conversations": 31,
+      "solved": 15,
+      "unengaged": 15,
+      "failed": 1,
+      "engaged": 16
+    },
+    {
+      "date": "2026-02-05",
+      "conversations": 45,
+      "solved": 23,
+      "unengaged": 22,
+      "failed": 0,
+      "engaged": 23
+    },
+    {
+      "date": "2026-02-06",
+      "conversations": 30,
+      "solved": 14,
+      "unengaged": 16,
+      "failed": 0,
+      "engaged": 14
+    },
+    {
+      "date": "2026-02-07",
+      "conversations": 39,
+      "solved": 15,
+      "unengaged": 24,
+      "failed": 0,
+      "engaged": 15
+    },
+    {
+      "date": "2026-02-08",
+      "conversations": 39,
+      "solved": 22,
+      "unengaged": 17,
+      "failed": 0,
+      "engaged": 22
+    },
+    {
+      "date": "2026-02-09",
+      "conversations": 35,
+      "solved": 18,
+      "unengaged": 17,
+      "failed": 0,
+      "engaged": 18
+    },
+    {
+      "date": "2026-02-10",
+      "conversations": 44,
+      "solved": 23,
+      "unengaged": 20,
+      "failed": 1,
+      "engaged": 24
+    },
+    {
+      "date": "2026-02-11",
+      "conversations": 45,
+      "solved": 29,
+      "unengaged": 16,
+      "failed": 0,
+      "engaged": 29
+    },
+    {
+      "date": "2026-02-12",
+      "conversations": 45,
+      "solved": 16,
+      "unengaged": 29,
+      "failed": 0,
+      "engaged": 16
+    },
+    {
+      "date": "2026-02-13",
+      "conversations": 44,
+      "solved": 25,
+      "unengaged": 19,
+      "failed": 0,
+      "engaged": 25
+    },
+    {
+      "date": "2026-02-14",
+      "conversations": 44,
+      "solved": 20,
+      "unengaged": 24,
+      "failed": 0,
+      "engaged": 20
+    },
+    {
+      "date": "2026-02-15",
+      "conversations": 30,
+      "solved": 18,
+      "unengaged": 12,
+      "failed": 0,
+      "engaged": 18
+    },
+    {
+      "date": "2026-02-16",
+      "conversations": 39,
+      "solved": 24,
+      "unengaged": 15,
+      "failed": 0,
+      "engaged": 24
+    },
+    {
+      "date": "2026-02-17",
+      "conversations": 65,
+      "solved": 37,
+      "unengaged": 28,
+      "failed": 0,
+      "engaged": 37
+    },
+    {
+      "date": "2026-02-18",
+      "conversations": 44,
+      "solved": 13,
+      "unengaged": 31,
+      "failed": 0,
+      "engaged": 13
+    },
+    {
+      "date": "2026-02-19",
+      "conversations": 49,
+      "solved": 23,
+      "unengaged": 26,
+      "failed": 0,
+      "engaged": 23
+    },
+    {
+      "date": "2026-02-20",
+      "conversations": 44,
+      "solved": 28,
+      "unengaged": 16,
+      "failed": 0,
+      "engaged": 28
+    },
+    {
+      "date": "2026-02-21",
+      "conversations": 35,
+      "solved": 21,
+      "unengaged": 14,
+      "failed": 0,
+      "engaged": 21
+    },
+    {
+      "date": "2026-02-22",
+      "conversations": 41,
+      "solved": 21,
+      "unengaged": 20,
+      "failed": 0,
+      "engaged": 21
+    },
+    {
+      "date": "2026-02-23",
+      "conversations": 81,
+      "solved": 26,
+      "unengaged": 55,
+      "failed": 0,
+      "engaged": 26
+    },
+    {
+      "date": "2026-02-24",
+      "conversations": 74,
+      "solved": 26,
+      "unengaged": 48,
+      "failed": 0,
+      "engaged": 26
+    },
+    {
+      "date": "2026-02-25",
+      "conversations": 50,
+      "solved": 27,
+      "unengaged": 23,
+      "failed": 0,
+      "engaged": 27
+    },
+    {
+      "date": "2026-02-26",
+      "conversations": 45,
+      "solved": 25,
+      "unengaged": 20,
+      "failed": 0,
+      "engaged": 25
+    },
+    {
+      "date": "2026-02-27",
+      "conversations": 35,
+      "solved": 20,
+      "unengaged": 15,
+      "failed": 0,
+      "engaged": 20
+    },
+    {
+      "date": "2026-02-28",
+      "conversations": 45,
+      "solved": 30,
+      "unengaged": 15,
+      "failed": 0,
+      "engaged": 30
+    },
+    {
+      "date": "2026-03-01",
+      "conversations": 57,
+      "solved": 30,
+      "unengaged": 27,
+      "failed": 0,
+      "engaged": 30
+    },
+    {
+      "date": "2026-03-02",
+      "conversations": 37,
+      "solved": 19,
+      "unengaged": 18,
+      "failed": 0,
+      "engaged": 19
+    },
+    {
+      "date": "2026-03-03",
+      "conversations": 51,
+      "solved": 24,
+      "unengaged": 27,
+      "failed": 0,
+      "engaged": 24
+    },
+    {
+      "date": "2026-03-04",
+      "conversations": 61,
+      "solved": 28,
+      "unengaged": 33,
+      "failed": 0,
+      "engaged": 28
+    },
+    {
+      "date": "2026-03-05",
+      "conversations": 137,
+      "solved": 71,
+      "unengaged": 66,
+      "failed": 0,
+      "engaged": 71
+    },
+    {
+      "date": "2026-03-06",
+      "conversations": 86,
+      "solved": 40,
+      "unengaged": 46,
+      "failed": 0,
+      "engaged": 40
+    },
+    {
+      "date": "2026-03-07",
+      "conversations": 62,
+      "solved": 27,
+      "unengaged": 35,
+      "failed": 0,
+      "engaged": 27
+    },
+    {
+      "date": "2026-03-08",
+      "conversations": 98,
+      "solved": 45,
+      "unengaged": 53,
+      "failed": 0,
+      "engaged": 45
+    },
+    {
+      "date": "2026-03-09",
+      "conversations": 90,
+      "solved": 40,
+      "unengaged": 50,
+      "failed": 0,
+      "engaged": 40
+    },
+    {
+      "date": "2026-03-10",
+      "conversations": 70,
+      "solved": 31,
+      "unengaged": 38,
+      "failed": 1,
+      "engaged": 32
+    },
+    {
+      "date": "2026-03-11",
+      "conversations": 56,
+      "solved": 23,
+      "unengaged": 33,
+      "failed": 0,
+      "engaged": 23
+    },
+    {
+      "date": "2026-03-12",
+      "conversations": 82,
+      "solved": 37,
+      "unengaged": 45,
+      "failed": 0,
+      "engaged": 37
+    },
+    {
+      "date": "2026-03-13",
+      "conversations": 75,
+      "solved": 34,
+      "unengaged": 41,
+      "failed": 0,
+      "engaged": 34
+    },
+    {
+      "date": "2026-03-14",
+      "conversations": 83,
+      "solved": 32,
+      "unengaged": 51,
+      "failed": 0,
+      "engaged": 32
+    },
+    {
+      "date": "2026-03-15",
+      "conversations": 82,
+      "solved": 43,
+      "unengaged": 39,
+      "failed": 0,
+      "engaged": 43
+    },
+    {
+      "date": "2026-03-16",
+      "conversations": 66,
+      "solved": 25,
+      "unengaged": 41,
+      "failed": 0,
+      "engaged": 25
+    },
+    {
+      "date": "2026-03-17",
+      "conversations": 76,
+      "solved": 40,
+      "unengaged": 36,
+      "failed": 0,
+      "engaged": 40
+    },
+    {
+      "date": "2026-03-18",
+      "conversations": 66,
+      "solved": 24,
+      "unengaged": 42,
+      "failed": 0,
+      "engaged": 24
+    },
+    {
+      "date": "2026-03-19",
+      "conversations": 90,
+      "solved": 34,
+      "unengaged": 56,
+      "failed": 0,
+      "engaged": 34
+    },
+    {
+      "date": "2026-03-20",
+      "conversations": 132,
+      "solved": 23,
+      "unengaged": 109,
+      "failed": 0,
+      "engaged": 23
+    },
+    {
+      "date": "2026-03-21",
+      "conversations": 67,
+      "solved": 23,
+      "unengaged": 44,
+      "failed": 0,
+      "engaged": 23
+    },
+    {
+      "date": "2026-03-22",
+      "conversations": 86,
+      "solved": 29,
+      "unengaged": 57,
+      "failed": 0,
+      "engaged": 29
+    },
+    {
+      "date": "2026-03-23",
+      "conversations": 67,
+      "solved": 24,
+      "unengaged": 43,
+      "failed": 0,
+      "engaged": 24
+    },
+    {
+      "date": "2026-03-24",
+      "conversations": 65,
+      "solved": 30,
+      "unengaged": 35,
+      "failed": 0,
+      "engaged": 30
+    },
+    {
+      "date": "2026-03-25",
+      "conversations": 60,
+      "solved": 25,
+      "unengaged": 35,
+      "failed": 0,
+      "engaged": 25
+    },
+    {
+      "date": "2026-03-26",
+      "conversations": 64,
+      "solved": 23,
+      "unengaged": 41,
+      "failed": 0,
+      "engaged": 23
+    },
+    {
+      "date": "2026-03-27",
+      "conversations": 49,
+      "solved": 20,
+      "unengaged": 29,
+      "failed": 0,
+      "engaged": 20
+    },
+    {
+      "date": "2026-03-28",
+      "conversations": 72,
+      "solved": 24,
+      "unengaged": 48,
+      "failed": 0,
+      "engaged": 24
+    },
+    {
+      "date": "2026-03-29",
+      "conversations": 76,
+      "solved": 27,
+      "unengaged": 49,
+      "failed": 0,
+      "engaged": 27
+    },
+    {
+      "date": "2026-03-30",
+      "conversations": 82,
+      "solved": 25,
+      "unengaged": 57,
+      "failed": 0,
+      "engaged": 25
+    },
+    {
+      "date": "2026-03-31",
+      "conversations": 74,
+      "solved": 27,
+      "unengaged": 47,
+      "failed": 0,
+      "engaged": 27
+    },
+    {
+      "date": "2026-04-01",
+      "conversations": 71,
+      "solved": 41,
+      "unengaged": 30,
+      "failed": 0,
+      "engaged": 41
+    },
+    {
+      "date": "2026-04-02",
+      "conversations": 81,
+      "solved": 27,
+      "unengaged": 54,
+      "failed": 0,
+      "engaged": 27
+    },
+    {
+      "date": "2026-04-03",
+      "conversations": 72,
+      "solved": 35,
+      "unengaged": 36,
+      "failed": 1,
+      "engaged": 36
+    },
+    {
+      "date": "2026-04-04",
+      "conversations": 72,
+      "solved": 29,
+      "unengaged": 43,
+      "failed": 0,
+      "engaged": 29
+    },
+    {
+      "date": "2026-04-05",
+      "conversations": 81,
+      "solved": 18,
+      "unengaged": 63,
+      "failed": 0,
+      "engaged": 18
+    },
+    {
+      "date": "2026-04-06",
+      "conversations": 60,
+      "solved": 18,
+      "unengaged": 42,
+      "failed": 0,
+      "engaged": 18
+    },
+    {
+      "date": "2026-04-07",
+      "conversations": 72,
+      "solved": 29,
+      "unengaged": 43,
+      "failed": 0,
+      "engaged": 29
+    },
+    {
+      "date": "2026-04-08",
+      "conversations": 70,
+      "solved": 27,
+      "unengaged": 43,
+      "failed": 0,
+      "engaged": 27
+    },
+    {
+      "date": "2026-04-09",
+      "conversations": 52,
+      "solved": 21,
+      "unengaged": 31,
+      "failed": 0,
+      "engaged": 21
+    },
+    {
+      "date": "2026-04-10",
+      "conversations": 76,
+      "solved": 32,
+      "unengaged": 44,
+      "failed": 0,
+      "engaged": 32
+    },
+    {
+      "date": "2026-04-11",
+      "conversations": 109,
+      "solved": 43,
+      "unengaged": 66,
+      "failed": 0,
+      "engaged": 43
+    },
+    {
+      "date": "2026-04-12",
+      "conversations": 89,
+      "solved": 34,
+      "unengaged": 55,
+      "failed": 0,
+      "engaged": 34
+    },
+    {
+      "date": "2026-04-13",
+      "conversations": 116,
+      "solved": 41,
+      "unengaged": 75,
+      "failed": 0,
+      "engaged": 41
+    },
+    {
+      "date": "2026-04-14",
+      "conversations": 100,
+      "solved": 33,
+      "unengaged": 67,
+      "failed": 0,
+      "engaged": 33
+    },
+    {
+      "date": "2026-04-15",
+      "conversations": 94,
+      "solved": 34,
+      "unengaged": 60,
+      "failed": 0,
+      "engaged": 34
+    },
+    {
+      "date": "2026-04-16",
+      "conversations": 102,
+      "solved": 42,
+      "unengaged": 60,
+      "failed": 0,
+      "engaged": 42
+    },
+    {
+      "date": "2026-04-17",
+      "conversations": 119,
+      "solved": 41,
+      "unengaged": 78,
+      "failed": 0,
+      "engaged": 41
+    },
+    {
+      "date": "2026-04-18",
+      "conversations": 96,
+      "solved": 33,
+      "unengaged": 63,
+      "failed": 0,
+      "engaged": 33
+    },
+    {
+      "date": "2026-04-19",
+      "conversations": 76,
+      "solved": 17,
+      "unengaged": 59,
+      "failed": 0,
+      "engaged": 17
+    },
+    {
+      "date": "2026-04-20",
+      "conversations": 140,
+      "solved": 38,
+      "unengaged": 102,
+      "failed": 0,
+      "engaged": 38
+    },
+    {
+      "date": "2026-04-21",
+      "conversations": 103,
+      "solved": 27,
+      "unengaged": 76,
+      "failed": 0,
+      "engaged": 27
+    },
+    {
+      "date": "2026-04-22",
+      "conversations": 115,
+      "solved": 35,
+      "unengaged": 80,
+      "failed": 0,
+      "engaged": 35
+    },
+    {
+      "date": "2026-04-23",
+      "conversations": 172,
+      "solved": 52,
+      "unengaged": 120,
+      "failed": 0,
+      "engaged": 52
+    },
+    {
+      "date": "2026-04-24",
+      "conversations": 143,
+      "solved": 32,
+      "unengaged": 111,
+      "failed": 0,
+      "engaged": 32
+    },
+    {
+      "date": "2026-04-25",
+      "conversations": 160,
+      "solved": 63,
+      "unengaged": 97,
+      "failed": 0,
+      "engaged": 63
+    },
+    {
+      "date": "2026-04-26",
+      "conversations": 141,
+      "solved": 48,
+      "unengaged": 93,
+      "failed": 0,
+      "engaged": 48
+    },
+    {
+      "date": "2026-04-27",
+      "conversations": 336,
+      "solved": 144,
+      "unengaged": 192,
+      "failed": 0,
+      "engaged": 144
+    },
+    {
+      "date": "2026-04-28",
+      "conversations": 705,
+      "solved": 344,
+      "unengaged": 361,
+      "failed": 0,
+      "engaged": 344
+    },
+    {
+      "date": "2026-04-29",
+      "conversations": 136,
+      "solved": 35,
+      "unengaged": 101,
+      "failed": 0,
+      "engaged": 35
+    },
+    {
+      "date": "2026-04-30",
+      "conversations": 62,
+      "solved": 12,
+      "unengaged": 50,
+      "failed": 0,
+      "engaged": 12
+    },
+    {
+      "date": "2026-05-01",
+      "conversations": 91,
+      "solved": 22,
+      "unengaged": 69,
+      "failed": 0,
+      "engaged": 22
+    },
+    {
+      "date": "2026-05-02",
+      "conversations": 19,
+      "solved": 0,
+      "unengaged": 19,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2026-05-03",
+      "conversations": 10,
+      "solved": 0,
+      "unengaged": 10,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2026-05-04",
+      "conversations": 23,
+      "solved": 0,
+      "unengaged": 23,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2026-05-05",
+      "conversations": 17,
+      "solved": 0,
+      "unengaged": 17,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2026-05-06",
+      "conversations": 13,
+      "solved": 0,
+      "unengaged": 13,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2026-05-07",
+      "conversations": 17,
+      "solved": 0,
+      "unengaged": 17,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2026-05-08",
+      "conversations": 16,
+      "solved": 0,
+      "unengaged": 16,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2026-05-09",
+      "conversations": 11,
+      "solved": 0,
+      "unengaged": 11,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2026-05-10",
+      "conversations": 9,
+      "solved": 0,
+      "unengaged": 9,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2026-05-11",
+      "conversations": 10,
+      "solved": 0,
+      "unengaged": 10,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2026-05-12",
+      "conversations": 13,
+      "solved": 0,
+      "unengaged": 13,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2026-05-13",
+      "conversations": 19,
+      "solved": 0,
+      "unengaged": 19,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2026-05-14",
+      "conversations": 14,
+      "solved": 0,
+      "unengaged": 14,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2026-05-15",
+      "conversations": 9,
+      "solved": 0,
+      "unengaged": 9,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2026-05-16",
+      "conversations": 5,
+      "solved": 0,
+      "unengaged": 5,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2026-05-17",
+      "conversations": 6,
+      "solved": 0,
+      "unengaged": 6,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2026-05-18",
+      "conversations": 10,
+      "solved": 0,
+      "unengaged": 10,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2026-05-19",
+      "conversations": 7,
+      "solved": 0,
+      "unengaged": 7,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2026-05-20",
+      "conversations": 10,
+      "solved": 0,
+      "unengaged": 10,
+      "failed": 0,
+      "engaged": 0
+    },
+    {
+      "date": "2026-05-21",
+      "conversations": 8,
+      "solved": 0,
+      "unengaged": 8,
+      "failed": 0,
+      "engaged": 0
+    }
+  ],
+  "heatmap": [
+    {
+      "dayOfWeek": "Sun",
+      "timeBucket": "12AM–3AM",
+      "conversations": 436
+    },
+    {
+      "dayOfWeek": "Sun",
+      "timeBucket": "3AM–6AM",
+      "conversations": 351
+    },
+    {
+      "dayOfWeek": "Sun",
+      "timeBucket": "6AM–9AM",
+      "conversations": 139
+    },
+    {
+      "dayOfWeek": "Sun",
+      "timeBucket": "9AM–12PM",
+      "conversations": 146
+    },
+    {
+      "dayOfWeek": "Sun",
+      "timeBucket": "12PM–3PM",
+      "conversations": 429
+    },
+    {
+      "dayOfWeek": "Sun",
+      "timeBucket": "3PM–6PM",
+      "conversations": 640
+    },
+    {
+      "dayOfWeek": "Sun",
+      "timeBucket": "6PM–9PM",
+      "conversations": 650
+    },
+    {
+      "dayOfWeek": "Sun",
+      "timeBucket": "9PM–12AM",
+      "conversations": 654
+    },
+    {
+      "dayOfWeek": "Mon",
+      "timeBucket": "12AM–3AM",
+      "conversations": 675
+    },
+    {
+      "dayOfWeek": "Mon",
+      "timeBucket": "3AM–6AM",
+      "conversations": 440
+    },
+    {
+      "dayOfWeek": "Mon",
+      "timeBucket": "6AM–9AM",
+      "conversations": 154
+    },
+    {
+      "dayOfWeek": "Mon",
+      "timeBucket": "9AM–12PM",
+      "conversations": 157
+    },
+    {
+      "dayOfWeek": "Mon",
+      "timeBucket": "12PM–3PM",
+      "conversations": 528
+    },
+    {
+      "dayOfWeek": "Mon",
+      "timeBucket": "3PM–6PM",
+      "conversations": 889
+    },
+    {
+      "dayOfWeek": "Mon",
+      "timeBucket": "6PM–9PM",
+      "conversations": 788
+    },
+    {
+      "dayOfWeek": "Mon",
+      "timeBucket": "9PM–12AM",
+      "conversations": 745
+    },
+    {
+      "dayOfWeek": "Tue",
+      "timeBucket": "12AM–3AM",
+      "conversations": 776
+    },
+    {
+      "dayOfWeek": "Tue",
+      "timeBucket": "3AM–6AM",
+      "conversations": 756
+    },
+    {
+      "dayOfWeek": "Tue",
+      "timeBucket": "6AM–9AM",
+      "conversations": 158
+    },
+    {
+      "dayOfWeek": "Tue",
+      "timeBucket": "9AM–12PM",
+      "conversations": 164
+    },
+    {
+      "dayOfWeek": "Tue",
+      "timeBucket": "12PM–3PM",
+      "conversations": 456
+    },
+    {
+      "dayOfWeek": "Tue",
+      "timeBucket": "3PM–6PM",
+      "conversations": 675
+    },
+    {
+      "dayOfWeek": "Tue",
+      "timeBucket": "6PM–9PM",
+      "conversations": 635
+    },
+    {
+      "dayOfWeek": "Tue",
+      "timeBucket": "9PM–12AM",
+      "conversations": 660
+    },
+    {
+      "dayOfWeek": "Wed",
+      "timeBucket": "12AM–3AM",
+      "conversations": 504
+    },
+    {
+      "dayOfWeek": "Wed",
+      "timeBucket": "3AM–6AM",
+      "conversations": 331
+    },
+    {
+      "dayOfWeek": "Wed",
+      "timeBucket": "6AM–9AM",
+      "conversations": 124
+    },
+    {
+      "dayOfWeek": "Wed",
+      "timeBucket": "9AM–12PM",
+      "conversations": 136
+    },
+    {
+      "dayOfWeek": "Wed",
+      "timeBucket": "12PM–3PM",
+      "conversations": 422
+    },
+    {
+      "dayOfWeek": "Wed",
+      "timeBucket": "3PM–6PM",
+      "conversations": 602
+    },
+    {
+      "dayOfWeek": "Wed",
+      "timeBucket": "6PM–9PM",
+      "conversations": 598
+    },
+    {
+      "dayOfWeek": "Wed",
+      "timeBucket": "9PM–12AM",
+      "conversations": 553
+    },
+    {
+      "dayOfWeek": "Thu",
+      "timeBucket": "12AM–3AM",
+      "conversations": 537
+    },
+    {
+      "dayOfWeek": "Thu",
+      "timeBucket": "3AM–6AM",
+      "conversations": 347
+    },
+    {
+      "dayOfWeek": "Thu",
+      "timeBucket": "6AM–9AM",
+      "conversations": 136
+    },
+    {
+      "dayOfWeek": "Thu",
+      "timeBucket": "9AM–12PM",
+      "conversations": 147
+    },
+    {
+      "dayOfWeek": "Thu",
+      "timeBucket": "12PM–3PM",
+      "conversations": 427
+    },
+    {
+      "dayOfWeek": "Thu",
+      "timeBucket": "3PM–6PM",
+      "conversations": 731
+    },
+    {
+      "dayOfWeek": "Thu",
+      "timeBucket": "6PM–9PM",
+      "conversations": 710
+    },
+    {
+      "dayOfWeek": "Thu",
+      "timeBucket": "9PM–12AM",
+      "conversations": 541
+    },
+    {
+      "dayOfWeek": "Fri",
+      "timeBucket": "12AM–3AM",
+      "conversations": 522
+    },
+    {
+      "dayOfWeek": "Fri",
+      "timeBucket": "3AM–6AM",
+      "conversations": 358
+    },
+    {
+      "dayOfWeek": "Fri",
+      "timeBucket": "6AM–9AM",
+      "conversations": 136
+    },
+    {
+      "dayOfWeek": "Fri",
+      "timeBucket": "9AM–12PM",
+      "conversations": 127
+    },
+    {
+      "dayOfWeek": "Fri",
+      "timeBucket": "12PM–3PM",
+      "conversations": 432
+    },
+    {
+      "dayOfWeek": "Fri",
+      "timeBucket": "3PM–6PM",
+      "conversations": 698
+    },
+    {
+      "dayOfWeek": "Fri",
+      "timeBucket": "6PM–9PM",
+      "conversations": 643
+    },
+    {
+      "dayOfWeek": "Fri",
+      "timeBucket": "9PM–12AM",
+      "conversations": 583
+    },
+    {
+      "dayOfWeek": "Sat",
+      "timeBucket": "12AM–3AM",
+      "conversations": 457
+    },
+    {
+      "dayOfWeek": "Sat",
+      "timeBucket": "3AM–6AM",
+      "conversations": 397
+    },
+    {
+      "dayOfWeek": "Sat",
+      "timeBucket": "6AM–9AM",
+      "conversations": 215
+    },
+    {
+      "dayOfWeek": "Sat",
+      "timeBucket": "9AM–12PM",
+      "conversations": 151
+    },
+    {
+      "dayOfWeek": "Sat",
+      "timeBucket": "12PM–3PM",
+      "conversations": 374
+    },
+    {
+      "dayOfWeek": "Sat",
+      "timeBucket": "3PM–6PM",
+      "conversations": 625
+    },
+    {
+      "dayOfWeek": "Sat",
+      "timeBucket": "6PM–9PM",
+      "conversations": 602
+    },
+    {
+      "dayOfWeek": "Sat",
+      "timeBucket": "9PM–12AM",
+      "conversations": 489
+    }
+  ]
+}

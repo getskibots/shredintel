@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { DemandHeatmap } from '../DemandHeatmap'
 import { FrictionMap } from '../FrictionMap'
 import { IntentCategoryBreakdown } from '../IntentCategoryBreakdown'
@@ -8,8 +8,8 @@ import { SectionHeader } from '../SectionHeader'
 import { SectionNav } from '../SectionNav'
 import { VoiceGeography } from '../VoiceGeography'
 import { VoiceIntentHero } from '../VoiceIntentHero'
+import { useMCChatAnalytics } from '../../data/useAnalytics'
 import {
-  buildMCChatFixtures,
   type ChatCustomerNeedCategory,
   type IntentCategorySummary,
   type MCChatPeriodKey,
@@ -143,7 +143,15 @@ export function MCChatReportGrid() {
   void IntentCategoryBreakdown
 
   const [period, setPeriod] = useState<MCChatPeriodKey>('all')
-  const f = useMemo(() => buildMCChatFixtures(period), [period])
+  const { data: f, isLive, isLoading } = useMCChatAnalytics(period)
+
+  if (isLoading || !f) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <p className="text-sm text-slate-500">Loading Mountain Collective chat analytics…</p>
+      </div>
+    )
+  }
 
   const tabClass = (active: boolean) =>
     active
@@ -162,9 +170,29 @@ export function MCChatReportGrid() {
       <div className="sticky top-14 z-20 border-b border-slate-200 bg-white">
         <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
           <div>
-            <h1 className="text-xl font-semibold tracking-tight text-slate-900">
-              Chat — Mountain Collective
-            </h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-semibold tracking-tight text-slate-900">
+                Chat — Mountain Collective
+              </h1>
+              <span
+                className={
+                  isLive
+                    ? 'inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-700'
+                    : 'inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500'
+                }
+                title={isLive ? 'Reading live from Supabase' : 'Using bundled fixtures'}
+              >
+                <span
+                  aria-hidden
+                  className={
+                    isLive
+                      ? 'h-1.5 w-1.5 rounded-full bg-emerald-500'
+                      : 'h-1.5 w-1.5 rounded-full bg-slate-400'
+                  }
+                />
+                {isLive ? 'Live' : 'Demo'}
+              </span>
+            </div>
             <p className="mt-0.5 text-xs text-slate-500">
               What your guests asked the chat assistant over {f.daysInWindow} days.
             </p>

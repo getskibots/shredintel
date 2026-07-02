@@ -1,5 +1,4 @@
-import { useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { ConversionPulse } from '../ConversionPulse'
 import { DemandHeatmap } from '../DemandHeatmap'
 import { DeviceExperienceMix } from '../DeviceExperienceMix'
@@ -31,7 +30,13 @@ const sections = [
 export function BotAnalyticsPage() {
   const { botId: botIdParam } = useParams<{ botId: string }>()
   const botId = Number(botIdParam)
-  const [period, setPeriod] = useState<PeriodKey>('7d')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const period = (searchParams.get('period') === '30d' ? '30d' : '7d') as PeriodKey
+  const setPeriod = (p: PeriodKey) => {
+    const next = new URLSearchParams(searchParams)
+    next.set('period', p)
+    setSearchParams(next, { replace: true })
+  }
   const { data: f, isLive, isLoading } = useBotAnalytics(botId, period)
   const { bots } = useAvailableBots()
 

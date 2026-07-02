@@ -76,7 +76,9 @@ export function BotSelector() {
                   <button
                     type="button"
                     onClick={() => {
-                      navigate(b.route)
+                      // Preserve search params (e.g. ?period=30d) so the
+                      // period selection follows the user across bots.
+                      navigate({ pathname: b.route, search: location.search })
                       setOpen(false)
                     }}
                     className={[

@@ -572,20 +572,25 @@ export function useMCChatAnalytics(period: MCChatPeriodKey): AnalyticsState<MCCh
 }
 
 /**
- * Discovers all bot_ids that have data in Supabase. Uses report.outcome_timeline
- * as the discovery source (every bot with a single conversation shows up there).
- * Falls back to the three known bots when Supabase isn't configured or empty.
+ * Lists every bot from the `public.bots` registry (id + name), which mirrors
+ * Botscrew's admin_bot. This is the authoritative full list (~457 rows) WITH
+ * names — small enough to fetch in one request (well under PostgREST's row cap),
+ * unlike scanning report.outcome_timeline.
+ *
+ * Requires: GRANT SELECT ON public.bots TO anon;  (run once in Supabase)
+ * Falls back to the three known bots when Supabase is unconfigured or the
+ * grant/query fails.
  */
 export interface BotOption {
   botId: number
-  label: string       // e.g., "Bot 43" — replace with name once report.bots view exists
+  label: string       // bot display name (falls back to "Bot <id>")
   route: string       // canonical route to view this bot
 }
 
 const KNOWN_BOTS: BotOption[] = [
-  { botId: 43,  label: 'Bot 43 · Jackson Hole (chat)',        route: '/bot/43' },
-  { botId: 2,   label: 'Bot 2 · Mountain Collective (chat)',  route: '/bot/2' },
-  { botId: 248, label: 'Bot 248 · Mountain Collective (voice)', route: '/voice' },
+  { botId: 43,  label: 'Jackson Hole (chat)',        route: '/bot/43' },
+  { botId: 2,   label: 'Mountain Collective (chat)',  route: '/bot/2' },
+  { botId: 248, label: 'Mountain Collective (voice)', route: '/voice' },
 ]
 
 export function useAvailableBots(): { bots: BotOption[]; isLive: boolean; isLoading: boolean } {
@@ -599,30 +604,23 @@ export function useAvailableBots(): { bots: BotOption[]; isLive: boolean; isLoad
       if (!supabase) return
       try {
         const { data, error } = await supabase
-          .schema('report')
-          .from('outcome_timeline')
-          .select('bot_id')
+          .from('bots')
+          .select('id, name')
+          .order('name', { ascending: true })
+          .limit(2000)
         if (cancelled) return
         if (error || !data || data.length === 0) {
           setState({ bots: KNOWN_BOTS, isLive: false, isLoading: false })
           return
         }
-        // Dedupe + sort ascending
-        const seen = new Set<number>()
-        const discovered: BotOption[] = []
-        for (const row of data as { bot_id: number }[]) {
-          if (row?.bot_id != null && !seen.has(row.bot_id)) {
-            seen.add(row.bot_id)
-            const known = KNOWN_BOTS.find((b) => b.botId === row.bot_id)
-            discovered.push({
-              botId: row.bot_id,
-              label: known?.label ?? `Bot ${row.bot_id}`,
-              route: known?.route ?? `/bot/${row.bot_id}`,
-            })
-          }
-        }
-        discovered.sort((a, b) => a.botId - b.botId)
-        setState({ bots: discovered, isLive: true, isLoading: false })
+        const bots: BotOption[] = (data as { id: number; name: string | null }[])
+          .filter((r) => r?.id != null)
+          .map((r) => ({
+            botId: r.id,
+            label: r.name?.trim() || `Bot ${r.id}`,
+            route: `/bot/${r.id}`,
+          }))
+        setState({ bots, isLive: true, isLoading: false })
       } catch {
         if (cancelled) return
         setState({ bots: KNOWN_BOTS, isLive: false, isLoading: false })

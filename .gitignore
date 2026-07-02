@@ -30,6 +30,12 @@ storybook-static
 scripts/*.json
 scripts/*.csv
 
+# Raw customer data exports (PII: caller numbers, transcripts) — NEVER commit
+# Anchored to repo root so it does NOT match src/data (app code).
+/data/
+etl/.env
+etl/node_modules/
+
 # Local environment variables
 .env
 .env.local

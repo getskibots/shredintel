@@ -64,7 +64,7 @@ interface NavItem {
 // real route here — it lands on /chat/mc (the primary demo dashboard).
 // Users navigate between chat/jh, chat/mc, and voice via URL for now.
 const NAV: NavItem[] = [
-  { key: 'analytics', label: 'Analytics', to: '/chat/mc',  Icon: TrendingUp },
+  { key: 'analytics', label: 'Analytics', to: '/',  Icon: TrendingUp },
   { key: 'knowledge', label: 'Knowledge',                  Icon: Lightbulb },
   { key: 'ai-edits',  label: 'AI Edits',                   Icon: MessageSquareText },
   { key: 'flows',     label: 'Flows',                      Icon: Shuffle },
@@ -85,9 +85,11 @@ export function DashboardShell({
   const location = useLocation()
 
   const isRowActive = (item: NavItem) => {
-    // Analytics highlights on any of the three analytics routes we have today.
+    // Analytics highlights on the index and any bot/voice dashboard.
     if (item.key === 'analytics') {
       return (
+        location.pathname === '/' ||
+        location.pathname.startsWith('/bot') ||
         location.pathname.startsWith('/chat') ||
         location.pathname.startsWith('/voice')
       )
@@ -170,7 +172,7 @@ export function DashboardShell({
         <header className="flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 md:px-6">
           <div className="hidden text-sm text-slate-500 sm:block">
             <Link
-              to="/chat/mc"
+              to="/"
               className="text-botscrew-500 hover:underline"
             >
               Home

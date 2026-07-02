@@ -1,0 +1,1 @@
+export { BotIndexPage } from './BotIndexPage'

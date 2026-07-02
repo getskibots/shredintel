@@ -109,9 +109,9 @@ export function DashboardShell({
 
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-900">
-      {/* ── Sidebar (mirrors omni-odin) ────────────────────────────── */}
+      {/* ── Sidebar (mirrors omni-odin) — hidden on mobile ─────────── */}
       <aside
-        className="flex w-[104px] shrink-0 flex-col bg-botscrew-500 text-white"
+        className="hidden w-[104px] shrink-0 flex-col bg-botscrew-500 text-white md:flex"
         aria-label="Primary navigation"
       >
         <div className="flex flex-col items-center px-3 pt-4 pb-3">
@@ -166,9 +166,9 @@ export function DashboardShell({
 
       {/* ── Main column ────────────────────────────────────────────── */}
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* Top bar — mirrors omni-odin TopBar */}
-        <header className="flex h-16 items-center justify-between border-b border-slate-200 bg-white px-6">
-          <div className="text-sm text-slate-500">
+        {/* Top bar — mirrors omni-odin TopBar. Home + avatar collapse on mobile. */}
+        <header className="flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 md:px-6">
+          <div className="hidden text-sm text-slate-500 sm:block">
             <Link
               to="/chat/mc"
               className="text-botscrew-500 hover:underline"
@@ -187,7 +187,7 @@ export function DashboardShell({
                 .join('')
                 .slice(0, 2)}
             </div>
-            <span className="text-sm text-slate-700">{userName}</span>
+            <span className="hidden text-sm text-slate-700 sm:inline">{userName}</span>
           </div>
         </header>
 

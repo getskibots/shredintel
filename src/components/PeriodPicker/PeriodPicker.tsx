@@ -10,11 +10,11 @@ import {
 } from '../../lib/period'
 import { DateRangeCalendar } from './DateRangeCalendar'
 
-const PRESETS: Array<{ key: PresetKey; label: string }> = [
-  { key: '7d',  label: 'Last 7 days'  },
-  { key: '30d', label: 'Last 30 days' },
-  { key: '90d', label: 'Last 90 days' },
-  { key: 'all', label: 'All time'     },
+const PRESETS: Array<{ key: PresetKey; label: string; shortLabel: string }> = [
+  { key: '7d',  label: 'Last 7 days',  shortLabel: '7d'  },
+  { key: '30d', label: 'Last 30 days', shortLabel: '30d' },
+  { key: '90d', label: 'Last 90 days', shortLabel: '90d' },
+  { key: 'all', label: 'All time',     shortLabel: 'All' },
 ]
 
 interface PeriodPickerProps {
@@ -103,9 +103,11 @@ export function PeriodPicker({
               setPopoverOpen(false)
             }}
             aria-pressed={activePreset === p.key}
+            aria-label={p.label}
             className={chipClass(activePreset === p.key)}
           >
-            {p.label}
+            <span className="sm:hidden">{p.shortLabel}</span>
+            <span className="hidden sm:inline">{p.label}</span>
           </button>
         ))}
 
@@ -119,7 +121,7 @@ export function PeriodPicker({
           className={chipClass(isCustom)}
         >
           <CalendarDays className="h-3.5 w-3.5" strokeWidth={2} />
-          {isCustom ? customLabel : 'Custom'}
+          <span className="hidden sm:inline">{isCustom ? customLabel : 'Custom'}</span>
         </button>
       </div>
 

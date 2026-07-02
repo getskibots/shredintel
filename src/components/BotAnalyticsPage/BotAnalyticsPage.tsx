@@ -1,4 +1,5 @@
 import { useParams, useSearchParams } from 'react-router-dom'
+import { BotSelector } from '../BotSelector'
 import { ConversionPulse } from '../ConversionPulse'
 import { DemandHeatmap } from '../DemandHeatmap'
 import { DeviceExperienceMix } from '../DeviceExperienceMix'
@@ -68,12 +69,13 @@ export function BotAnalyticsPage() {
   return (
     <div>
       <div className="sticky top-14 z-20 border-b border-slate-200 bg-white">
-        <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-semibold tracking-tight text-slate-900">
-              Analytics <span className="text-slate-400">·</span>{' '}
-              <span className="text-slate-600">{pageTitle}</span>
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 md:px-6">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-lg font-semibold tracking-tight text-slate-900 md:text-xl">
+              Analytics <span className="hidden text-slate-400 sm:inline">·</span>{' '}
+              <span className="hidden text-slate-600 sm:inline">{pageTitle}</span>
             </h1>
+            <BotSelector />
             <span
               className={
                 isLive
@@ -89,13 +91,12 @@ export function BotAnalyticsPage() {
               {isLive ? 'Live' : 'Demo'}
             </span>
           </div>
-          <PeriodPicker value={selection} onChange={setSelection} align="start" />
-
+          <PeriodPicker value={selection} onChange={setSelection} align="end" />
         </div>
         <SectionNav items={sections} />
       </div>
 
-      <div className="space-y-12 px-6 py-8">
+      <div className="space-y-12 px-4 py-6 md:px-6 md:py-8">
         <section id="core" className="scroll-mt-40 space-y-5">
           <SectionHeader number="1" name="Conversation Core" tagline="What happened?" />
           <ResolutionHero stats={f.resolution} scopeLabel={`Bot ${botId}`} periodLabel={f.periodLabel} />

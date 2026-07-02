@@ -128,8 +128,8 @@ export function DateRangeCalendar({
 
   return (
     <div className="flex">
-      {/* Sidebar presets */}
-      <div className="flex w-[132px] shrink-0 flex-col border-r border-slate-100 py-2">
+      {/* Sidebar presets — hidden on mobile (chips outside already expose them) */}
+      <div className="hidden w-[132px] shrink-0 flex-col border-r border-slate-100 py-2 md:flex">
         {SIDE_PRESETS.map((p) => (
           <button
             key={p.key}
@@ -183,18 +183,20 @@ export function DateRangeCalendar({
           </div>
         </div>
 
-        {/* Two months */}
+        {/* Two months on desktop, single (right/newer) month on mobile */}
         <div className="flex gap-6 px-4 py-4" onMouseLeave={() => setHover(null)}>
-          <MonthGrid
-            monthStart={leftMonth}
-            range={effectiveRange}
-            firstClicked={selection.from}
-            secondClicked={selection.to}
-            minDate={minDate}
-            maxDate={maxDate}
-            onDayClick={handleDayClick}
-            onDayHover={setHover}
-          />
+          <div className="hidden md:block">
+            <MonthGrid
+              monthStart={leftMonth}
+              range={effectiveRange}
+              firstClicked={selection.from}
+              secondClicked={selection.to}
+              minDate={minDate}
+              maxDate={maxDate}
+              onDayClick={handleDayClick}
+              onDayHover={setHover}
+            />
+          </div>
           <MonthGrid
             monthStart={rightMonth}
             range={effectiveRange}

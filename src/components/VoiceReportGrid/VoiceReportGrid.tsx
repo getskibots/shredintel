@@ -1,4 +1,5 @@
 import { useSearchParams } from 'react-router-dom'
+import { BotSelector } from '../BotSelector'
 import { CallTimeMetrics } from '../CallTimeMetrics'
 import { DemandHeatmap } from '../DemandHeatmap'
 import { IntentCategoryBreakdown } from '../IntentCategoryBreakdown'
@@ -51,12 +52,13 @@ export function VoiceReportGrid() {
   return (
     <div>
       <div className="sticky top-14 z-20 border-b border-slate-200 bg-white">
-        <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 md:px-6">
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-semibold tracking-tight text-slate-900">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-lg font-semibold tracking-tight text-slate-900 md:text-xl">
                 Voice
               </h1>
+              <BotSelector />
               <span
                 className={
                   isLive
@@ -76,22 +78,23 @@ export function VoiceReportGrid() {
                 {isLive ? 'Live' : 'Demo'}
               </span>
             </div>
-            <p className="mt-0.5 text-xs text-slate-500">
+            <p className="mt-0.5 hidden text-xs text-slate-500 sm:block">
               Mountain Collective — what your guests called about over{' '}
               {f.daysInWindow} days.
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <PeriodPicker value={selection} onChange={setSelection} align="start" />
+          <div className="flex flex-wrap items-center gap-2">
+            <PeriodPicker value={selection} onChange={setSelection} align="end" />
             <button className="rounded-lg bg-botscrew-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-botscrew-600">
-              Export calls
+              <span className="sm:hidden">Export</span>
+              <span className="hidden sm:inline">Export calls</span>
             </button>
           </div>
         </div>
         <SectionNav items={sections} />
       </div>
 
-      <div className="space-y-12 px-6 py-8">
+      <div className="space-y-12 px-4 py-6 md:px-6 md:py-8">
         {/* ── § 1 Guest Intent ───────────────────────────────────────── */}
         <section id="guest-intent" className="scroll-mt-40 space-y-5">
           <SectionHeader

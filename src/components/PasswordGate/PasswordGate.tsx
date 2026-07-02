@@ -1,6 +1,5 @@
 import { useState, type ReactNode, type FormEvent } from 'react'
 import logoUrl from '../../assets/logo.png'
-import { isEmbedMode } from '../../lib/embed'
 
 /**
  * Soft password gate for the standalone site (analytics.getskibots.com).
@@ -10,9 +9,12 @@ import { isEmbedMode } from '../../lib/embed'
  * bundle, so true data protection must come from Supabase RLS (or Vercel's
  * edge Password Protection). Treat this as "keep randoms out", not a vault.
  *
- * Embed mode (?embed=1, Botscrew iframe) is exempt: the host app supplies its
- * own authentication around the iframe, and prompting there would break the
- * drop-in integration.
+ * NOTE (2026-07-02): the embed surface (public/embed.js, embed-test.html) and
+ * the old ?embed=1 gate-exemption were removed. That exemption was a bypass —
+ * anyone could append ?embed=1 to a dashboard URL and skip the gate. Embed
+ * mode is now gated like every other route. When the Botscrew iframe is wired
+ * up for real, reintroduce embed access behind proper host-side auth, not a
+ * blanket skip.
  *
  * The password itself never lives in the bundle — only its SHA-256 hash.
  * To change it, run:
@@ -31,10 +33,7 @@ async function sha256Hex(input: string): Promise<string> {
 }
 
 export function PasswordGate({ children }: { children: ReactNode }) {
-  // Botscrew iframe is exempt — host provides its own auth.
-  const embed = isEmbedMode()
   const [authed, setAuthed] = useState<boolean>(() => {
-    if (embed) return true
     try {
       return localStorage.getItem(STORAGE_KEY) === PASSWORD_HASH
     } catch {

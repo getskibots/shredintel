@@ -54,32 +54,46 @@
         margin: 0;
         color: #0f172a;
       }
-      .card-header .meta {
+      .card-header .controls {
+        display: flex;
+        gap: 6px;
+      }
+      .card-header button {
+        font: inherit;
         font-size: 12px;
-        color: #64748b;
-        font-family: ui-monospace, monospace;
-      }
-      #shred-iframe {
-        display: block;
-        width: 100%;
-        border: 0;
-        transition: height 200ms ease-out;
-      }
-      #log {
-        font-family: ui-monospace, monospace;
-        font-size: 11px;
+        padding: 4px 10px;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        background: white;
+        cursor: pointer;
         color: #475569;
-        padding: 8px 20px;
-        background: #f8fafc;
-        border-top: 1px solid #e2e8f0;
-        max-height: 100px;
-        overflow-y: auto;
       }
+      .card-header button:hover {
+        background: #f8fafc;
+      }
+      .card-header button.active {
+        background: #2A7DC0;
+        color: white;
+        border-color: #2A7DC0;
+      }
+      .snippet {
+        background: #0f172a;
+        color: #e2e8f0;
+        padding: 14px 20px;
+        font-family: ui-monospace, monospace;
+        font-size: 12px;
+        line-height: 1.6;
+        overflow-x: auto;
+      }
+      .snippet .tag { color: #7dd3fc; }
+      .snippet .attr { color: #fbbf24; }
+      .snippet .val { color: #86efac; }
+      .snippet .comment { color: #64748b; }
     </style>
   </head>
   <body>
     <div class="host-chrome">
-      <h1>Simulated Botscrew admin — /admin/bot/2/analytics</h1>
+      <h1>Simulated Botscrew admin — /admin/bot/:id/analytics</h1>
       <div class="fake-nav">
         <span>Analytics</span>
         <span>Knowledge</span>
@@ -91,41 +105,42 @@
     <div class="container">
       <div class="card">
         <div class="card-header">
-          <h2>Analytics · Mountain Collective (chat)</h2>
-          <span class="meta" id="height-meta">iframe height: —</span>
+          <h2>The entire integration is this:</h2>
         </div>
-        <iframe
-          id="shred-iframe"
-          src="/?embed=1#/bot/2"
-          title="shredintel"
-        ></iframe>
-        <div id="log"></div>
+        <pre class="snippet">
+<span class="comment">&lt;!-- Load once, anywhere in your page --&gt;</span>
+<span class="tag">&lt;script</span> <span class="attr">src</span>=<span class="val">"https://shred.getskibots.com/embed.js"</span> <span class="attr">async</span><span class="tag">&gt;&lt;/script&gt;</span>
+
+<span class="comment">&lt;!-- Drop wherever you want the dashboard --&gt;</span>
+<span class="tag">&lt;shredintel-analytics</span> <span class="attr">bot-id</span>=<span class="val">"2"</span><span class="tag">&gt;&lt;/shredintel-analytics&gt;</span></pre>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>Live demo — try the bot switcher</h2>
+          <div class="controls">
+            <button data-bot="43">Jackson Hole (chat)</button>
+            <button data-bot="2" class="active">Mtn Collective (chat)</button>
+            <button data-bot="248">Mtn Collective (voice)</button>
+          </div>
+        </div>
+        <shredintel-analytics id="shred" bot-id="2"></shredintel-analytics>
       </div>
     </div>
 
+    <!-- Load the web-component. In prod this URL is the same. -->
+    <script src="/embed.js" async></script>
+
+    <!-- Demo controls: swap the bot-id attribute and the component re-navigates -->
     <script>
-      const iframe = document.getElementById('shred-iframe')
-      const heightMeta = document.getElementById('height-meta')
-      const log = document.getElementById('log')
-
-      function addLog(text) {
-        const line = document.createElement('div')
-        line.textContent = new Date().toISOString().slice(11, 19) + '  ' + text
-        log.prepend(line)
-        while (log.children.length > 20) log.removeChild(log.lastChild)
-      }
-
-      window.addEventListener('message', (event) => {
-        const data = event.data
-        if (!data || data.source !== 'shredintel') return
-        if (data.type === 'height' && typeof data.height === 'number') {
-          iframe.style.height = data.height + 'px'
-          heightMeta.textContent = 'iframe height: ' + data.height + 'px'
-          addLog('height ← ' + data.height + 'px')
-        }
+      const el = document.getElementById('shred')
+      document.querySelectorAll('[data-bot]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('[data-bot]').forEach(b => b.classList.remove('active'))
+          btn.classList.add('active')
+          el.setAttribute('bot-id', btn.dataset.bot)
+        })
       })
-
-      addLog('embed-test.html loaded — waiting for shredintel height messages…')
     </script>
   </body>
 </html>

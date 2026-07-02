@@ -72,16 +72,23 @@ export function useEmbedHeightSync(enabled: boolean): void {
     const emit = () => {
       // Use scrollHeight so we capture content beyond viewport
       const h = document.documentElement.scrollHeight
-      if (h !== lastHeight) {
+      if (h > 0 && h !== lastHeight) {
         lastHeight = h
         postHeight(h)
       }
     }
 
+    // ResizeObserver alone misses late Recharts/async layout — fire at
+    // multiple checkpoints for the first few seconds to catch them all.
     emit()
+    const timerIds: number[] = []
+    ;[16, 100, 500, 1500, 3000].forEach((ms) => {
+      timerIds.push(window.setTimeout(emit, ms))
+    })
 
     const ro = new ResizeObserver(emit)
     ro.observe(document.body)
+    ro.observe(document.documentElement)
 
     // Also emit on route change (hashchange for HashRouter)
     window.addEventListener('hashchange', emit)
@@ -89,6 +96,7 @@ export function useEmbedHeightSync(enabled: boolean): void {
     window.addEventListener('load', emit)
 
     return () => {
+      timerIds.forEach((t) => window.clearTimeout(t))
       ro.disconnect()
       window.removeEventListener('hashchange', emit)
       window.removeEventListener('load', emit)

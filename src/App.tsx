@@ -2,6 +2,7 @@ import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-d
 import { BotAnalyticsPage } from './components/BotAnalyticsPage'
 import { BotIndexPage } from './components/BotIndexPage'
 import { DashboardShell } from './components/DashboardShell'
+import { PasswordGate } from './components/PasswordGate'
 import { VoiceReportGrid } from './components/VoiceReportGrid'
 import { isEmbedMode, useEmbedHeightSync } from './lib/embed'
 
@@ -42,9 +43,11 @@ function ChannelShell() {
 
 function App() {
   return (
-    <HashRouter>
-      <ChannelShell />
-    </HashRouter>
+    <PasswordGate>
+      <HashRouter>
+        <ChannelShell />
+      </HashRouter>
+    </PasswordGate>
   )
 }
 

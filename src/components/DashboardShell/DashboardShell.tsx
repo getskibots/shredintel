@@ -1,15 +1,14 @@
 import type { ReactNode } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import {
-  MessageSquare,
-  Mic,
+  TrendingUp,
   Lightbulb,
   MessageSquareText,
   Shuffle,
   Wand2,
   MessagesSquare,
   Headphones,
-  LayoutGrid,
+  MessageSquare,
   SlidersHorizontal,
   CircleHelp,
   type LucideIcon,
@@ -39,10 +38,9 @@ export interface DashboardShellProps {
 }
 
 type NavKey =
-  | 'chat'
-  | 'voice'
+  | 'analytics'
   | 'knowledge'
-  | 'ai-messages'
+  | 'ai-edits'
   | 'flows'
   | 'actions'
   | 'triggers'
@@ -60,18 +58,20 @@ interface NavItem {
   badge?: number
 }
 
+// Sidebar items match getskibots/omni-odin exactly. Analytics is the only
+// real route here — it lands on /chat/mc (the primary demo dashboard).
+// Users navigate between chat/jh, chat/mc, and voice via URL for now.
 const NAV: NavItem[] = [
-  { key: 'chat',        label: 'Chat',        to: '/chat',  Icon: MessageSquare },
-  { key: 'voice',       label: 'Voice',       to: '/voice', Icon: Mic },
-  { key: 'knowledge',   label: 'Knowledge',                 Icon: Lightbulb },
-  { key: 'ai-messages', label: 'AI Messages',               Icon: MessageSquareText },
-  { key: 'flows',       label: 'Flows',                     Icon: Shuffle },
-  { key: 'actions',     label: 'Actions',                   Icon: Wand2 },
-  { key: 'triggers',    label: 'Triggers',                  Icon: MessagesSquare },
-  { key: 'support',     label: 'Support',                   Icon: Headphones, badge: 9 },
-  { key: 'widget',      label: 'Widget',                    Icon: LayoutGrid },
-  { key: 'settings',    label: 'Settings',                  Icon: SlidersHorizontal },
-  { key: 'help',        label: 'Help',                      Icon: CircleHelp },
+  { key: 'analytics', label: 'Analytics', to: '/chat/mc',  Icon: TrendingUp },
+  { key: 'knowledge', label: 'Knowledge',                  Icon: Lightbulb },
+  { key: 'ai-edits',  label: 'AI Edits',                   Icon: MessageSquareText },
+  { key: 'flows',     label: 'Flows',                      Icon: Shuffle },
+  { key: 'actions',   label: 'Actions',                    Icon: Wand2 },
+  { key: 'triggers',  label: 'Triggers',                   Icon: MessagesSquare },
+  { key: 'support',   label: 'Support',                    Icon: Headphones },
+  { key: 'widget',    label: 'Widget',                     Icon: MessageSquare },
+  { key: 'settings',  label: 'Settings',                   Icon: SlidersHorizontal },
+  { key: 'help',      label: 'Help',                       Icon: CircleHelp },
 ]
 
 export function DashboardShell({
@@ -83,13 +83,17 @@ export function DashboardShell({
   const location = useLocation()
 
   const isRowActive = (item: NavItem) => {
-    if (item.to) {
-      // Real route: highlight when we're on it OR when its channel matches activeChannel
-      if (item.key === activeChannel) return true
-      return location.pathname.startsWith(item.to)
+    // Analytics highlights on any of the three analytics routes we have today.
+    if (item.key === 'analytics') {
+      return (
+        location.pathname.startsWith('/chat') ||
+        location.pathname.startsWith('/voice')
+      )
     }
     return false
   }
+  // Silence unused prop until we expand nav semantics again.
+  void activeChannel
 
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-900">

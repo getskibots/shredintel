@@ -1,0 +1,131 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>shredintel embed test</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: system-ui, sans-serif;
+        background: #f1f5f9;
+        color: #0f172a;
+      }
+      .host-chrome {
+        background: #1e293b;
+        color: white;
+        padding: 14px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .host-chrome h1 {
+        font-size: 15px;
+        margin: 0;
+        font-weight: 600;
+      }
+      .host-chrome .fake-nav {
+        display: flex;
+        gap: 16px;
+        font-size: 13px;
+        opacity: 0.7;
+      }
+      .container {
+        max-width: 1400px;
+        margin: 24px auto;
+        padding: 0 20px;
+      }
+      .card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        margin-bottom: 24px;
+      }
+      .card-header {
+        padding: 14px 20px;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .card-header h2 {
+        font-size: 14px;
+        font-weight: 600;
+        margin: 0;
+        color: #0f172a;
+      }
+      .card-header .meta {
+        font-size: 12px;
+        color: #64748b;
+        font-family: ui-monospace, monospace;
+      }
+      #shred-iframe {
+        display: block;
+        width: 100%;
+        border: 0;
+        transition: height 200ms ease-out;
+      }
+      #log {
+        font-family: ui-monospace, monospace;
+        font-size: 11px;
+        color: #475569;
+        padding: 8px 20px;
+        background: #f8fafc;
+        border-top: 1px solid #e2e8f0;
+        max-height: 100px;
+        overflow-y: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="host-chrome">
+      <h1>Simulated Botscrew admin — /admin/bot/2/analytics</h1>
+      <div class="fake-nav">
+        <span>Analytics</span>
+        <span>Knowledge</span>
+        <span>Flows</span>
+        <span>Support</span>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="card">
+        <div class="card-header">
+          <h2>Analytics · Mountain Collective (chat)</h2>
+          <span class="meta" id="height-meta">iframe height: —</span>
+        </div>
+        <iframe
+          id="shred-iframe"
+          src="/?embed=1#/bot/2"
+          title="shredintel"
+        ></iframe>
+        <div id="log"></div>
+      </div>
+    </div>
+
+    <script>
+      const iframe = document.getElementById('shred-iframe')
+      const heightMeta = document.getElementById('height-meta')
+      const log = document.getElementById('log')
+
+      function addLog(text) {
+        const line = document.createElement('div')
+        line.textContent = new Date().toISOString().slice(11, 19) + '  ' + text
+        log.prepend(line)
+        while (log.children.length > 20) log.removeChild(log.lastChild)
+      }
+
+      window.addEventListener('message', (event) => {
+        const data = event.data
+        if (!data || data.source !== 'shredintel') return
+        if (data.type === 'height' && typeof data.height === 'number') {
+          iframe.style.height = data.height + 'px'
+          heightMeta.textContent = 'iframe height: ' + data.height + 'px'
+          addLog('height ← ' + data.height + 'px')
+        }
+      })
+
+      addLog('embed-test.html loaded — waiting for shredintel height messages…')
+    </script>
+  </body>
+</html>

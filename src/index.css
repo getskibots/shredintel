@@ -11,3 +11,18 @@ body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
+
+/* Embed mode — host page iframes shredintel and supplies its own chrome.
+ * Our top bar (h-16) is hidden, so the sticky page header (top-14) needs
+ * to sit at the top of the iframe. Neutralize the sticky offset. */
+body.shredintel-embed .sticky {
+  top: 0 !important;
+}
+body.shredintel-embed {
+  background: transparent !important;
+}
+html.shredintel-embed,
+html.shredintel-embed body,
+html.shredintel-embed #root {
+  height: auto;
+}

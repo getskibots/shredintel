@@ -2,10 +2,13 @@ import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-d
 import { BotAnalyticsPage } from './components/BotAnalyticsPage'
 import { DashboardShell } from './components/DashboardShell'
 import { VoiceReportGrid } from './components/VoiceReportGrid'
+import { isEmbedMode, useEmbedHeightSync } from './lib/embed'
 
 function ChannelShell() {
   const location = useLocation()
   const channel = location.pathname.startsWith('/voice') ? 'voice' : 'chat'
+  // In embed mode, sync body height to the parent iframe every layout tick
+  useEmbedHeightSync(isEmbedMode())
   // Bot/resort label switches based on which chat dashboard is active
   const botLabel = location.pathname.startsWith('/chat/mc')
     ? 'Mountain Collective — Chat'

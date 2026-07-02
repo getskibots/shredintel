@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import logoUrl from '../../assets/logo.png'
 import { BotSelector } from '../BotSelector'
+import { isEmbedMode } from '../../lib/embed'
 
 /**
  * Dashboard chrome — sidebar + top bar.
@@ -95,6 +96,16 @@ export function DashboardShell({
   }
   // Silence unused prop until we expand nav semantics again.
   void activeChannel
+
+  // Embed mode — host page (e.g., Botscrew admin) iframes us and supplies
+  // its own chrome. We drop our sidebar + top bar and render the body only.
+  if (isEmbedMode()) {
+    return (
+      <div className="min-h-screen bg-transparent text-slate-900">
+        <main className="min-w-0">{children}</main>
+      </div>
+    )
+  }
 
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-900">

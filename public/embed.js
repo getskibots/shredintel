@@ -3,11 +3,11 @@
  * partner dashboards, anywhere).
  *
  * Usage (host page):
- *   <script src="https://shred.getskibots.com/embed.js" async></script>
+ *   <script src="https://analytics.getskibots.com/embed.js" async></script>
  *   <shredintel-analytics bot-id="1"></shredintel-analytics>
  *
  * That's the entire integration surface. The element renders an iframe
- * pointing at shred.getskibots.com, listens for height messages from that
+ * pointing at analytics.getskibots.com, listens for height messages from that
  * iframe, and auto-sizes itself. Changing `bot-id` at runtime re-navigates.
  *
  * Attributes (all optional except bot-id):
@@ -24,13 +24,13 @@
   'use strict'
 
   // Where the iframe should point. Auto-detected from the script src so this
-  // file works both on shred.getskibots.com (prod) and localhost (dev).
+  // file works both on analytics.getskibots.com (prod) and localhost (dev).
   var IFRAME_ORIGIN = (function () {
     try {
       var s = document.currentScript && document.currentScript.src
       if (s) return new URL(s).origin
     } catch (e) {}
-    return 'https://shred.getskibots.com'
+    return 'https://analytics.getskibots.com'
   })()
 
   var TAG_NAME = 'shredintel-analytics'

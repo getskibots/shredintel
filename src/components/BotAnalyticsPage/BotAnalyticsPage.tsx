@@ -12,7 +12,7 @@ import { ResolutionHero } from '../ResolutionHero'
 import { SectionHeader } from '../SectionHeader'
 import { SectionNav } from '../SectionNav'
 import { SenderMixStack } from '../SenderMixStack'
-import { useBotAnalytics } from '../../data/useAnalytics'
+import { useAvailableBots, useBotAnalytics } from '../../data/useAnalytics'
 import { type PeriodKey } from '../../fixtures/sample'
 
 /**
@@ -33,6 +33,13 @@ export function BotAnalyticsPage() {
   const botId = Number(botIdParam)
   const [period, setPeriod] = useState<PeriodKey>('7d')
   const { data: f, isLive, isLoading } = useBotAnalytics(botId, period)
+  const { bots } = useAvailableBots()
+
+  // Show the bot's label from the registry when we know it; fall back to id.
+  const bot = bots.find((b) => b.botId === botId)
+  const pageTitle = bot?.label
+    ? bot.label.replace(/^Bot \d+ · /, '')
+    : `Bot ${botId}`
 
   if (Number.isNaN(botId)) {
     return (
@@ -60,7 +67,8 @@ export function BotAnalyticsPage() {
         <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-semibold tracking-tight text-slate-900">
-              Analytics · Bot {botId}
+              Analytics <span className="text-slate-400">·</span>{' '}
+              <span className="text-slate-600">{pageTitle}</span>
             </h1>
             <span
               className={

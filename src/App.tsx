@@ -1,8 +1,6 @@
 import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { BotAnalyticsPage } from './components/BotAnalyticsPage'
 import { DashboardShell } from './components/DashboardShell'
-import { MCChatReportGrid } from './components/MCChatReportGrid'
-import { ShredIntelReportGrid } from './components/ShredIntelReportGrid'
 import { VoiceReportGrid } from './components/VoiceReportGrid'
 
 function ChannelShell() {
@@ -22,15 +20,16 @@ function ChannelShell() {
       activeChannel={channel}
     >
       <Routes>
-        <Route path="/" element={<Navigate to="/chat/jh" replace />} />
-        <Route path="/chat" element={<Navigate to="/chat/jh" replace />} />
-        <Route path="/chat/jh" element={<ShredIntelReportGrid />} />
-        <Route path="/chat/mc" element={<MCChatReportGrid />} />
+        {/* All chat routes collapse into one canonical layout — BotAnalyticsPage.
+            Voice stays separate because its data model differs (no page URLs,
+            call summaries live in raw.admin_call). */}
+        <Route path="/" element={<Navigate to="/bot/43" replace />} />
+        <Route path="/chat" element={<Navigate to="/bot/43" replace />} />
+        <Route path="/chat/jh" element={<Navigate to="/bot/43" replace />} />
+        <Route path="/chat/mc" element={<Navigate to="/bot/2" replace />} />
         <Route path="/voice" element={<VoiceReportGrid />} />
-        {/* Generic dashboard for any bot_id — reached via BotSelector for
-            partners outside the three curated dashboards */}
         <Route path="/bot/:botId" element={<BotAnalyticsPage />} />
-        <Route path="*" element={<Navigate to="/chat/jh" replace />} />
+        <Route path="*" element={<Navigate to="/bot/43" replace />} />
       </Routes>
     </DashboardShell>
   )

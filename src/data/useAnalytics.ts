@@ -582,8 +582,8 @@ export interface BotOption {
 }
 
 const KNOWN_BOTS: BotOption[] = [
-  { botId: 43,  label: 'Bot 43 · Jackson Hole (chat)',     route: '/chat/jh' },
-  { botId: 2,   label: 'Bot 2 · Mountain Collective (chat)', route: '/chat/mc' },
+  { botId: 43,  label: 'Bot 43 · Jackson Hole (chat)',        route: '/bot/43' },
+  { botId: 2,   label: 'Bot 2 · Mountain Collective (chat)',  route: '/bot/2' },
   { botId: 248, label: 'Bot 248 · Mountain Collective (voice)', route: '/voice' },
 ]
 

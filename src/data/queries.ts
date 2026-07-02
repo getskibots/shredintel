@@ -1,0 +1,187 @@
+/**
+ * Supabase query layer for the `report.*` schema built by Dru's ETL.
+ *
+ * Contract (from drumanshoo/get-ski-bots pipeline/schema/004_report_views.sql):
+ *   report.outcome_timeline             (bot_id, day, total_conversations, solved, unengaged, failed, engaged_conversations, engagement_rate, resolution_rate_of_engaged)
+ *   report.conversion_pulse             (bot_id, day, converted_conversations, total_conversations, engaged_conversations, conversion_share_of_total, conversion_share_of_engaged)
+ *   report.knowledge_source_leaderboard (bot_id, day, source_name, bot_message_count, failed_count)
+ *   report.sender_mix_stack             (bot_id, day, bot_messages, user_messages, support_messages, total_messages)
+ *   report.guest_identity_split         (bot_id, day, total_conversations, known_guests, anonymous_guests, contactable_guests)
+ *   report.lead_capture_funnel          (bot_id, day, started, engaged, asked_bot, contacted, support_touched)
+ *   report.device_experience_mix        (bot_id, day, dimension='device'|'browser', key, conversations, failed_conversations)
+ *   report.demand_heatmap               (bot_id, day, day_of_week, time_bucket, conversations, user_messages)
+ *
+ * All 8 views are SELECT-granted to the anon role via migration 006.
+ * `report` schema must be added to Supabase → Settings → API → Exposed schemas.
+ */
+
+import { getSupabase } from '../lib/supabase'
+
+// Row shapes as returned by PostgREST
+export interface OutcomeRow {
+  bot_id: number
+  day: string
+  total_conversations: number
+  solved: number
+  unengaged: number
+  failed: number
+  engaged_conversations: number
+  engagement_rate: number
+  resolution_rate_of_engaged: number
+}
+
+export interface ConversionRow {
+  bot_id: number
+  day: string
+  converted_conversations: number
+  total_conversations: number
+  engaged_conversations: number
+  conversion_share_of_total: number
+  conversion_share_of_engaged: number
+}
+
+export interface KnowledgeSourceRow {
+  bot_id: number
+  day: string
+  source_name: string
+  bot_message_count: number
+  failed_count: number
+}
+
+export interface SenderMixRow {
+  bot_id: number
+  day: string
+  bot_messages: number
+  user_messages: number
+  support_messages: number
+  total_messages: number
+}
+
+export interface GuestIdentityRow {
+  bot_id: number
+  day: string
+  total_conversations: number
+  known_guests: number
+  anonymous_guests: number
+  contactable_guests: number
+}
+
+export interface LeadCaptureRow {
+  bot_id: number
+  day: string
+  started: number
+  engaged: number
+  asked_bot: number
+  contacted: number
+  support_touched: number
+}
+
+export interface DeviceExperienceRow {
+  bot_id: number
+  day: string
+  dimension: 'device' | 'browser'
+  key: string | null
+  conversations: number
+  failed_conversations: number
+}
+
+export interface DemandHeatmapRow {
+  bot_id: number
+  day: string
+  day_of_week: string // 'Mon'..'Sun' — verify against Dru's convention
+  time_bucket: string // matches TimeBucket in analytics.ts
+  conversations: number
+  user_messages: number
+}
+
+export interface LiveBundle {
+  outcomeTimeline: OutcomeRow[]
+  conversionPulse: ConversionRow[]
+  knowledgeSourceLeaderboard: KnowledgeSourceRow[]
+  senderMixStack: SenderMixRow[]
+  guestIdentitySplit: GuestIdentityRow[]
+  leadCaptureFunnel: LeadCaptureRow[]
+  deviceExperienceMix: DeviceExperienceRow[]
+  demandHeatmap: DemandHeatmapRow[]
+}
+
+/**
+ * Fetches all 8 views in parallel, filtered to (bot_id, day BETWEEN from AND to).
+ * Returns null if the client isn't configured OR if the report schema isn't
+ * reachable (schema not exposed, permissions denied, network error, etc.).
+ * Callers should fall back to fixtures in that case.
+ */
+export async function fetchLiveBundle(
+  botId: number,
+  from: string, // 'YYYY-MM-DD'
+  to: string,   // 'YYYY-MM-DD'
+): Promise<LiveBundle | null> {
+  const supabase = getSupabase()
+  if (!supabase) return null
+
+  const q = <T,>(view: string) =>
+    supabase
+      .schema('report')
+      .from(view)
+      .select('*')
+      .eq('bot_id', botId)
+      .gte('day', from)
+      .lte('day', to) as unknown as Promise<{ data: T[] | null; error: unknown }>
+
+  try {
+    const [outcome, conversion, knowledge, sender, identity, funnel, device, heatmap] =
+      await Promise.all([
+        q<OutcomeRow>('outcome_timeline'),
+        q<ConversionRow>('conversion_pulse'),
+        q<KnowledgeSourceRow>('knowledge_source_leaderboard'),
+        q<SenderMixRow>('sender_mix_stack'),
+        q<GuestIdentityRow>('guest_identity_split'),
+        q<LeadCaptureRow>('lead_capture_funnel'),
+        q<DeviceExperienceRow>('device_experience_mix'),
+        q<DemandHeatmapRow>('demand_heatmap'),
+      ])
+
+    // Any query erroring is treated as "schema unreachable" — bail out.
+    const anyError =
+      outcome.error || conversion.error || knowledge.error || sender.error ||
+      identity.error || funnel.error || device.error || heatmap.error
+    if (anyError) {
+      // eslint-disable-next-line no-console
+      console.warn('[shredintel] Supabase live-fetch failed, falling back to fixtures', anyError)
+      return null
+    }
+
+    return {
+      outcomeTimeline: outcome.data ?? [],
+      conversionPulse: conversion.data ?? [],
+      knowledgeSourceLeaderboard: knowledge.data ?? [],
+      senderMixStack: sender.data ?? [],
+      guestIdentitySplit: identity.data ?? [],
+      leadCaptureFunnel: funnel.data ?? [],
+      deviceExperienceMix: device.data ?? [],
+      demandHeatmap: heatmap.data ?? [],
+    }
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.warn('[shredintel] Supabase live-fetch threw', err)
+    return null
+  }
+}
+
+/**
+ * Compute (from, to) ISO dates for a period selector. The upper bound is
+ * always "yesterday UTC" (the ETL runs nightly, today's rollup isn't in yet).
+ */
+export function periodDates(period: '7d' | '30d' | '90d' | '180d' | 'all'):
+  { from: string; to: string } {
+  const to = new Date()
+  to.setUTCDate(to.getUTCDate() - 1)
+  const from = new Date(to)
+  if (period === '7d')       from.setUTCDate(from.getUTCDate() - 6)
+  else if (period === '30d') from.setUTCDate(from.getUTCDate() - 29)
+  else if (period === '90d') from.setUTCDate(from.getUTCDate() - 89)
+  else if (period === '180d') from.setUTCDate(from.getUTCDate() - 179)
+  else                        from.setUTCDate(from.getUTCDate() - 730) // 'all' = 2 years window (safe upper bound)
+  const iso = (d: Date) => d.toISOString().slice(0, 10)
+  return { from: iso(from), to: iso(to) }
+}

@@ -1,16 +1,21 @@
-import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { CallTimeMetrics } from '../CallTimeMetrics'
 import { DemandHeatmap } from '../DemandHeatmap'
 import { IntentCategoryBreakdown } from '../IntentCategoryBreakdown'
 import { KnowledgeGaps } from '../KnowledgeGaps'
 import { KnowledgeSourceLeaderboard } from '../KnowledgeSourceLeaderboard'
+import { PeriodPicker } from '../PeriodPicker'
 import { SectionHeader } from '../SectionHeader'
 import { SectionNav } from '../SectionNav'
 import { VoiceGeography } from '../VoiceGeography'
 import { VoiceIntentHero } from '../VoiceIntentHero'
 import { useVoiceAnalytics } from '../../data/useAnalytics'
-import { type VoicePeriodKey } from '../../fixtures/voice'
 import { formatNumber, formatPercent } from '../../lib/formatters'
+import {
+  selectionFromSearchParams,
+  writeSelectionToSearchParams,
+  type PeriodSelection,
+} from '../../lib/period'
 
 const sections = [
   { id: 'guest-intent', number: '1', name: 'Guest Intent' },
@@ -19,16 +24,16 @@ const sections = [
   { id: 'demand', number: '4', name: 'Demand Patterns' },
 ]
 
-const PERIODS: Array<{ key: VoicePeriodKey; label: string }> = [
-  { key: '7d', label: 'Last 7 days' },
-  { key: '30d', label: 'Last 30 days' },
-  { key: '90d', label: 'Last 90 days' },
-  { key: 'all', label: 'All time' },
-]
-
 export function VoiceReportGrid() {
-  const [period, setPeriod] = useState<VoicePeriodKey>('all')
-  const { data: f, isLive, isLoading } = useVoiceAnalytics(period)
+  const [searchParams, setSearchParams] = useSearchParams()
+  // Voice historically defaulted to "All time" (the demo needs the full window
+  // to show peak call patterns); keep that default when no URL param is set.
+  const selection = selectionFromSearchParams(searchParams, { kind: 'preset', preset: 'all' })
+  const setSelection = (next: PeriodSelection) => {
+    const params = writeSelectionToSearchParams(new URLSearchParams(searchParams), next)
+    setSearchParams(params, { replace: true })
+  }
+  const { data: f, isLive, isLoading } = useVoiceAnalytics(selection)
 
   if (isLoading || !f) {
     return (
@@ -37,11 +42,6 @@ export function VoiceReportGrid() {
       </div>
     )
   }
-
-  const tabClass = (active: boolean) =>
-    active
-      ? 'rounded-md bg-botscrew-500 px-3 py-1.5 text-xs font-semibold text-white'
-      : 'rounded-md px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100'
 
   // Quick efficiency stats for the operator footnote
   const aiHandled = f.callTime.aiOnlyCalls
@@ -82,19 +82,7 @@ export function VoiceReportGrid() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <div className="flex rounded-lg border border-slate-200 bg-white p-0.5">
-              {PERIODS.map((p) => (
-                <button
-                  key={p.key}
-                  type="button"
-                  onClick={() => setPeriod(p.key)}
-                  aria-pressed={period === p.key}
-                  className={tabClass(period === p.key)}
-                >
-                  {p.label}
-                </button>
-              ))}
-            </div>
+            <PeriodPicker value={selection} onChange={setSelection} align="start" />
             <button className="rounded-lg bg-botscrew-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-botscrew-600">
               Export calls
             </button>

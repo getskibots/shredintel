@@ -205,10 +205,14 @@ const BASELINE_GEO: Array<{ country: string; raw: number }> = [
 const GEO_KNOWN = BASELINE_GEO.reduce((s, g) => s + g.raw, 0)
 
 // ─── Helpers ───────────────────────────────────────────────────────────
+function sliceTimelineByDays(days: number): DailyEntry[] {
+  const capped = Math.max(1, Math.min(days, DAILY.length))
+  return DAILY.slice(Math.max(0, DAILY.length - capped))
+}
 function sliceTimelineByPeriod(period: VoicePeriodKey): DailyEntry[] {
   if (period === 'all') return DAILY
   const days = period === '7d' ? 7 : period === '30d' ? 30 : 90
-  return DAILY.slice(Math.max(0, DAILY.length - days))
+  return sliceTimelineByDays(days)
 }
 function aggregate(entries: DailyEntry[]) {
   let calls = 0, solved = 0, unengaged = 0, talk = 0, humanInvolved = 0
@@ -227,8 +231,25 @@ function aggregate(entries: DailyEntry[]) {
 const SECONDS_PER_HOUR = 3600
 
 // ─── Factory ───────────────────────────────────────────────────────────
+/**
+ * Days-driven variant used by the custom-range picker. Wraps
+ * buildVoiceFixtures by monkey-patching the slice: same math, arbitrary
+ * window length. `label` overrides the periodLabel.
+ */
+export function buildVoiceFixturesForDays(
+  days: number,
+  label: string,
+  periodTag: VoicePeriodKey = '30d',
+): VoiceFixtures {
+  const fixtures = buildVoiceFixturesInternal(sliceTimelineByDays(days), periodTag)
+  return { ...fixtures, periodLabel: label }
+}
+
 export function buildVoiceFixtures(period: VoicePeriodKey): VoiceFixtures {
-  const sliced = sliceTimelineByPeriod(period)
+  return buildVoiceFixturesInternal(sliceTimelineByPeriod(period), period)
+}
+
+function buildVoiceFixturesInternal(sliced: DailyEntry[], period: VoicePeriodKey): VoiceFixtures {
   const daysInWindow = sliced.length
   const agg = aggregate(sliced)
   // Engaged-only scope: voice has SOLVED + FAILED outcomes, FAILED=0 in this

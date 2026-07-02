@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { getSupabase, supabaseConfigured } from '../lib/supabase'
 import { fetchLiveBundle, periodDates, type LiveBundle } from './queries'
 import { buildMCChatFixtures, type MCChatFixtures, type MCChatPeriodKey } from '../fixtures/mc-chat'
-import { buildVoiceFixtures, type VoiceFixtures, type VoicePeriodKey } from '../fixtures/voice'
-import { buildPeriodFixtures, type PeriodFixtures, type PeriodKey } from '../fixtures/sample'
+import { buildVoiceFixtures, buildVoiceFixturesForDays, type VoiceFixtures, type VoicePeriodKey } from '../fixtures/voice'
+import { buildPeriodFixtures, buildPeriodFixturesForDays, type PeriodFixtures, type PeriodKey } from '../fixtures/sample'
+import { resolveSelection, type PeriodSelection } from '../lib/period'
 
 // Botscrew bot ids — same across chat + voice tenants.
 const BOT_ID_MC_CHAT = 2
@@ -634,11 +635,37 @@ export function useAvailableBots(): { bots: BotOption[]; isLive: boolean; isLoad
 }
 
 /**
+ * Build chat fixtures for a given selection. Presets go through
+ * `buildPeriodFixtures`; custom ranges go through the days-driven builder
+ * with a human range label.
+ */
+function chatFixturesFor(selection: PeriodSelection): PeriodFixtures {
+  if (selection.kind === 'preset') {
+    return buildPeriodFixtures(selection.preset as PeriodKey)
+  }
+  const resolved = resolveSelection(selection)
+  return buildPeriodFixturesForDays(resolved.days, resolved.label)
+}
+
+function voiceFixturesFor(selection: PeriodSelection): VoiceFixtures {
+  if (selection.kind === 'preset') {
+    return buildVoiceFixtures(selection.preset as VoicePeriodKey)
+  }
+  const resolved = resolveSelection(selection)
+  return buildVoiceFixturesForDays(resolved.days, resolved.label)
+}
+
+// Stable key so useMemo/useEffect only recompute when the selection changes
+function selectionKey(sel: PeriodSelection): string {
+  return sel.kind === 'preset' ? `p:${sel.preset}` : `c:${sel.from}:${sel.to}`
+}
+
+/**
  * Generic hook — analytics for any bot_id. Used by the /bot/:botId route.
  */
 export function useBotAnalytics(
   botId: number,
-  period: PeriodKey,
+  selection: PeriodSelection,
 ): AnalyticsState<PeriodFixtures> {
   const [state, setState] = useState<AnalyticsState<PeriodFixtures>>({
     data: null,
@@ -647,7 +674,8 @@ export function useBotAnalytics(
     error: null,
   })
 
-  const fixtureFallback = useMemo(() => buildPeriodFixtures(period), [period])
+  const selKey = selectionKey(selection)
+  const fixtureFallback = useMemo(() => chatFixturesFor(selection), [selKey])
 
   useEffect(() => {
     if (!supabaseConfigured) {
@@ -656,7 +684,7 @@ export function useBotAnalytics(
     }
     let cancelled = false
     ;(async () => {
-      const { from, to } = periodDates(period === '7d' ? '7d' : '30d')
+      const { from, to } = resolveSelection(selection)
       const bundle = await fetchLiveBundle(botId, from, to)
       if (cancelled) return
       if (!bundleHasData(bundle)) {
@@ -667,12 +695,12 @@ export function useBotAnalytics(
       setState({ data: merged, isLoading: false, isLive: true, error: null })
     })()
     return () => { cancelled = true }
-  }, [botId, period, fixtureFallback])
+  }, [botId, selKey, fixtureFallback])
 
   return state
 }
 
-export function useJHChatAnalytics(period: PeriodKey): AnalyticsState<PeriodFixtures> {
+export function useJHChatAnalytics(selection: PeriodSelection): AnalyticsState<PeriodFixtures> {
   const [state, setState] = useState<AnalyticsState<PeriodFixtures>>({
     data: null,
     isLoading: supabaseConfigured,
@@ -680,7 +708,8 @@ export function useJHChatAnalytics(period: PeriodKey): AnalyticsState<PeriodFixt
     error: null,
   })
 
-  const fixtureFallback = useMemo(() => buildPeriodFixtures(period), [period])
+  const selKey = selectionKey(selection)
+  const fixtureFallback = useMemo(() => chatFixturesFor(selection), [selKey])
 
   useEffect(() => {
     if (!supabaseConfigured) {
@@ -689,7 +718,7 @@ export function useJHChatAnalytics(period: PeriodKey): AnalyticsState<PeriodFixt
     }
     let cancelled = false
     ;(async () => {
-      const { from, to } = periodDates(period === '7d' ? '7d' : '30d')
+      const { from, to } = resolveSelection(selection)
       const bundle = await fetchLiveBundle(BOT_ID_JH_CHAT, from, to)
       if (cancelled) return
       if (!bundleHasData(bundle)) {
@@ -700,12 +729,12 @@ export function useJHChatAnalytics(period: PeriodKey): AnalyticsState<PeriodFixt
       setState({ data: merged, isLoading: false, isLive: true, error: null })
     })()
     return () => { cancelled = true }
-  }, [period, fixtureFallback])
+  }, [selKey, fixtureFallback])
 
   return state
 }
 
-export function useVoiceAnalytics(period: VoicePeriodKey): AnalyticsState<VoiceFixtures> {
+export function useVoiceAnalytics(selection: PeriodSelection): AnalyticsState<VoiceFixtures> {
   const [state, setState] = useState<AnalyticsState<VoiceFixtures>>({
     data: null,
     isLoading: supabaseConfigured,
@@ -713,7 +742,8 @@ export function useVoiceAnalytics(period: VoicePeriodKey): AnalyticsState<VoiceF
     error: null,
   })
 
-  const fixtureFallback = useMemo(() => buildVoiceFixtures(period), [period])
+  const selKey = selectionKey(selection)
+  const fixtureFallback = useMemo(() => voiceFixturesFor(selection), [selKey])
 
   useEffect(() => {
     if (!supabaseConfigured) {
@@ -722,7 +752,7 @@ export function useVoiceAnalytics(period: VoicePeriodKey): AnalyticsState<VoiceF
     }
     let cancelled = false
     ;(async () => {
-      const { from, to } = periodDates(period)
+      const { from, to } = resolveSelection(selection)
       const bundle = await fetchLiveBundle(BOT_ID_MC_VOICE, from, to)
       if (cancelled) return
       if (!bundleHasData(bundle)) {
@@ -733,7 +763,7 @@ export function useVoiceAnalytics(period: VoicePeriodKey): AnalyticsState<VoiceF
       setState({ data: merged, isLoading: false, isLive: true, error: null })
     })()
     return () => { cancelled = true }
-  }, [period, fixtureFallback])
+  }, [selKey, fixtureFallback])
 
   return state
 }

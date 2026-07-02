@@ -505,12 +505,14 @@ export const demandHeatmapSample: DemandHeatmapProps = {
 
 // ─────────────────────────────────────────────────────────────────────────
 // Period-aware fixture factory.
-// `buildPeriodFixtures('7d' | '30d')` returns a bundle of props sized to
-// the requested window. Daily series respect a weekly pattern + slight
-// growth across the period. Counts scale by days/7.
+// `buildPeriodFixtures(key)` returns a bundle of props sized to the
+// requested window. Presets ('7d' | '30d' | '90d' | 'all') scale off the
+// JH 7-day baseline. For arbitrary date ranges use
+// `buildPeriodFixturesForDays(days, label)`.
+// Daily series respect a weekly pattern + slight growth across the period.
 // ─────────────────────────────────────────────────────────────────────────
 
-export type PeriodKey = '7d' | '30d'
+export type PeriodKey = '7d' | '30d' | '90d' | 'all'
 
 export interface PeriodFixtures {
   period: PeriodKey
@@ -562,9 +564,39 @@ function distributeAcrossDates(total: number, dates: string[]): number[] {
   return rounded
 }
 
+/** Days a preset represents (must match resolveSelection in src/lib/period.ts). */
+function daysForPreset(period: PeriodKey): number {
+  return period === '7d'  ? 7
+       : period === '30d' ? 30
+       : period === '90d' ? 90
+       :                    730 // 'all' — arbitrary far-back window
+}
+
+/** Human label for a preset (matches PERIOD_LABELS in src/lib/period.ts). */
+function labelForPreset(period: PeriodKey): string {
+  return period === '7d'  ? 'Last 7 days · vs. prior 7'
+       : period === '30d' ? 'Last 30 days · vs. prior 30'
+       : period === '90d' ? 'Last 90 days · vs. prior 90'
+       :                    'All time'
+}
+
 export function buildPeriodFixtures(period: PeriodKey): PeriodFixtures {
-  const days = period === '7d' ? 7 : 30
+  return buildPeriodFixturesForDays(daysForPreset(period), labelForPreset(period), period)
+}
+
+/**
+ * Days-driven fixture builder. Used by the picker for arbitrary custom
+ * ranges. Callers pass the day count and a human label; the shape and
+ * daily-series pattern are identical to `buildPeriodFixtures`.
+ */
+export function buildPeriodFixturesForDays(
+  daysArg: number,
+  label: string,
+  periodTag: PeriodKey = '30d',
+): PeriodFixtures {
+  const days = Math.max(1, Math.min(daysArg, 730))
   const scale = days / 7
+  const period: PeriodKey = periodTag
   const dates = generateDates(days)
 
   // Period totals (scaled from the JH 7-day baseline)
@@ -892,7 +924,7 @@ export function buildPeriodFixtures(period: PeriodKey): PeriodFixtures {
     workingHoursConversations: working,
   }
 
-  const periodLabel = period === '7d' ? 'Last 7 days · vs. prior 7' : 'Last 30 days · vs. prior 30'
+  const periodLabel = label
 
   return {
     period,

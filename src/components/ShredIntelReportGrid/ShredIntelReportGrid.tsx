@@ -25,7 +25,7 @@ const sections = [
 
 export function ShredIntelReportGrid() {
   const [period, setPeriod] = useState<PeriodKey>('7d')
-  const { data: f, isLive, isLoading } = useJHChatAnalytics(period)
+  const { data: f, isLive, isLoading } = useJHChatAnalytics({ kind: 'preset', preset: period })
 
   if (isLoading || !f) {
     return (

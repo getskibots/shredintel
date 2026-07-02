@@ -14,6 +14,7 @@ import {
   CircleHelp,
   type LucideIcon,
 } from 'lucide-react'
+import logoUrl from '../../assets/logo.png'
 
 /**
  * Dashboard chrome — sidebar + top bar.
@@ -73,15 +74,6 @@ const NAV: NavItem[] = [
   { key: 'help',        label: 'Help',                      Icon: CircleHelp },
 ]
 
-function MountainLogo({ className = '' }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 64 36" className={className} aria-hidden>
-      <path d="M2 32 L20 8 L30 22 L40 6 L62 32 Z" fill="white" />
-      <path d="M2 32 L62 32" stroke="white" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  )
-}
-
 export function DashboardShell({
   botLabel = '',
   userName = 'Brandon Quinn',
@@ -107,7 +99,7 @@ export function DashboardShell({
         aria-label="Primary navigation"
       >
         <div className="flex flex-col items-center px-3 pt-4 pb-3">
-          <MountainLogo className="w-[56px]" />
+          <img src={logoUrl} alt="Get Ski Bots" className="h-auto w-[72px]" />
         </div>
 
         <nav className="flex-1 py-2">

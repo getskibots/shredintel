@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { ConversionPulse } from '../ConversionPulse'
 import { DemandHeatmap } from '../DemandHeatmap'
 import { DeviceExperienceMix } from '../DeviceExperienceMix'
@@ -13,7 +13,8 @@ import { ResolutionHero } from '../ResolutionHero'
 import { SectionHeader } from '../SectionHeader'
 import { SectionNav } from '../SectionNav'
 import { SenderMixStack } from '../SenderMixStack'
-import { buildPeriodFixtures, type PeriodKey } from '../../fixtures/sample'
+import { useJHChatAnalytics } from '../../data/useAnalytics'
+import { type PeriodKey } from '../../fixtures/sample'
 
 const sections = [
   { id: 'core', number: '1', name: 'Conversation Core' },
@@ -24,7 +25,15 @@ const sections = [
 
 export function ShredIntelReportGrid() {
   const [period, setPeriod] = useState<PeriodKey>('7d')
-  const f = useMemo(() => buildPeriodFixtures(period), [period])
+  const { data: f, isLive, isLoading } = useJHChatAnalytics(period)
+
+  if (isLoading || !f) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <p className="text-sm text-slate-500">Loading Jackson Hole chat analytics…</p>
+      </div>
+    )
+  }
 
   const tabClass = (active: boolean) =>
     active
@@ -36,9 +45,29 @@ export function ShredIntelReportGrid() {
       {/* Page-local header — sticky beneath the dashboard top bar */}
       <div className="sticky top-14 z-20 border-b border-slate-200 bg-white">
         <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
-          <h1 className="text-xl font-semibold tracking-tight text-slate-900">
-            Analytics
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-semibold tracking-tight text-slate-900">
+              Analytics
+            </h1>
+            <span
+              className={
+                isLive
+                  ? 'inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-700'
+                  : 'inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500'
+              }
+              title={isLive ? 'Reading live from Supabase' : 'Using bundled fixtures'}
+            >
+              <span
+                aria-hidden
+                className={
+                  isLive
+                    ? 'h-1.5 w-1.5 rounded-full bg-emerald-500'
+                    : 'h-1.5 w-1.5 rounded-full bg-slate-400'
+                }
+              />
+              {isLive ? 'Live' : 'Demo'}
+            </span>
+          </div>
           <div className="flex items-center gap-2">
             <div className="flex rounded-lg border border-slate-200 bg-white p-0.5">
               <button

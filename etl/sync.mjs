@@ -30,6 +30,14 @@ const MODE =
 const BATCH_SIZE = Number(process.env.BATCH_SIZE || 5000)
 const RAW_SCHEMA = 'raw'
 
+// Full-mirror mode: discover + create + sync EVERY source table (not just the
+// curated TABLES list). `node sync.mjs --mirror` runs it; add --dry-run to
+// preview the plan + DDL. Nothing excluded by default (true 1:1 raw mirror).
+const MIRROR = process.argv.includes('--mirror')
+const MIRROR_EXCLUDE = new Set(
+  (process.env.MIRROR_EXCLUDE || '').split(',').map((s) => s.trim()).filter(Boolean),
+)
+
 // report.* materialized views to refresh after a sync
 const MATVIEWS = [
   'outcome_timeline',
@@ -178,6 +186,9 @@ function coerce(val, pgType) {
     return JSON.stringify(s)
   }
 
+  // bytea target — hand PG the raw bytes (node-postgres encodes Buffers itself)
+  if (pgType === 'bytea') return Buffer.isBuffer(val) ? val : Buffer.from(String(val))
+
   // Remaining Buffers (binary/bit on non-boolean columns): best-effort text
   if (Buffer.isBuffer(val)) return val.toString('utf8')
   return val
@@ -259,12 +270,125 @@ async function bulkInsert(pgc, cfg, cols, rows, pgTypeByName, upsert) {
       })
       return `(${ph.join(',')})`
     }).join(',')
-    let sql = `INSERT INTO ${RAW_SCHEMA}.${cfg.name} (${colList}) VALUES ${valuesSql}`
-    sql += upsert && updateSet
-      ? ` ON CONFLICT ("${cfg.pk}") DO UPDATE SET ${updateSet}`
-      : ` ON CONFLICT ("${cfg.pk}") DO NOTHING`
+    let sql = `INSERT INTO ${RAW_SCHEMA}."${cfg.name}" (${colList}) VALUES ${valuesSql}`
+    if (cfg.pk) {
+      sql += upsert && updateSet
+        ? ` ON CONFLICT ("${cfg.pk}") DO UPDATE SET ${updateSet}`
+        : ` ON CONFLICT ("${cfg.pk}") DO NOTHING`
+    }
     await pgc_query(pgc, sql, params)
   }
+}
+
+// ── full mirror: discover → create → sync every source table ──────
+// MySQL column → Postgres type. Errs wide (unsigned → next size up) so a raw
+// mirror never overflows or lossily truncates; unknown types fall back to text.
+function mapType(col) {
+  const dt = String(col.dataType || '').toLowerCase()
+  const ct = String(col.columnType || '').toLowerCase()
+  const unsigned = ct.includes('unsigned')
+  switch (dt) {
+    case 'bit': return 'boolean'
+    case 'tinyint': return ct.startsWith('tinyint(1)') ? 'boolean' : 'smallint'
+    case 'bool': case 'boolean': return 'boolean'
+    case 'smallint': return unsigned ? 'integer' : 'smallint'
+    case 'mediumint': return 'integer'
+    case 'int': case 'integer': return unsigned ? 'bigint' : 'integer'
+    case 'bigint': return unsigned ? 'numeric(20,0)' : 'bigint'
+    case 'decimal': case 'numeric': return (ct.match(/^decimal\([\d,\s]+\)/)?.[0] || 'numeric').replace('decimal', 'numeric')
+    case 'float': return 'real'
+    case 'double': case 'real': return 'double precision'
+    case 'date': return 'date'
+    case 'datetime': case 'timestamp': return 'timestamptz'
+    case 'time': return 'time'
+    case 'year': return 'integer'
+    case 'json': return 'jsonb'
+    case 'binary': case 'varbinary': case 'tinyblob': case 'blob':
+    case 'mediumblob': case 'longblob': return 'bytea'
+    default: return 'text' // char/varchar/*text/enum/set/geometry/etc.
+  }
+}
+
+// Every base table in the source DB, with columns + single-column PK (composite
+// PKs → treated as PK-less: full delete+reload each run).
+async function discoverTables(my) {
+  const db = process.env.BOTSCREW_MYSQL_DATABASE
+  const [tbls] = await my.query(
+    `SELECT TABLE_NAME AS name FROM information_schema.TABLES
+      WHERE TABLE_SCHEMA = ? AND TABLE_TYPE = 'BASE TABLE' ORDER BY TABLE_NAME`, [db])
+  const out = []
+  for (const { name } of tbls) {
+    if (MIRROR_EXCLUDE.has(name)) continue
+    const [cols] = await my.query(
+      `SELECT COLUMN_NAME n, DATA_TYPE dt, COLUMN_TYPE ct, IS_NULLABLE nul
+         FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? ORDER BY ORDINAL_POSITION`, [db, name])
+    const [pks] = await my.query(
+      `SELECT COLUMN_NAME n FROM information_schema.KEY_COLUMN_USAGE
+        WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND CONSTRAINT_NAME = 'PRIMARY'`, [db, name])
+    out.push({
+      name,
+      pk: pks.length === 1 ? pks[0].n : null,
+      cols: cols.map((c) => ({ name: c.n, dataType: c.dt, columnType: c.ct })),
+    })
+  }
+  return out
+}
+
+// CREATE SCHEMA/TABLE IF NOT EXISTS raw.<table> matching the source shape.
+// Returns the DDL (used for dry-run preview; existing tables are left untouched).
+async function ensureRawTable(pgc, t) {
+  const defs = t.cols.map((c) => `"${c.name}" ${mapType(c)}`)
+  if (t.pk) defs.push(`PRIMARY KEY ("${t.pk}")`)
+  const ddl = `CREATE TABLE IF NOT EXISTS ${RAW_SCHEMA}."${t.name}" (\n  ${defs.join(',\n  ')}\n)`
+  if (MODE === 'dry-run') return ddl
+  await pgc_query(pgc, `CREATE SCHEMA IF NOT EXISTS ${RAW_SCHEMA}`)
+  await pgc_query(pgc, ddl)
+  return ddl
+}
+
+// Sync one discovered table. Uses the ACTUAL destination column types (so it's
+// correct for both mirror-created and Dru's pre-existing tables).
+async function mirrorSyncTable(my, pgc, t) {
+  const srcCount = Number(await mysqlEstimate(my, t.name))
+  const isBig = !!t.pk && srcCount > 100_000
+  const mode = isBig ? 'incremental' : (t.pk ? 'full' : 'reload')
+
+  if (MODE === 'dry-run') return { table: t.name, mode, src: srcCount, toLoad: srcCount }
+
+  const pgCols = await pgColumns(pgc, t.name)
+  if (pgCols.length === 0) { warn(`raw.${t.name} missing after ensure — skipping`); return { table: t.name, skipped: true } }
+  const pgTypeByName = new Map(pgCols.map((c) => [c.name, c.type]))
+  const cols = t.cols.map((c) => c.name).filter((n) => pgTypeByName.has(n))
+  const pk = t.pk && cols.includes(t.pk) ? t.pk : null
+  const cfg = { name: t.name, pk }
+  const colSql = cols.map((c) => `\`${c}\``).join(',')
+
+  if (pk && isBig) {
+    const { rows: [{ hw }] } = await pgc_query(pgc, `SELECT MAX("${pk}") AS hw FROM ${RAW_SCHEMA}."${t.name}"`)
+    const highWater = hw ?? 0
+    const [[{ delta }]] = await my.query(`SELECT COUNT(*) AS delta FROM \`${t.name}\` WHERE \`${pk}\` > ?`, [highWater])
+    if (Number(delta) === 0) { log(`  ${t.name}: up to date`); return { table: t.name, mode, loaded: 0 } }
+    log(`  ${t.name}: +${delta} rows (${pk} > ${highWater})`)
+    let loaded = 0, cursor = highWater
+    for (;;) {
+      const [batch] = await my.query(
+        `SELECT ${colSql} FROM \`${t.name}\` WHERE \`${pk}\` > ? ORDER BY \`${pk}\` ASC LIMIT ?`, [cursor, BATCH_SIZE])
+      if (batch.length === 0) break
+      await bulkInsert(pgc, cfg, cols, batch, pgTypeByName, true)
+      loaded += batch.length; cursor = batch[batch.length - 1][pk]
+      process.stdout.write(`\r  ${t.name}: ${loaded}/${delta} …`)
+      if (batch.length < BATCH_SIZE) break
+    }
+    process.stdout.write('\n')
+    return { table: t.name, mode, loaded }
+  }
+
+  // small keyed → full upsert; PK-less → delete + reload
+  const [rows] = await my.query(`SELECT ${colSql} FROM \`${t.name}\``)
+  if (!pk) await pgc_query(pgc, `DELETE FROM ${RAW_SCHEMA}."${t.name}"`)
+  await bulkInsert(pgc, cfg, cols, rows, pgTypeByName, !!pk)
+  return { table: t.name, mode, loaded: rows.length }
 }
 
 // ── matview refresh ───────────────────────────────────────────────
@@ -313,6 +437,43 @@ async function main() {
     log('Connecting to Botscrew MySQL …')
     my = await connectMySQL()
     log('  ✓ Botscrew MySQL connected')
+
+    if (MIRROR) {
+      log('\nFull mirror — discovering source tables …')
+      const tables = await discoverTables(my)
+      log(`  ${tables.length} tables discovered${MIRROR_EXCLUDE.size ? ` (excluded ${MIRROR_EXCLUDE.size})` : ''}`)
+
+      if (MODE === 'dry-run') {
+        log('\nDRY RUN — plan (no writes):')
+        let totalRows = 0
+        const risky = []
+        for (const t of tables) {
+          const ddl = await ensureRawTable(pgc, t) // returns DDL; creates nothing in dry-run
+          const p = await mirrorSyncTable(my, pgc, t)
+          totalRows += p.toLoad || 0
+          log(`  ${t.name.padEnd(34)} pk=${(t.pk || '—').padEnd(6)} ${p.mode.padEnd(11)} ~${p.toLoad}`)
+          if (/\b(bytea|jsonb|numeric\(20)/.test(ddl)) risky.push(ddl)
+        }
+        log(`\n${tables.length} tables · ~${totalRows.toLocaleString()} rows to load on first run`)
+        if (risky.length) {
+          log(`\n── DDL for ${risky.length} tables with binary/json/bignum cols (review type mapping) ──`)
+          for (const d of risky) log('\n' + d)
+        }
+        return
+      }
+
+      log('Ensuring destination tables …')
+      for (const t of tables) await ensureRawTable(pgc, t)
+      log(`  ✓ ${tables.length} raw.* tables ensured`)
+      log('\nSyncing …')
+      let total = 0
+      for (const t of tables) { const p = await mirrorSyncTable(my, pgc, t); total += p.loaded || 0 }
+      log(`\nMirror complete — ${total.toLocaleString()} rows loaded.`)
+      await syncBotsRegistry(pgc)
+      await refreshMatviews(pgc)
+      log('\n✓ Full mirror synced + report.* refreshed.')
+      return
+    }
 
     if (MODE === 'test') {
       log('\nConnection test OK. Per-table snapshot:')

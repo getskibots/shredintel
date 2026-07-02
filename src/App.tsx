@@ -1,4 +1,5 @@
 import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { BotAnalyticsPage } from './components/BotAnalyticsPage'
 import { DashboardShell } from './components/DashboardShell'
 import { MCChatReportGrid } from './components/MCChatReportGrid'
 import { ShredIntelReportGrid } from './components/ShredIntelReportGrid'
@@ -26,6 +27,9 @@ function ChannelShell() {
         <Route path="/chat/jh" element={<ShredIntelReportGrid />} />
         <Route path="/chat/mc" element={<MCChatReportGrid />} />
         <Route path="/voice" element={<VoiceReportGrid />} />
+        {/* Generic dashboard for any bot_id — reached via BotSelector for
+            partners outside the three curated dashboards */}
+        <Route path="/bot/:botId" element={<BotAnalyticsPage />} />
         <Route path="*" element={<Navigate to="/chat/jh" replace />} />
       </Routes>
     </DashboardShell>

@@ -14,6 +14,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import logoUrl from '../../assets/logo.png'
+import { BotSelector } from '../BotSelector'
 
 /**
  * Dashboard chrome — sidebar + top bar.
@@ -164,9 +165,9 @@ export function DashboardShell({
               Home
             </Link>
           </div>
-          {botLabel && (
-            <div className="text-base font-semibold text-ink-900">{botLabel}</div>
-          )}
+          <BotSelector />
+          {/* botLabel is now surfaced via BotSelector — hide the static label */}
+          {false && botLabel}
           <div className="flex items-center gap-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-300 text-[11px] font-semibold text-slate-700">
               {userName

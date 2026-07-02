@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { supabaseConfigured } from '../lib/supabase'
+import { getSupabase, supabaseConfigured } from '../lib/supabase'
 import { fetchLiveBundle, periodDates, type LiveBundle } from './queries'
 import { buildMCChatFixtures, type MCChatFixtures, type MCChatPeriodKey } from '../fixtures/mc-chat'
 import { buildVoiceFixtures, type VoiceFixtures, type VoicePeriodKey } from '../fixtures/voice'
@@ -566,6 +566,108 @@ export function useMCChatAnalytics(period: MCChatPeriodKey): AnalyticsState<MCCh
     })()
     return () => { cancelled = true }
   }, [period, fixtureFallback])
+
+  return state
+}
+
+/**
+ * Discovers all bot_ids that have data in Supabase. Uses report.outcome_timeline
+ * as the discovery source (every bot with a single conversation shows up there).
+ * Falls back to the three known bots when Supabase isn't configured or empty.
+ */
+export interface BotOption {
+  botId: number
+  label: string       // e.g., "Bot 43" — replace with name once report.bots view exists
+  route: string       // canonical route to view this bot
+}
+
+const KNOWN_BOTS: BotOption[] = [
+  { botId: 43,  label: 'Bot 43 · Jackson Hole (chat)',     route: '/chat/jh' },
+  { botId: 2,   label: 'Bot 2 · Mountain Collective (chat)', route: '/chat/mc' },
+  { botId: 248, label: 'Bot 248 · Mountain Collective (voice)', route: '/voice' },
+]
+
+export function useAvailableBots(): { bots: BotOption[]; isLive: boolean; isLoading: boolean } {
+  const [state, setState] = useState({ bots: KNOWN_BOTS, isLive: false, isLoading: supabaseConfigured })
+
+  useEffect(() => {
+    if (!supabaseConfigured) return
+    let cancelled = false
+    ;(async () => {
+      const supabase = getSupabase()
+      if (!supabase) return
+      try {
+        const { data, error } = await supabase
+          .schema('report')
+          .from('outcome_timeline')
+          .select('bot_id')
+        if (cancelled) return
+        if (error || !data || data.length === 0) {
+          setState({ bots: KNOWN_BOTS, isLive: false, isLoading: false })
+          return
+        }
+        // Dedupe + sort ascending
+        const seen = new Set<number>()
+        const discovered: BotOption[] = []
+        for (const row of data as { bot_id: number }[]) {
+          if (row?.bot_id != null && !seen.has(row.bot_id)) {
+            seen.add(row.bot_id)
+            const known = KNOWN_BOTS.find((b) => b.botId === row.bot_id)
+            discovered.push({
+              botId: row.bot_id,
+              label: known?.label ?? `Bot ${row.bot_id}`,
+              route: known?.route ?? `/bot/${row.bot_id}`,
+            })
+          }
+        }
+        discovered.sort((a, b) => a.botId - b.botId)
+        setState({ bots: discovered, isLive: true, isLoading: false })
+      } catch {
+        if (cancelled) return
+        setState({ bots: KNOWN_BOTS, isLive: false, isLoading: false })
+      }
+    })()
+    return () => { cancelled = true }
+  }, [])
+
+  return state
+}
+
+/**
+ * Generic hook — analytics for any bot_id. Used by the /bot/:botId route.
+ */
+export function useBotAnalytics(
+  botId: number,
+  period: PeriodKey,
+): AnalyticsState<PeriodFixtures> {
+  const [state, setState] = useState<AnalyticsState<PeriodFixtures>>({
+    data: null,
+    isLoading: supabaseConfigured,
+    isLive: false,
+    error: null,
+  })
+
+  const fixtureFallback = useMemo(() => buildPeriodFixtures(period), [period])
+
+  useEffect(() => {
+    if (!supabaseConfigured) {
+      setState({ data: fixtureFallback, isLoading: false, isLive: false, error: null })
+      return
+    }
+    let cancelled = false
+    ;(async () => {
+      const { from, to } = periodDates(period === '7d' ? '7d' : '30d')
+      const bundle = await fetchLiveBundle(botId, from, to)
+      if (cancelled) return
+      if (!bundleHasData(bundle)) {
+        setState({ data: fixtureFallback, isLoading: false, isLive: false, error: null })
+        return
+      }
+      const merged = overlayJHChatLive(fixtureFallback, bundle!)
+      setState({ data: merged, isLoading: false, isLive: true, error: null })
+    })()
+    return () => { cancelled = true }
+  }, [botId, period, fixtureFallback])
 
   return state
 }

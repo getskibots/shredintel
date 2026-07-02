@@ -1,14 +1,29 @@
 import type { ReactNode } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
+import {
+  MessageSquare,
+  Mic,
+  Lightbulb,
+  MessageSquareText,
+  Shuffle,
+  Wand2,
+  MessagesSquare,
+  Headphones,
+  LayoutGrid,
+  SlidersHorizontal,
+  CircleHelp,
+  type LucideIcon,
+} from 'lucide-react'
 
 /**
- * Faithful re-creation of the Botscrew admin chrome:
- *  - Left rail (Botscrew blue) with stacked icon nav and a logo header/footer
- *  - Top bar (white) with breadcrumb, bot selector, "Test in Messenger / AI / widget", profile
- *  - Main content area (light-gray) for the analytics page
+ * Dashboard chrome — sidebar + top bar.
  *
- * The first two nav items (Chat, Voice) are real shredintel routes.
- * The rest mirror Botscrew's existing structure and are inert/decorative.
+ * Sidebar styling mirrors omni-odin (getskibots/omni-odin/src/components/Sidebar.tsx)
+ * pixel-for-pixel so shredintel and omni feel like the same product surface:
+ *   - w-[104px] rail on bg-botscrew-500
+ *   - full-width row highlight (bg-botscrew-700 active · bg-botscrew-600 hover)
+ *   - lucide icons, h-5 w-5, strokeWidth 1.75
+ *   - text-[11px] labels
  */
 
 export interface DashboardShellProps {
@@ -38,30 +53,24 @@ type NavKey =
 interface NavItem {
   key: NavKey
   label: string
-  icon: ReactNode
+  Icon: LucideIcon
   /** If present, item is a real route; otherwise inert (Botscrew chrome) */
   to?: string
   badge?: number
 }
 
-const icon = (path: string) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-    <path d={path} />
-  </svg>
-)
-
 const NAV: NavItem[] = [
-  { key: 'chat', label: 'Chat', to: '/chat', icon: icon('M21 11.5a8.38 8.38 0 01-8.5 8.5 8.5 8.5 0 01-3.6-.8L3 21l1.8-5.9A8.5 8.5 0 1121 11.5z') },
-  { key: 'voice', label: 'Voice', to: '/voice', icon: icon('M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3zM19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8') },
-  { key: 'knowledge', label: 'Knowledge', icon: icon('M12 2a3 3 0 00-3 3v1H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V8a2 2 0 00-2-2h-2V5a3 3 0 00-3-3zM9 13h6M9 17h6') },
-  { key: 'ai-messages', label: 'AI Messages', icon: icon('M21 11.5a8.38 8.38 0 01-8.5 8.5 8.5 8.5 0 01-3.6-.8L3 21l1.8-5.9A8.5 8.5 0 1121 11.5z') },
-  { key: 'flows', label: 'Flows', icon: icon('M7 7l4 4-4 4M17 7l-4 4 4 4') },
-  { key: 'actions', label: 'Actions', icon: icon('M13 2L3 14h7l-1 8 10-12h-7l1-8z') },
-  { key: 'triggers', label: 'Triggers', icon: icon('M9 12h6M9 16h6M9 8h6M5 21V5a2 2 0 012-2h7l5 5v13a2 2 0 01-2 2H7a2 2 0 01-2-2z') },
-  { key: 'support', label: 'Support', icon: icon('M3 18v-6a9 9 0 0118 0v6M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z'), badge: 9 },
-  { key: 'widget', label: 'Widget', icon: icon('M21 11.5a8.38 8.38 0 01-8.5 8.5 8.5 8.5 0 01-3.6-.8L3 21l1.8-5.9A8.5 8.5 0 1121 11.5z') },
-  { key: 'settings', label: 'Settings', icon: icon('M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z') },
-  { key: 'help', label: 'Help', icon: icon('M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01M12 22a10 10 0 1110-10 10 10 0 01-10 10z') },
+  { key: 'chat',        label: 'Chat',        to: '/chat',  Icon: MessageSquare },
+  { key: 'voice',       label: 'Voice',       to: '/voice', Icon: Mic },
+  { key: 'knowledge',   label: 'Knowledge',                 Icon: Lightbulb },
+  { key: 'ai-messages', label: 'AI Messages',               Icon: MessageSquareText },
+  { key: 'flows',       label: 'Flows',                     Icon: Shuffle },
+  { key: 'actions',     label: 'Actions',                   Icon: Wand2 },
+  { key: 'triggers',    label: 'Triggers',                  Icon: MessagesSquare },
+  { key: 'support',     label: 'Support',                   Icon: Headphones, badge: 9 },
+  { key: 'widget',      label: 'Widget',                    Icon: LayoutGrid },
+  { key: 'settings',    label: 'Settings',                  Icon: SlidersHorizontal },
+  { key: 'help',        label: 'Help',                      Icon: CircleHelp },
 ]
 
 function MountainLogo({ className = '' }: { className?: string }) {
@@ -79,109 +88,101 @@ export function DashboardShell({
   activeChannel = 'chat',
   children,
 }: DashboardShellProps) {
+  const location = useLocation()
+
+  const isRowActive = (item: NavItem) => {
+    if (item.to) {
+      // Real route: highlight when we're on it OR when its channel matches activeChannel
+      if (item.key === activeChannel) return true
+      return location.pathname.startsWith(item.to)
+    }
+    return false
+  }
+
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-900">
-      {/* ── Left rail ──────────────────────────────────────────────── */}
+      {/* ── Sidebar (mirrors omni-odin) ────────────────────────────── */}
       <aside
-        className="flex w-[72px] flex-col bg-botscrew-500 text-white"
+        className="flex w-[104px] shrink-0 flex-col bg-botscrew-500 text-white"
         aria-label="Primary navigation"
       >
-        <div className="flex h-14 items-center justify-center border-b border-white/10">
-          <MountainLogo className="h-7" />
+        <div className="flex flex-col items-center px-3 pt-4 pb-3">
+          <MountainLogo className="w-[56px]" />
         </div>
 
-        <nav className="flex-1 overflow-y-auto py-3">
-          <ul className="flex flex-col items-stretch gap-1 px-2">
-            {NAV.map((item) => {
-              const isActive = item.key === activeChannel
-              const className = [
-                'group relative flex flex-col items-center gap-1 rounded-lg py-2 text-[10px] font-medium transition',
-                isActive
-                  ? 'bg-white/10 text-white'
-                  : 'text-white/70 hover:bg-white/5 hover:text-white',
-              ].join(' ')
-              const inner = (
-                <>
-                  {isActive && (
-                    <span className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-r bg-white" />
+        <nav className="flex-1 py-2">
+          {NAV.map((item) => {
+            const active = isRowActive(item)
+            const rowClass = [
+              'flex flex-col items-center justify-center gap-1.5 py-4 transition',
+              active
+                ? 'bg-botscrew-700 text-white'
+                : 'text-white/90 hover:bg-botscrew-600',
+            ].join(' ')
+            const inner = (
+              <>
+                <div className="relative">
+                  <item.Icon strokeWidth={1.75} className="h-5 w-5" />
+                  {item.badge !== undefined && (
+                    <span className="absolute -right-2 -top-2 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-bold text-white ring-2 ring-botscrew-500">
+                      {item.badge}
+                    </span>
                   )}
-                  <div className="relative">
-                    {item.icon}
-                    {item.badge !== undefined && (
-                      <span className="absolute -right-2 -top-2 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-bold text-white">
-                        {item.badge}
-                      </span>
-                    )}
-                  </div>
-                  <span className="leading-tight">{item.label}</span>
-                </>
-              )
-              return (
-                <li key={item.key}>
-                  {item.to ? (
-                    <Link
-                      to={item.to}
-                      aria-current={isActive ? 'page' : undefined}
-                      className={className}
-                    >
-                      {inner}
-                    </Link>
-                  ) : (
-                    <a
-                      href="#"
-                      aria-disabled
-                      onClick={(e) => e.preventDefault()}
-                      className={className}
-                    >
-                      {inner}
-                    </a>
-                  )}
-                </li>
-              )
-            })}
-          </ul>
+                </div>
+                <span className="text-[11px] leading-tight">{item.label}</span>
+              </>
+            )
+            return item.to ? (
+              <Link
+                key={item.key}
+                to={item.to}
+                aria-current={active ? 'page' : undefined}
+                className={rowClass}
+              >
+                {inner}
+              </Link>
+            ) : (
+              <a
+                key={item.key}
+                href="#"
+                aria-disabled
+                onClick={(e) => e.preventDefault()}
+                className={rowClass}
+              >
+                {inner}
+              </a>
+            )
+          })}
         </nav>
-
-        <div className="flex h-12 items-center justify-center border-t border-white/10">
-          <MountainLogo className="h-5 opacity-60" />
-        </div>
       </aside>
 
       {/* ── Main column ────────────────────────────────────────────── */}
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* Top bar */}
-        <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b border-slate-200 bg-white px-5">
-          <div className="flex items-center gap-4">
+        {/* Top bar — mirrors omni-odin TopBar */}
+        <header className="flex h-16 items-center justify-between border-b border-slate-200 bg-white px-6">
+          <div className="text-sm text-slate-500">
             <Link
-              to="/chat"
-              className="text-sm font-semibold text-botscrew-500 hover:text-botscrew-600"
+              to="/chat/mc"
+              className="text-botscrew-500 hover:underline"
             >
               Home
             </Link>
           </div>
           {botLabel && (
-            <div className="text-sm font-semibold tracking-tight text-slate-900">
-              {botLabel}
-            </div>
+            <div className="text-base font-semibold text-ink-900">{botLabel}</div>
           )}
           <div className="flex items-center gap-2">
-            <div className="ml-2 flex items-center gap-2 rounded-lg border border-slate-200 px-2 py-1">
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-200 text-[11px] font-semibold text-slate-700">
-                {userName
-                  .split(' ')
-                  .map((w) => w[0])
-                  .join('')
-                  .slice(0, 2)}
-              </div>
-              <span className="text-xs font-medium text-slate-700">{userName}</span>
-              <span aria-hidden className="text-xs text-slate-400">
-                ▾
-              </span>
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-300 text-[11px] font-semibold text-slate-700">
+              {userName
+                .split(' ')
+                .map((w) => w[0])
+                .join('')
+                .slice(0, 2)}
             </div>
+            <span className="text-sm text-slate-700">{userName}</span>
           </div>
         </header>
 
-        {/* Page content */}
         <main className="min-w-0 flex-1">{children}</main>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import { useParams, useSearchParams } from 'react-router-dom'
+import { AskBar } from '../AskBar'
 import { BotSelector } from '../BotSelector'
 import { ConversionPulse } from '../ConversionPulse'
 import { DemandHeatmap } from '../DemandHeatmap'
@@ -97,6 +98,8 @@ export function BotAnalyticsPage() {
       </div>
 
       <div className="space-y-12 px-4 py-6 md:px-6 md:py-8">
+        <AskBar botId={botId} />
+
         <section id="core" className="scroll-mt-40 space-y-5">
           <SectionHeader number="1" name="Conversation Core" tagline="What happened?" />
           <ResolutionHero stats={f.resolution} scopeLabel={`Bot ${botId}`} periodLabel={f.periodLabel} />

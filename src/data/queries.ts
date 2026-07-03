@@ -125,9 +125,23 @@ export interface LiveBundle {
 }
 
 /**
- * Fetches all 8 views in parallel, filtered to (bot_id, day BETWEEN from AND to).
+ * Reject if a promise takes longer than `ms`, so the app falls back to fixtures
+ * instead of hanging on "Loading…" forever when Supabase is slow or unreachable
+ * (no per-request timeout otherwise — a stalled fetch would never resolve).
+ */
+function withTimeout<T>(p: Promise<T>, ms = 9000): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`live-fetch timed out after ${ms}ms`)), ms),
+    ),
+  ])
+}
+
+/**
+ * Fetches all 9 views in parallel, filtered to (bot_id, day BETWEEN from AND to).
  * Returns null if the client isn't configured OR if the report schema isn't
- * reachable (schema not exposed, permissions denied, network error, etc.).
+ * reachable (schema not exposed, permissions denied, network error, TIMEOUT).
  * Callers should fall back to fixtures in that case.
  */
 export async function fetchLiveBundle(
@@ -149,7 +163,7 @@ export async function fetchLiveBundle(
 
   try {
     const [outcome, conversion, knowledge, sender, identity, funnel, device, heatmap, depth] =
-      await Promise.all([
+      await withTimeout(Promise.all([
         q<OutcomeRow>('outcome_timeline'),
         q<ConversionRow>('conversion_pulse'),
         q<KnowledgeSourceRow>('knowledge_source_leaderboard'),
@@ -159,7 +173,7 @@ export async function fetchLiveBundle(
         q<DeviceExperienceRow>('device_experience_mix'),
         q<DemandHeatmapRow>('demand_heatmap'),
         q<ConversationDepthRow>('conversation_depth'),
-      ])
+      ]))
 
     // Any of the 8 ORIGINAL views erroring = "schema unreachable" → bail to fixtures.
     // conversation_depth is deliberately EXCLUDED: it's a newer view, and if it

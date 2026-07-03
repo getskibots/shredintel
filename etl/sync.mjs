@@ -409,13 +409,19 @@ async function refreshMatviews(pgc) {
 // registry) via the anon key. Keep it in lockstep with raw.admin_bot so
 // newly-added bots appear automatically. Entirely in-Supabase (no MySQL).
 async function syncBotsRegistry(pgc) {
+  // Only ACTIVE bots (active=1) — hides test/copy/dev clones + retired dupes so
+  // the app's bot list matches the Botscrew admin. Drop any that went inactive.
+  await pgc_query(pgc,
+    `DELETE FROM public.bots
+      WHERE id NOT IN (SELECT id FROM raw.admin_bot WHERE active = 1)`)
   const res = await pgc_query(pgc,
     `INSERT INTO public.bots (id, name)
      SELECT id, COALESCE(NULLIF(TRIM(name), ''), 'Bot ' || id)
        FROM raw.admin_bot
+      WHERE active = 1
      ON CONFLICT (id) DO UPDATE
        SET name = EXCLUDED.name, synced_at = now()`)
-  log(`  public.bots registry upserted (${res.rowCount} rows)`)
+  log(`  public.bots registry = ${res.rowCount} active bots`)
 }
 
 // ── main ──────────────────────────────────────────────────────────

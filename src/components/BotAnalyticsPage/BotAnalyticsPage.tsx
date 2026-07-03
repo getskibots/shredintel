@@ -114,7 +114,7 @@ export function BotAnalyticsPage() {
           <SectionHeader number="2" name="Message Intelligence" tagline="How did the bot perform?" />
           {/* ShredIntel enrichment — what guests ask about, where they get stuck, how they feel */}
           <KnowledgeSectionDemand {...f.knowledgeSectionDemand} />
-          <ConversionBlockers {...f.conversionBlockers} />
+          <ConversionBlockers {...f.conversionBlockers} botId={botId} />
           <GuestSentiment {...f.guestSentiment} />
           <KnowledgeSourceLeaderboard {...f.knowledgeSourceLeaderboard} />
           <SenderMixStack {...f.senderMixStack} />

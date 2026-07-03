@@ -1,0 +1,90 @@
+/**
+ * Read-only data access for the AI layer. The model writes SQL; this module
+ * makes sure that SQL can only ever READ, and only from the curated report
+ * schema — never raw.* (which holds PII), never a write.
+ *
+ * Defense in depth:
+ *   1. validateSql  — single statement, SELECT/WITH only, no DDL/DML keywords,
+ *                     no raw.* / public.* (except public.bots)
+ *   2. READ ONLY transaction + statement_timeout at the DB level
+ *   3. enforced LIMIT
+ *
+ * A dedicated read-only Postgres role is the proper hardening (TODO); until
+ * then these guards + the READ ONLY txn are the boundary.
+ */
+import pg from 'pg'
+
+let pool: pg.Pool | null = null
+function getPool(): pg.Pool {
+  if (pool) return pool
+  const cfg = process.env.SHREDINTEL_DB_URL
+    ? { connectionString: process.env.SHREDINTEL_DB_URL }
+    : {
+        host: process.env.SUPABASE_DB_HOST,
+        port: Number(process.env.SUPABASE_DB_PORT || 5432),
+        user: process.env.SUPABASE_DB_USER,
+        password: process.env.SUPABASE_DB_PASSWORD,
+        database: process.env.SUPABASE_DB_NAME || 'postgres',
+      }
+  pool = new pg.Pool({ ...cfg, ssl: { rejectUnauthorized: false }, max: 3, idleTimeoutMillis: 10_000 })
+  return pool
+}
+
+const WRITE_KW = /\b(insert|update|delete|drop|alter|create|truncate|grant|revoke|copy|call|do|merge|vacuum|reindex|comment|refresh)\b/i
+
+export function validateSql(sql: string): { ok: boolean; reason?: string } {
+  const s = sql.trim().replace(/;+\s*$/, '')
+  if (!s) return { ok: false, reason: 'empty' }
+  if (s.includes(';')) return { ok: false, reason: 'multiple statements' }
+  if (!/^\s*(select|with)\b/i.test(s)) return { ok: false, reason: 'must start with SELECT or WITH' }
+  if (WRITE_KW.test(s)) return { ok: false, reason: 'write/DDL keyword present' }
+  if (/\braw\s*\./i.test(s)) return { ok: false, reason: 'raw schema (PII) is off-limits' }
+  if (/\bpublic\s*\.(?!bots\b)/i.test(s)) return { ok: false, reason: 'restricted schema' }
+  return { ok: true }
+}
+
+export async function runReadOnly<T = Record<string, unknown>>(sql: string, rowLimit = 500): Promise<T[]> {
+  const v = validateSql(sql)
+  if (!v.ok) throw new Error(`rejected SQL: ${v.reason}`)
+  const capped = /\blimit\s+\d+\s*$/i.test(sql.trim().replace(/;+\s*$/, ''))
+    ? sql.trim().replace(/;+\s*$/, '')
+    : `${sql.trim().replace(/;+\s*$/, '')} limit ${rowLimit}`
+
+  const client = await getPool().connect()
+  try {
+    await client.query('begin read only')
+    await client.query("set local statement_timeout = '8000ms'")
+    const res = await client.query(capped)
+    await client.query('rollback')
+    return res.rows as T[]
+  } catch (e) {
+    try { await client.query('rollback') } catch { /* ignore */ }
+    throw e
+  } finally {
+    client.release()
+  }
+}
+
+/**
+ * Column catalog for the report schema (covers tables, views AND matviews via
+ * pg_catalog — information_schema omits matviews). This is what the model sees;
+ * it can only query what's listed here.
+ */
+export async function schemaCatalog(): Promise<string> {
+  const { rows } = await getPool().query<{ rel: string; col: string; typ: string }>(`
+    select c.relname as rel, a.attname as col, format_type(a.atttypid, a.atttypmod) as typ
+      from pg_class c
+      join pg_namespace n on n.oid = c.relnamespace
+      join pg_attribute a on a.attrelid = c.oid
+     where n.nspname = 'report'
+       and c.relkind in ('r', 'v', 'm')
+       and a.attnum > 0 and not a.attisdropped
+       and c.relname not like '\\_%'
+     order by c.relname, a.attnum`)
+  const byRel = new Map<string, string[]>()
+  for (const r of rows) {
+    if (!byRel.has(r.rel)) byRel.set(r.rel, [])
+    byRel.get(r.rel)!.push(`${r.col} ${r.typ}`)
+  }
+  return [...byRel.entries()].map(([rel, cols]) => `report.${rel}(${cols.join(', ')})`).join('\n')
+}

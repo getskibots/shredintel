@@ -20,6 +20,21 @@ export interface AnalyticsState<T> {
 
 // ─── Helpers to reshape live rows into the fixture-facing prop shapes ──
 
+// Fixture-bleed guard: when a bot is LIVE, overlay real data onto a BLANKED base
+// (numbers → 0, arrays → []) instead of the demo fixtures — so any section
+// without live coverage shows honest empties, never fabricated sample numbers.
+// Strings/labels are preserved so panel structure stays intact.
+function blankData<T>(v: T): T {
+  if (Array.isArray(v)) return [] as unknown as T
+  if (typeof v === 'number') return 0 as unknown as T
+  if (v && typeof v === 'object') {
+    const out: Record<string, unknown> = {}
+    for (const k of Object.keys(v as object)) out[k] = blankData((v as Record<string, unknown>)[k])
+    return out as unknown as T
+  }
+  return v
+}
+
 function overlayMCChatLive(base: MCChatFixtures, live: LiveBundle): MCChatFixtures {
   const out = { ...base }
 
@@ -562,7 +577,7 @@ export function useMCChatAnalytics(period: MCChatPeriodKey): AnalyticsState<MCCh
         setState({ data: fixtureFallback, isLoading: false, isLive: false, error: null })
         return
       }
-      const merged = overlayMCChatLive(fixtureFallback, bundle!)
+      const merged = overlayMCChatLive(blankData(fixtureFallback), bundle!)
       setState({ data: merged, isLoading: false, isLive: true, error: null })
     })()
     return () => { cancelled = true }
@@ -689,7 +704,7 @@ export function useBotAnalytics(
         setState({ data: fixtureFallback, isLoading: false, isLive: false, error: null })
         return
       }
-      const merged = overlayJHChatLive(fixtureFallback, bundle!)
+      const merged = overlayJHChatLive(blankData(fixtureFallback), bundle!)
       setState({ data: merged, isLoading: false, isLive: true, error: null })
     })()
     return () => { cancelled = true }
@@ -723,7 +738,7 @@ export function useJHChatAnalytics(selection: PeriodSelection): AnalyticsState<P
         setState({ data: fixtureFallback, isLoading: false, isLive: false, error: null })
         return
       }
-      const merged = overlayJHChatLive(fixtureFallback, bundle!)
+      const merged = overlayJHChatLive(blankData(fixtureFallback), bundle!)
       setState({ data: merged, isLoading: false, isLive: true, error: null })
     })()
     return () => { cancelled = true }

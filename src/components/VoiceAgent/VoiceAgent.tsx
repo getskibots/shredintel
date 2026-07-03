@@ -4,6 +4,7 @@ import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
 } from 'recharts'
 import { brand } from '../../lib/chartTheme'
+import { VOICE_PROFILES, DEFAULT_VOICE_ID, profileFor, pickBrowserVoice } from '../../lib/voices'
 
 /**
  * ShredIntel voice agent — talk to your resort's data and hear the answer while
@@ -38,6 +39,15 @@ export function VoiceAgent({ botId }: { botId: number }) {
   const activeRef = useRef(false)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recogRef = useRef<any>(null)
+
+  const [voiceId, setVoiceId] = useState<string>(() => {
+    try { return localStorage.getItem(`shredintel_voice_${botId}`) || DEFAULT_VOICE_ID } catch { return DEFAULT_VOICE_ID }
+  })
+  const voiceIdRef = useRef(voiceId)
+  useEffect(() => {
+    voiceIdRef.current = voiceId
+    try { localStorage.setItem(`shredintel_voice_${botId}`, voiceId) } catch { /* noop */ }
+  }, [botId, voiceId])
 
   const setM = (m: Mode) => { modeRef.current = m; setMode(m) }
 
@@ -94,7 +104,7 @@ export function VoiceAgent({ botId }: { botId: number }) {
       const res = await fetch('/api/ask', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ botId, question }),
+        body: JSON.stringify({ botId, question, mode: 'voice', voiceId: voiceIdRef.current }),
       })
       const data = await res.json()
       if (!activeRef.current) return
@@ -114,7 +124,11 @@ export function VoiceAgent({ botId }: { botId: number }) {
     setM('speaking')
     try {
       const u = new SpeechSynthesisUtterance(text)
-      u.rate = 1.03
+      const profile = profileFor(voiceIdRef.current)
+      u.pitch = profile.pitch
+      u.rate = profile.rate
+      const chosen = pickBrowserVoice(profile, window.speechSynthesis.getVoices())
+      if (chosen) u.voice = chosen
       u.onend = () => { if (activeRef.current) listen() }
       u.onerror = () => { if (activeRef.current) listen() }
       window.speechSynthesis.cancel()
@@ -132,13 +146,32 @@ export function VoiceAgent({ botId }: { botId: number }) {
     )
   }
 
+  const picker = (
+    <div className="inline-flex items-center gap-0.5 rounded-full border border-slate-200 bg-white p-0.5">
+      {VOICE_PROFILES.map((p) => (
+        <button
+          key={p.id}
+          type="button"
+          onClick={() => setVoiceId(p.id)}
+          title={p.blurb}
+          className={[
+            'rounded-full px-2.5 py-1 text-xs font-medium transition',
+            voiceId === p.id ? 'bg-botscrew-500 text-white' : 'text-slate-500 hover:text-slate-800',
+          ].join(' ')}
+        >
+          {p.name}
+        </button>
+      ))}
+    </div>
+  )
+
   const active = mode !== 'off'
   const t = turn
 
   return (
     <div className="mx-auto mb-10 max-w-3xl">
       {!active ? (
-        <div className="flex justify-center">
+        <div className="flex flex-col items-center gap-3">
           <button
             type="button"
             onClick={start}
@@ -146,6 +179,10 @@ export function VoiceAgent({ botId }: { botId: number }) {
           >
             <Mic className="h-4 w-4" strokeWidth={2} /> Talk to ShredIntel
           </button>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-400">Voice</span>
+            {picker}
+          </div>
         </div>
       ) : (
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -174,6 +211,10 @@ export function VoiceAgent({ botId }: { botId: number }) {
             >
               <Square className="h-3.5 w-3.5" strokeWidth={2} /> End
             </button>
+          </div>
+          <div className="mt-3 flex items-center gap-2">
+            <span className="text-xs text-slate-400">Voice</span>
+            {picker}
           </div>
 
           {t && (

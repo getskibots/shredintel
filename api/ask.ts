@@ -14,6 +14,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { chat } from './_lib/llm.js'
 import { runReadOnly, schemaCatalog, validateSql } from './_lib/db.js'
 import { PROMPT_LIBRARY, systemPrompt, SQL_INSTRUCTION, ANSWER_INSTRUCTION } from './_lib/prompts.js'
+import { voiceAnswerInstruction } from './_lib/voices.js'
 
 // Two model calls + DB round-trips can take a bit; give the function headroom.
 export const maxDuration = 30
@@ -56,10 +57,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // 2) run (read-only, timeout, capped)
     const rows = await runReadOnly(sql)
 
-    // 3) rows → plain-English answer + chart hint
+    // 3) rows → answer + chart hint. Voice mode swaps in the selected ShredIntel
+    // persona instruction (api/_lib/voices.ts) for a spoken-friendly reply.
+    const answerInstruction =
+      body.mode === 'voice' ? voiceAnswerInstruction(body.voiceId) : ANSWER_INSTRUCTION
     const ansJson = await chat({
       system,
-      user: `Question: ${question}\nResult rows (JSON): ${JSON.stringify(rows).slice(0, 4000)}\n\n${ANSWER_INSTRUCTION}`,
+      user: `Question: ${question}\nResult rows (JSON): ${JSON.stringify(rows).slice(0, 4000)}\n\n${answerInstruction}`,
       json: true,
       maxTokens: 500,
     })

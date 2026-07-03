@@ -15,6 +15,9 @@ import { chat } from './_lib/llm.js'
 import { runReadOnly, schemaCatalog, validateSql } from './_lib/db.js'
 import { PROMPT_LIBRARY, systemPrompt, SQL_INSTRUCTION, ANSWER_INSTRUCTION } from './_lib/prompts.js'
 
+// Two model calls + DB round-trips can take a bit; give the function headroom.
+export const maxDuration = 30
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'GET') {
     return res.status(200).json({ templates: PROMPT_LIBRARY })
@@ -72,6 +75,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.status(200).json({ answer, chart, sql, rows: rows.slice(0, 100) })
   } catch (e) {
+    console.error('[api/ask] failed:', e)
     return res.status(500).json({ error: e instanceof Error ? e.message : 'unknown error' })
   }
 }

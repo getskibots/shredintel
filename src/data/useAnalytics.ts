@@ -439,6 +439,48 @@ function overlayJHChatLive(base: PeriodFixtures, live: LiveBundle): PeriodFixtur
     }
   }
 
+  // § 2 — ShredIntel enrichment (section demand / pinchpoints / sentiment)
+  const aggIntel = (rows: LiveBundle['intelSection']) => {
+    const m = new Map<string, { c: number; neg: number }>()
+    for (const r of rows) {
+      const prev = m.get(r.key) ?? { c: 0, neg: 0 }
+      m.set(r.key, { c: prev.c + Number(r.conversations), neg: prev.neg + Number(r.negative ?? 0) })
+    }
+    return m
+  }
+  const sumMap = (m: Map<string, { c: number; neg: number }>) =>
+    [...m.values()].reduce((s, v) => s + v.c, 0)
+
+  const sentMap = aggIntel(live.intelSentiment)
+  const substantiveTotal = sumMap(sentMap) || sumMap(aggIntel(live.intelSection))
+
+  if (live.intelSection.length > 0) {
+    const sections = [...aggIntel(live.intelSection).entries()]
+      .map(([label, v]) => ({ label, conversations: v.c, share: substantiveTotal > 0 ? v.c / substantiveTotal : 0 }))
+      .sort((a, b) => b.conversations - a.conversations)
+    out.knowledgeSectionDemand = { sections, totalSubstantive: substantiveTotal }
+  }
+  if (live.intelPinchpoint.length > 0) {
+    const m = aggIntel(live.intelPinchpoint)
+    const blockers = [...m.entries()]
+      .map(([label, v]) => ({ label, conversations: v.c, share: substantiveTotal > 0 ? v.c / substantiveTotal : 0, negative: v.neg }))
+      .sort((a, b) => b.conversations - a.conversations)
+    const affected = sumMap(m)
+    out.conversionBlockers = {
+      blockers, affectedConversations: affected,
+      affectedShare: substantiveTotal > 0 ? affected / substantiveTotal : 0,
+    }
+  }
+  if (live.intelSentiment.length > 0) {
+    const g = (k: string) => sentMap.get(k)?.c ?? 0
+    const positive = g('Positive'), neutral = g('Neutral'), negative = g('Negative')
+    out.guestSentiment = {
+      positive, neutral, negative, total: substantiveTotal,
+      positiveShare: substantiveTotal > 0 ? positive / substantiveTotal : 0,
+      negativeShare: substantiveTotal > 0 ? negative / substantiveTotal : 0,
+    }
+  }
+
   // § 3 — Guest identity split
   if (live.guestIdentitySplit.length > 0) {
     const totalConversations = sum(live.guestIdentitySplit.map((r) => r.total_conversations))

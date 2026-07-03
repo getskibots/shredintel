@@ -20,6 +20,9 @@ import type {
   IntentBreakdown,
   KnowledgeGap,
   KnowledgeSourceLeaderboardProps,
+  KnowledgeSectionDemandProps,
+  ConversionBlockersProps,
+  GuestSentimentProps,
   KpiTileData,
   LeadCaptureFunnelProps,
   OutcomeTimelineProps,
@@ -526,6 +529,9 @@ export interface PeriodFixtures {
   conversionPulse: ConversionPulseProps
   knowledgeSourceLeaderboard: KnowledgeSourceLeaderboardProps
   senderMixStack: SenderMixStackProps
+  knowledgeSectionDemand: KnowledgeSectionDemandProps
+  conversionBlockers: ConversionBlockersProps
+  guestSentiment: GuestSentimentProps
   guestIdentitySplit: GuestIdentitySplitProps
   leadCaptureFunnel: LeadCaptureFunnelProps
   frictionPages: FrictionPage[]
@@ -808,6 +814,38 @@ export function buildPeriodFixturesForDays(
     })),
   }
 
+  // ── ShredIntel enrichment panels (§2) ──────────────────────────────
+  const totalSub = Math.round(21000 * scale)
+  const sectionRaw: Array<[string, number]> = [
+    ['General Info', 0.30], ['Tickets', 0.18], ['Ecommerce / Account Management', 0.09],
+    ['Refund Policies', 0.07], ['Season Passes', 0.06], ['Parking & Transit', 0.05],
+    ['Ski & Snowboard Lessons', 0.045], ['Lodging', 0.04], ['Dining & Après', 0.03],
+    ['Ski & Snowboard Rentals', 0.028], ['Events', 0.02], ['Other', 0.037],
+  ]
+  const knowledgeSectionDemand: KnowledgeSectionDemandProps = {
+    totalSubstantive: totalSub,
+    sections: sectionRaw.map(([label, sh]) => ({ label, conversations: Math.round(totalSub * sh), share: sh })),
+  }
+  const pinchRaw: Array<[string, number]> = [
+    ['Account access', 0.018], ['Login', 0.012], ['Checkout', 0.010], ['Password reset', 0.008],
+    ['Payment', 0.007], ['Waiver', 0.006], ['Order lookup', 0.005], ['Booking change', 0.004],
+    ['Confirmation', 0.003], ['Voucher', 0.002], ['Credit', 0.002],
+  ]
+  const affected = Math.round(totalSub * pinchRaw.reduce((s, [, x]) => s + x, 0))
+  const conversionBlockers: ConversionBlockersProps = {
+    affectedConversations: affected,
+    affectedShare: totalSub > 0 ? affected / totalSub : 0,
+    blockers: pinchRaw.map(([label, sh]) => ({
+      label, conversations: Math.round(totalSub * sh), share: sh, negative: Math.round(totalSub * sh * 0.5),
+    })),
+  }
+  const sNeg = Math.round(totalSub * 0.09)
+  const sPos = Math.round(totalSub * 0.15)
+  const guestSentiment: GuestSentimentProps = {
+    positive: sPos, neutral: totalSub - sNeg - sPos, negative: sNeg, total: totalSub,
+    positiveShare: totalSub > 0 ? sPos / totalSub : 0, negativeShare: totalSub > 0 ? sNeg / totalSub : 0,
+  }
+
   // ── Guest identity (aggregate counts only) ─────────────────────────
   const known = Math.round(6800 * scale)
   const anon = totalConversations - known
@@ -965,6 +1003,9 @@ export function buildPeriodFixturesForDays(
     conversionPulse,
     knowledgeSourceLeaderboard,
     senderMixStack,
+    knowledgeSectionDemand,
+    conversionBlockers,
+    guestSentiment,
     guestIdentitySplit,
     leadCaptureFunnel,
     frictionPages,

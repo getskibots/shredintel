@@ -112,6 +112,18 @@ export interface ConversationDepthRow {
   median_first_response_sec: number | null
 }
 
+/**
+ * report.intel_* views (bot_id, day, key, conversations) — ShredIntel AI
+ * enrichment aggregates. `negative` only present on intel_pinchpoint.
+ */
+export interface IntelBreakdownRow {
+  bot_id: number
+  day: string
+  key: string
+  conversations: number
+  negative?: number
+}
+
 export interface LiveBundle {
   outcomeTimeline: OutcomeRow[]
   conversionPulse: ConversionRow[]
@@ -122,6 +134,9 @@ export interface LiveBundle {
   deviceExperienceMix: DeviceExperienceRow[]
   demandHeatmap: DemandHeatmapRow[]
   conversationDepth: ConversationDepthRow[]
+  intelSection: IntelBreakdownRow[]
+  intelPinchpoint: IntelBreakdownRow[]
+  intelSentiment: IntelBreakdownRow[]
 }
 
 /**
@@ -162,7 +177,8 @@ export async function fetchLiveBundle(
       .lte('day', to) as unknown as Promise<{ data: T[] | null; error: unknown }>
 
   try {
-    const [outcome, conversion, knowledge, sender, identity, funnel, device, heatmap, depth] =
+    const [outcome, conversion, knowledge, sender, identity, funnel, device, heatmap, depth,
+           iSection, iPinch, iSent] =
       await withTimeout(Promise.all([
         q<OutcomeRow>('outcome_timeline'),
         q<ConversionRow>('conversion_pulse'),
@@ -173,6 +189,9 @@ export async function fetchLiveBundle(
         q<DeviceExperienceRow>('device_experience_mix'),
         q<DemandHeatmapRow>('demand_heatmap'),
         q<ConversationDepthRow>('conversation_depth'),
+        q<IntelBreakdownRow>('intel_section'),
+        q<IntelBreakdownRow>('intel_pinchpoint'),
+        q<IntelBreakdownRow>('intel_sentiment'),
       ]))
 
     // Any of the 8 ORIGINAL views erroring = "schema unreachable" → bail to fixtures.
@@ -201,6 +220,10 @@ export async function fetchLiveBundle(
       deviceExperienceMix: device.data ?? [],
       demandHeatmap: heatmap.data ?? [],
       conversationDepth: depth.error ? [] : (depth.data ?? []),
+      // intel_* are newer enrichment views — non-fatal like conversation_depth
+      intelSection: iSection.error ? [] : (iSection.data ?? []),
+      intelPinchpoint: iPinch.error ? [] : (iPinch.data ?? []),
+      intelSentiment: iSent.error ? [] : (iSent.data ?? []),
     }
   } catch (err) {
     // eslint-disable-next-line no-console

@@ -2,7 +2,10 @@ import { useParams, useSearchParams } from 'react-router-dom'
 import { AskBar } from '../AskBar'
 import { BotSelector } from '../BotSelector'
 import { ConversationCounts } from '../ConversationCounts'
+import { ConversionBlockers } from '../ConversionBlockers'
 import { ConversionPulse } from '../ConversionPulse'
+import { GuestSentiment } from '../GuestSentiment'
+import { KnowledgeSectionDemand } from '../KnowledgeSectionDemand'
 import { DemandHeatmap } from '../DemandHeatmap'
 import { DeviceExperienceMix } from '../DeviceExperienceMix'
 import { GuestIdentitySplit } from '../GuestIdentitySplit'
@@ -109,6 +112,10 @@ export function BotAnalyticsPage() {
 
         <section id="intelligence" className="scroll-mt-40 space-y-5">
           <SectionHeader number="2" name="Message Intelligence" tagline="How did the bot perform?" />
+          {/* ShredIntel enrichment — what guests ask about, where they get stuck, how they feel */}
+          <KnowledgeSectionDemand {...f.knowledgeSectionDemand} />
+          <ConversionBlockers {...f.conversionBlockers} />
+          <GuestSentiment {...f.guestSentiment} />
           <KnowledgeSourceLeaderboard {...f.knowledgeSourceLeaderboard} />
           <SenderMixStack {...f.senderMixStack} />
         </section>

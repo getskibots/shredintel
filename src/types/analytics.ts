@@ -202,6 +202,38 @@ export interface ConversationCountsProps {
   trend: ConversationCountsPoint[]
 }
 
+// § 2 — ShredIntel enrichment panels (AI-classified per conversation)
+
+export interface BreakdownItem {
+  label: string
+  conversations: number
+  share: number       // 0-1 of substantive conversations
+  negative?: number   // negative-sentiment count (used by pinchpoints)
+}
+
+/** Guest demand across resort knowledge sections (topic taxonomy). */
+export interface KnowledgeSectionDemandProps {
+  sections: BreakdownItem[]
+  totalSubstantive: number
+}
+
+/** Ecommerce / account conversion blockers (cross-cutting pinchpoints). */
+export interface ConversionBlockersProps {
+  blockers: BreakdownItem[]
+  affectedConversations: number
+  affectedShare: number  // pinchpoint-tagged / substantive
+}
+
+/** Overall guest sentiment split. */
+export interface GuestSentimentProps {
+  positive: number
+  neutral: number
+  negative: number
+  total: number
+  positiveShare: number
+  negativeShare: number
+}
+
 // § 2 — KnowledgeSourceLeaderboard
 
 export interface KnowledgeSourceItem {

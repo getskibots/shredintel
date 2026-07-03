@@ -69,15 +69,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     })
     let answer = ''
     let chart: unknown = null
+    let vegaLite: unknown = null
     try {
       const parsed = JSON.parse(ansJson)
       answer = String(parsed.answer || '')
       chart = parsed.chart ?? null
+      vegaLite = parsed.vegaLite ?? null
     } catch {
       answer = ansJson
     }
 
-    return res.status(200).json({ answer, chart, sql, rows: rows.slice(0, 100) })
+    return res.status(200).json({ answer, chart, vegaLite, sql, rows: rows.slice(0, 100) })
   } catch (e) {
     console.error('[api/ask] failed:', e)
     return res.status(500).json({ error: e instanceof Error ? e.message : 'unknown error' })

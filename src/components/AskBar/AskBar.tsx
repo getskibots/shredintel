@@ -5,6 +5,7 @@ import {
 } from 'recharts'
 import { brand } from '../../lib/chartTheme'
 import { VOICE_PROFILES, DEFAULT_VOICE_ID } from '../../lib/voices'
+import { VegaLiteChart } from '../VegaLiteChart'
 
 /**
  * ShredIntel hero search — the dashboard's spine. Ask any question about the
@@ -22,6 +23,7 @@ interface ChartHint {
 interface AskResult {
   answer: string
   chart: ChartHint | null
+  vegaLite?: Record<string, unknown> | null
   sql: string
   rows: Record<string, unknown>[]
 }
@@ -209,7 +211,11 @@ export function AskBar({ botId }: { botId: number }) {
           </div>
           <p className="text-[15px] leading-relaxed text-slate-800">{result.answer}</p>
 
-          {result.chart && result.chart.type !== 'none' && result.chart.x && result.chart.y && result.rows.length > 0 && (
+          {result.vegaLite && result.rows.length > 0 ? (
+            <div className="mt-4">
+              <VegaLiteChart spec={result.vegaLite} rows={result.rows} />
+            </div>
+          ) : result.chart && result.chart.type !== 'none' && result.chart.x && result.chart.y && result.rows.length > 0 ? (
             <div className="mt-4 h-56">
               <ResponsiveContainer width="100%" height="100%">
                 {result.chart.type === 'line' ? (
@@ -229,7 +235,7 @@ export function AskBar({ botId }: { botId: number }) {
                 )}
               </ResponsiveContainer>
             </div>
-          )}
+          ) : null}
 
           <button
             type="button"

@@ -5,6 +5,7 @@ import {
 } from 'recharts'
 import { brand } from '../../lib/chartTheme'
 import { DEFAULT_VOICE_ID, profileFor, pickBrowserVoice } from '../../lib/voices'
+import { VegaLiteChart } from '../VegaLiteChart'
 
 /**
  * ShredIntel voice agent — talk to your resort's data and hear the answer while
@@ -18,7 +19,7 @@ import { DEFAULT_VOICE_ID, profileFor, pickBrowserVoice } from '../../lib/voices
 
 type Mode = 'off' | 'listening' | 'thinking' | 'speaking'
 interface ChartHint { type: 'bar' | 'line' | 'none'; x?: string; y?: string }
-interface Turn { q: string; answer: string; chart: ChartHint | null; rows: Record<string, unknown>[] }
+interface Turn { q: string; answer: string; chart: ChartHint | null; vegaLite?: Record<string, unknown> | null; rows: Record<string, unknown>[] }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const SR: any = typeof window !== 'undefined' ? (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition : null
@@ -103,7 +104,7 @@ export function VoiceAgent({ botId }: { botId: number }) {
       const data = await res.json()
       if (!activeRef.current) return
       const answer = String(data.answer || (data.error ? `I hit a problem: ${data.error}` : 'I could not find an answer.'))
-      setTurn({ q: question, answer, chart: data.chart ?? null, rows: Array.isArray(data.rows) ? data.rows : [] })
+      setTurn({ q: question, answer, chart: data.chart ?? null, vegaLite: data.vegaLite ?? null, rows: Array.isArray(data.rows) ? data.rows : [] })
       speak(answer)
     } catch {
       if (!activeRef.current) return
@@ -190,7 +191,11 @@ export function VoiceAgent({ botId }: { botId: number }) {
                 <Sparkles className="h-3.5 w-3.5 text-botscrew-500" strokeWidth={2} /> ShredIntel
               </div>
               <p className="text-[15px] leading-relaxed text-slate-800">{t.answer}</p>
-              {t.chart && t.chart.type !== 'none' && t.chart.x && t.chart.y && t.rows.length > 0 && (
+              {t.vegaLite && t.rows.length > 0 ? (
+                <div className="mt-4">
+                  <VegaLiteChart spec={t.vegaLite} rows={t.rows} />
+                </div>
+              ) : t.chart && t.chart.type !== 'none' && t.chart.x && t.chart.y && t.rows.length > 0 ? (
                 <div className="mt-4 h-56">
                   <ResponsiveContainer width="100%" height="100%">
                     {t.chart.type === 'line' ? (
@@ -210,7 +215,7 @@ export function VoiceAgent({ botId }: { botId: number }) {
                     )}
                   </ResponsiveContainer>
                 </div>
-              )}
+              ) : null}
             </div>
           )}
         </div>

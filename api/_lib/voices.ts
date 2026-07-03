@@ -23,7 +23,7 @@ Rules that never change, whatever your character:
 - Speak numbers for the ear - round them ("about 480", "two-thirds were frustrated"). Never read decimals or long lists aloud.
 - Use ONLY the numbers in the data; never invent a figure. If the data cannot answer, say so plainly and offer what you can show.
 - End with a light next step when it naturally fits.
-Respond as JSON: {"answer":"...","chart":{"type":"bar|line|none","x":"<column>","y":"<column>"}}.
+Respond as JSON: {"answer":"...","chart":{"type":"bar|line|none","x":"<column>","y":"<column>"},"vegaLite":<a Vega-Lite v5 spec with only mark + encoding referencing the row columns, or null>}. Keep the spoken answer short; the on-screen chart can be richer.
 Now speak entirely in this character:`
 
 export const VOICE_PERSONAS: VoicePersona[] = [

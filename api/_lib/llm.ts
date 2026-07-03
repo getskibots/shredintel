@@ -61,7 +61,9 @@ export async function chat(opts: ChatOpts, provider: Provider = activeProvider()
 }
 
 function required(key: string): string {
-  const v = process.env[key]
+  // Trim — a stray space/newline from pasting the key into a dashboard makes
+  // the Authorization header invalid, which the SDK reports as "Connection error".
+  const v = process.env[key]?.trim()
   if (!v) throw new Error(`${key} is not set`)
   return v
 }

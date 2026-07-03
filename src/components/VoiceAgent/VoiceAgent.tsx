@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { Mic, Square, Sparkles } from 'lucide-react'
+import { AudioLines, Mic, Square, Sparkles } from 'lucide-react'
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
 } from 'recharts'
 import { brand } from '../../lib/chartTheme'
-import { VOICE_PROFILES, DEFAULT_VOICE_ID, profileFor, pickBrowserVoice } from '../../lib/voices'
+import { DEFAULT_VOICE_ID, profileFor, pickBrowserVoice } from '../../lib/voices'
 
 /**
  * ShredIntel voice agent — talk to your resort's data and hear the answer while
@@ -40,14 +40,7 @@ export function VoiceAgent({ botId }: { botId: number }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recogRef = useRef<any>(null)
 
-  const [voiceId, setVoiceId] = useState<string>(() => {
-    try { return localStorage.getItem(`shredintel_voice_${botId}`) || DEFAULT_VOICE_ID } catch { return DEFAULT_VOICE_ID }
-  })
-  const voiceIdRef = useRef(voiceId)
-  useEffect(() => {
-    voiceIdRef.current = voiceId
-    try { localStorage.setItem(`shredintel_voice_${botId}`, voiceId) } catch { /* noop */ }
-  }, [botId, voiceId])
+  const voiceIdRef = useRef(DEFAULT_VOICE_ID)
 
   const setM = (m: Mode) => { modeRef.current = m; setMode(m) }
 
@@ -63,6 +56,7 @@ export function VoiceAgent({ botId }: { botId: number }) {
 
   function start() {
     if (!supported) return
+    try { voiceIdRef.current = localStorage.getItem(`shredintel_voice_${botId}`) || DEFAULT_VOICE_ID } catch { /* noop */ }
     activeRef.current = true
     setTurn(null)
     listen()
@@ -146,25 +140,6 @@ export function VoiceAgent({ botId }: { botId: number }) {
     )
   }
 
-  const picker = (
-    <div className="inline-flex items-center gap-0.5 rounded-full border border-slate-200 bg-white p-0.5">
-      {VOICE_PROFILES.map((p) => (
-        <button
-          key={p.id}
-          type="button"
-          onClick={() => setVoiceId(p.id)}
-          title={p.blurb}
-          className={[
-            'rounded-full px-2.5 py-1 text-xs font-medium transition',
-            voiceId === p.id ? 'bg-botscrew-500 text-white' : 'text-slate-500 hover:text-slate-800',
-          ].join(' ')}
-        >
-          {p.name}
-        </button>
-      ))}
-    </div>
-  )
-
   const active = mode !== 'off'
   const t = turn
 
@@ -177,12 +152,8 @@ export function VoiceAgent({ botId }: { botId: number }) {
             onClick={start}
             className="inline-flex items-center gap-2 rounded-full border border-botscrew-200 bg-botscrew-50 px-4 py-2 text-sm font-semibold text-botscrew-700 transition hover:bg-botscrew-100"
           >
-            <Mic className="h-4 w-4" strokeWidth={2} /> Talk to ShredIntel
+            <AudioLines className="h-4 w-4" strokeWidth={2} /> Talk to ShredIntel
           </button>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-400">Voice</span>
-            {picker}
-          </div>
         </div>
       ) : (
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -211,10 +182,6 @@ export function VoiceAgent({ botId }: { botId: number }) {
             >
               <Square className="h-3.5 w-3.5" strokeWidth={2} /> End
             </button>
-          </div>
-          <div className="mt-3 flex items-center gap-2">
-            <span className="text-xs text-slate-400">Voice</span>
-            {picker}
           </div>
 
           {t && (

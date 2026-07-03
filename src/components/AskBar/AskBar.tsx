@@ -1,9 +1,10 @@
-import { useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Sparkles, ArrowUp, Mic, ChevronDown, Loader2, TriangleAlert } from 'lucide-react'
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
 } from 'recharts'
 import { brand } from '../../lib/chartTheme'
+import { VOICE_PROFILES, DEFAULT_VOICE_ID } from '../../lib/voices'
 
 /**
  * ShredIntel hero search — the dashboard's spine. Ask any question about the
@@ -43,6 +44,10 @@ export function AskBar({ botId }: { botId: number }) {
   const recogRef = useRef<{ stop: () => void } | null>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const SR = typeof window !== 'undefined' ? (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition : null
+  const [voiceId, setVoiceId] = useState<string>(() => {
+    try { return localStorage.getItem(`shredintel_voice_${botId}`) || DEFAULT_VOICE_ID } catch { return DEFAULT_VOICE_ID }
+  })
+  useEffect(() => { try { localStorage.setItem(`shredintel_voice_${botId}`, voiceId) } catch { /* noop */ } }, [botId, voiceId])
 
   async function ask(body: { question?: string; templateId?: string }) {
     setLoading(true)
@@ -102,6 +107,25 @@ export function AskBar({ botId }: { botId: number }) {
 
   return (
     <div className="mx-auto mb-10 max-w-3xl">
+      <div className="mb-2.5 flex items-center justify-center gap-2">
+        <span className="text-[11px] font-medium uppercase tracking-wider text-slate-400">ShredIntel voice</span>
+        <div className="inline-flex items-center gap-0.5 rounded-full border border-slate-200 bg-white p-0.5">
+          {VOICE_PROFILES.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => setVoiceId(p.id)}
+              title={p.blurb}
+              className={[
+                'rounded-full px-2.5 py-0.5 text-[11px] font-medium transition',
+                voiceId === p.id ? 'bg-botscrew-500 text-white' : 'text-slate-500 hover:text-slate-800',
+              ].join(' ')}
+            >
+              {p.name}
+            </button>
+          ))}
+        </div>
+      </div>
       <form onSubmit={onSubmit} className="relative">
         <Sparkles
           className="pointer-events-none absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-botscrew-500"
@@ -134,7 +158,12 @@ export function AskBar({ botId }: { botId: number }) {
             type="submit"
             disabled={loading || !query.trim()}
             aria-label="Ask"
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-botscrew-500 text-white transition hover:bg-botscrew-600 disabled:cursor-not-allowed disabled:opacity-50"
+            className={[
+              'flex h-11 w-11 items-center justify-center rounded-full transition',
+              query.trim() && !loading
+                ? 'bg-botscrew-500 text-white hover:bg-botscrew-600'
+                : 'cursor-not-allowed bg-slate-100 text-slate-400',
+            ].join(' ')}
           >
             {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <ArrowUp className="h-5 w-5" strokeWidth={2.2} />}
           </button>
@@ -154,6 +183,10 @@ export function AskBar({ botId }: { botId: number }) {
           </button>
         ))}
       </div>
+
+      <p className="mt-3 text-center text-[11px] text-slate-400">
+        Ask by typing, by voice with the mic, or tap a starter above.
+      </p>
 
       {loading && (
         <div className="mt-5 flex items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-500">

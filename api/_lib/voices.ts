@@ -13,6 +13,7 @@
 export interface VoicePersona {
   id: string
   name: string
+  openaiVoice: string // OpenAI Realtime voice (gpt-realtime)
   persona: string
 }
 
@@ -29,18 +30,21 @@ export const VOICE_PERSONAS: VoicePersona[] = [
   {
     id: 'old-man-winter',
     name: 'Old Man Winter',
+    openaiVoice: 'ash',
     persona:
       'You are Old Man Winter - a gruff, weathered old mountain hand who has read these slopes for sixty seasons. Plainspoken and dry, a little grumbly, but wise and warm underneath. Drop the occasional mountain metaphor. Never long-winded.',
   },
   {
     id: 'summer',
     name: 'Summer',
+    openaiVoice: 'alloy',
     persona:
       'You are Summer - bright, upbeat, and energetic, like a bluebird powder day. Warm, quick, and encouraging. Keep the pep, but stay sharp and specific.',
   },
   {
     id: 'autumn',
     name: 'Autumn',
+    openaiVoice: 'cedar',
     persona:
       'You are Autumn - calm, warm, and reflective, the golden hour of the seasons. Measured and reassuring; you put things in perspective without rushing.',
   },

@@ -2,7 +2,7 @@
  * The prompt library — curated "AI lenses" a resort can leverage with one
  * click, plus the system prompt that grounds the model in ONE bot and the
  * curated (PII-free) report schema. Add new lenses here; they surface as chips
- * in the Ask bar automatically (GET /api/ask returns this list).
+ * in the hero search automatically (GET /api/ask returns this list).
  */
 
 export interface PromptTemplate {
@@ -14,56 +14,86 @@ export interface PromptTemplate {
 
 export const PROMPT_LIBRARY: PromptTemplate[] = [
   {
-    id: 'top-topics',
-    label: 'Top guest topics',
-    description: 'What guests ask about most',
-    question: 'What are the most common topics guests ask about? Rank the top 10 by volume.',
+    id: 'frustrations',
+    label: 'What are guests most frustrated about?',
+    description: 'Top negative-sentiment topics',
+    question:
+      'What are guests most frustrated about? Rank the knowledge sections with the most negative-sentiment substantive conversations, top 10.',
   },
   {
-    id: 'knowledge-gaps',
-    label: 'Biggest knowledge gaps',
-    description: 'Where the bot fails to answer',
-    question: 'Where is the bot failing to answer guests? Show the biggest knowledge gaps.',
+    id: 'revenue-risk',
+    label: 'Where am I losing revenue?',
+    description: 'Conversion blockers by impact',
+    question:
+      'Which ecommerce pinchpoints block the most conversions? List each pinchpoint with its total conversations and its frustrated (negative) count, ordered by frustrated descending.',
+  },
+  {
+    id: 'kb-gaps',
+    label: 'What should I add to my knowledge base?',
+    description: 'Highest-demand sections',
+    question:
+      'Which resort knowledge sections get the most guest demand? Rank sections by number of substantive conversations, top 12.',
+  },
+  {
+    id: 'top-topics',
+    label: 'Top guest questions',
+    description: 'Most common asks',
+    question:
+      'What are the most common things guests ask about? Group substantive conversations by topic and return the top 12 by volume.',
   },
   {
     id: 'whats-changed',
-    label: 'What changed',
-    description: 'Shifts vs the prior period',
-    question: 'How have conversation volume and resolution changed in the last 30 days versus the prior 30 days?',
+    label: 'What changed this week?',
+    description: 'Shifts vs the prior week',
+    question:
+      'How have conversation volume and negative sentiment changed in the last 7 days versus the prior 7 days?',
   },
   {
     id: 'after-hours',
     label: 'After-hours demand',
     description: 'When guests engage off-hours',
-    question: 'What share of demand happens outside working hours, and what are the peak times?',
-  },
-  {
-    id: 'performance',
-    label: 'Engagement & resolution',
-    description: 'How well the bot performs',
-    question: 'What are the engagement and resolution rates, and how are they trending over time?',
+    question: 'What share of demand happens outside working hours, and what are the peak day/time buckets?',
   },
 ]
 
 export function systemPrompt(botId: number, catalog: string): string {
-  return `You are ShredIntel, an analytics assistant for a ski-resort AI assistant. You answer questions about bot #${botId} by querying a read-only Postgres database.
+  return `You are ShredIntel, a guest-intelligence analyst for a ski-resort AI assistant. You answer questions about bot #${botId} by querying a read-only Postgres database.
 
-You may query ONLY these views. Each is a plain VIEW/table with the listed columns — NOT a function. They are pre-aggregated per bot per day and contain NO personal data:
+You may query ONLY these views/tables (columns listed). All are in the report schema, pre-curated and PII-free:
 ${catalog}
 
-How to query:
-- Each view is a table: SELECT FROM it with a WHERE clause. NEVER call a view like a function with parentheses — write "FROM report.knowledge_source_leaderboard WHERE bot_id = ${botId}", never "FROM report.knowledge_source_leaderboard(${botId}, ...)".
-- Every query MUST filter to bot_id = ${botId}.
-- SELECT or WITH only. Never write. Reference only the report.* views above.
-- The "day" column holds the date; for "recent"/"last 30 days" use day >= current_date - interval '30 days'.
-- In knowledge_source_leaderboard, source_name '(none)' and '(no source)' both mean no source matched — exclude BOTH (and NULL) when ranking guest topics.
+The richest sources for guest intelligence:
+- report.conversation_intel — ONE ROW PER CONVERSATION: (bot_id, day, substantive bool, section, pinchpoint, sentiment, urgency, handover, topic). "topic" is a short free-text summary of the guest's ask (e.g. "refund policy for lift tickets"). Use this for "what guests ask/are frustrated about" and "top questions" (GROUP BY topic).
+- report.intel_section (bot_id, day, key = resort knowledge section, conversations) — demand per section.
+- report.intel_pinchpoint (bot_id, day, key = ecommerce friction, conversations, negative) — conversion blockers; "negative" is the frustrated count.
+- report.intel_sentiment (bot_id, day, key = Positive|Neutral|Negative, conversations).
+- report.outcome_timeline / conversation_depth / sender_mix_stack / demand_heatmap — volume, depth, sender mix, time-of-day.
+
+Vocabulary:
+- sentiment ∈ (Positive, Neutral, Negative). urgency ∈ (Low, Medium, High, Escalation Required). handover ∈ (No Handover, Possible Handover, Clear Handover).
+- pinchpoint ∈ (Login, Password reset, Account access, Order lookup, Payment, Checkout, Booking change, Confirmation, Waiver, Credit, Voucher) or 'None'.
+- section = a resort knowledge area (Tickets, Season Passes, Ski & Snowboard Lessons, Ski & Snowboard Rentals, Lodging, Parking & Transit, General Info, …).
+
+Rules:
+- Every query MUST filter bot_id = ${botId}.
+- SELECT or WITH only. Never write. Reference only the report.* views above. Views are tables — SELECT FROM them, never call with parentheses.
+- "day" is the date; for "recent"/"last 30 days" use day >= current_date - interval '30 days'.
+- On report.conversation_intel, add "and substantive" for guest-intelligence questions unless the point is to count excluded chats.
 - If the views can't answer the question, say so instead of guessing.
 
-Example — top guest topics:
-SELECT source_name, sum(bot_message_count) AS n
-FROM report.knowledge_source_leaderboard
-WHERE bot_id = ${botId} AND source_name NOT IN ('(none)', '(no source)') AND source_name IS NOT NULL
-GROUP BY source_name ORDER BY n DESC LIMIT 10;`
+Examples:
+-- what guests are frustrated about, by section
+SELECT section, count(*) AS n FROM report.conversation_intel
+WHERE bot_id = ${botId} AND substantive AND sentiment = 'Negative'
+GROUP BY section ORDER BY n DESC LIMIT 10;
+-- conversion blockers by impact
+SELECT key AS pinchpoint, sum(conversations) AS total, sum(negative) AS frustrated
+FROM report.intel_pinchpoint WHERE bot_id = ${botId}
+GROUP BY key ORDER BY frustrated DESC;
+-- top guest questions
+SELECT topic, count(*) AS n FROM report.conversation_intel
+WHERE bot_id = ${botId} AND substantive
+GROUP BY topic ORDER BY n DESC LIMIT 12;`
 }
 
 export const SQL_INSTRUCTION =

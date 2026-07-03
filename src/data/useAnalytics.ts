@@ -343,6 +343,39 @@ function overlayJHChatLive(base: PeriodFixtures, live: LiveBundle): PeriodFixtur
     }
   }
 
+  // § 1 — Conversation counts (Extended Conversation Counts)
+  if (live.conversationDepth.length > 0) {
+    const rows = live.conversationDepth
+    const sessions = sum(rows.map((r) => Number(r.conversations)))
+    const engagedSessions = sum(rows.map((r) => Number(r.engaged_conversations)))
+    const singleUserMsgSessions = sum(rows.map((r) => Number(r.single_user_msg_sessions)))
+    const userMessages = sum(rows.map((r) => Number(r.user_messages)))
+    const messages = sum(rows.map((r) => Number(r.total_messages)))
+    // Exact period avg first-response = Σ(sum_sec) / Σ(responded); NULL until the
+    // response-time enrichment view lands (columns arrive null for now).
+    out.conversationCounts = {
+      sessions,
+      messages,
+      userMessages,
+      engagedSessions,
+      singleUserMsgSessions,
+      singleMsgShareOfEngaged: engagedSessions > 0 ? singleUserMsgSessions / engagedSessions : 0,
+      messagesPerSession: sessions > 0 ? messages / sessions : 0,
+      userMessagesPerSession: sessions > 0 ? userMessages / sessions : 0,
+      avgUserMsgsPerEngaged: engagedSessions > 0 ? userMessages / engagedSessions : 0,
+      avgFirstResponseSec: null,
+      medianFirstResponseSec: null,
+      sessionsDelta: undefined, // no honest prior-window fetch yet
+      messagesDelta: undefined,
+      trend: rows.map((r) => ({
+        date: r.day,
+        sessions: Number(r.conversations),
+        messages: Number(r.total_messages),
+        userMessages: Number(r.user_messages),
+      })),
+    }
+  }
+
   // § 2 — Knowledge source leaderboard
   if (live.knowledgeSourceLeaderboard.length > 0) {
     const perSource = new Map<string, { count: number; failed: number }>()

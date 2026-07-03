@@ -94,6 +94,24 @@ export interface DemandHeatmapRow {
   user_messages: number
 }
 
+/**
+ * report.conversation_depth (bot_id, day) — the one view we added for §1
+ * "Extended Conversation Counts": bounce sessions + time-to-first-response.
+ * See etl/build-conversation-depth.mjs.
+ */
+export interface ConversationDepthRow {
+  bot_id: number
+  day: string
+  conversations: number
+  engaged_conversations: number
+  single_user_msg_sessions: number
+  user_messages: number
+  total_messages: number
+  avg_user_msgs_per_engaged: number | null
+  avg_first_response_sec: number | null
+  median_first_response_sec: number | null
+}
+
 export interface LiveBundle {
   outcomeTimeline: OutcomeRow[]
   conversionPulse: ConversionRow[]
@@ -103,6 +121,7 @@ export interface LiveBundle {
   leadCaptureFunnel: LeadCaptureRow[]
   deviceExperienceMix: DeviceExperienceRow[]
   demandHeatmap: DemandHeatmapRow[]
+  conversationDepth: ConversationDepthRow[]
 }
 
 /**
@@ -129,7 +148,7 @@ export async function fetchLiveBundle(
       .lte('day', to) as unknown as Promise<{ data: T[] | null; error: unknown }>
 
   try {
-    const [outcome, conversion, knowledge, sender, identity, funnel, device, heatmap] =
+    const [outcome, conversion, knowledge, sender, identity, funnel, device, heatmap, depth] =
       await Promise.all([
         q<OutcomeRow>('outcome_timeline'),
         q<ConversionRow>('conversion_pulse'),
@@ -139,9 +158,12 @@ export async function fetchLiveBundle(
         q<LeadCaptureRow>('lead_capture_funnel'),
         q<DeviceExperienceRow>('device_experience_mix'),
         q<DemandHeatmapRow>('demand_heatmap'),
+        q<ConversationDepthRow>('conversation_depth'),
       ])
 
-    // Any query erroring is treated as "schema unreachable" — bail out.
+    // Any of the 8 ORIGINAL views erroring = "schema unreachable" → bail to fixtures.
+    // conversation_depth is deliberately EXCLUDED: it's a newer view, and if it
+    // ever errors (not refreshed/granted) the other 8 should still render live.
     const anyError =
       outcome.error || conversion.error || knowledge.error || sender.error ||
       identity.error || funnel.error || device.error || heatmap.error
@@ -149,6 +171,10 @@ export async function fetchLiveBundle(
       // eslint-disable-next-line no-console
       console.warn('[shredintel] Supabase live-fetch failed, falling back to fixtures', anyError)
       return null
+    }
+    if (depth.error) {
+      // eslint-disable-next-line no-console
+      console.warn('[shredintel] conversation_depth unavailable (non-fatal)', depth.error)
     }
 
     return {
@@ -160,6 +186,7 @@ export async function fetchLiveBundle(
       leadCaptureFunnel: funnel.data ?? [],
       deviceExperienceMix: device.data ?? [],
       demandHeatmap: heatmap.data ?? [],
+      conversationDepth: depth.error ? [] : (depth.data ?? []),
     }
   } catch (err) {
     // eslint-disable-next-line no-console

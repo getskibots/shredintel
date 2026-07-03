@@ -1,16 +1,14 @@
 import { useParams, useSearchParams } from 'react-router-dom'
 import { AskBar } from '../AskBar'
 import { BotSelector } from '../BotSelector'
+import { ConversationCounts } from '../ConversationCounts'
 import { ConversionPulse } from '../ConversionPulse'
 import { DemandHeatmap } from '../DemandHeatmap'
 import { DeviceExperienceMix } from '../DeviceExperienceMix'
 import { GuestIdentitySplit } from '../GuestIdentitySplit'
 import { KnowledgeSourceLeaderboard } from '../KnowledgeSourceLeaderboard'
-import { KpiStrip } from '../KpiStrip'
 import { LeadCaptureFunnel } from '../LeadCaptureFunnel'
-import { OutcomeTimeline } from '../OutcomeTimeline'
 import { PeriodPicker } from '../PeriodPicker'
-import { ResolutionHero } from '../ResolutionHero'
 import { SectionHeader } from '../SectionHeader'
 import { SectionNav } from '../SectionNav'
 import { SenderMixStack } from '../SenderMixStack'
@@ -102,10 +100,11 @@ export function BotAnalyticsPage() {
 
         <section id="core" className="scroll-mt-40 space-y-5">
           <SectionHeader number="1" name="Conversation Core" tagline="What happened?" />
-          <ResolutionHero stats={f.resolution} scopeLabel={`Bot ${botId}`} periodLabel={f.periodLabel} />
-          <KpiStrip tiles={f.kpis} />
-          <OutcomeTimeline {...f.outcomeTimeline} />
+          {/* Extended Conversation Counts — the spec's §1 (sessions vs. messages, depth, bounce). */}
+          <ConversationCounts {...f.conversationCounts} />
           <ConversionPulse {...f.conversionPulse} />
+          {/* Benched until the SOLVED outcome derivation is settled (see reference_shredintel_data_model):
+              ResolutionHero, KpiStrip, OutcomeTimeline all read outcome=SOLVED, which is 0 for every live bot. */}
         </section>
 
         <section id="intelligence" className="scroll-mt-40 space-y-5">

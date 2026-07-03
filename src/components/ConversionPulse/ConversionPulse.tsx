@@ -7,6 +7,7 @@ import {
   XAxis,
 } from 'recharts'
 import { EmptyState, Metric, Panel } from '../shared'
+import { chart } from '../../lib/chartTheme'
 import {
   deltaTone,
   formatDelta,
@@ -79,30 +80,16 @@ export function ConversionPulse({
                 data={timeline}
                 margin={{ top: 4, right: 8, left: 0, bottom: 0 }}
               >
-                <CartesianGrid stroke="#E2E8F0" strokeDasharray="3 3" vertical={false} />
-                <XAxis
-                  dataKey="date"
-                  tick={{ fill: '#64748B', fontSize: 11 }}
-                  tickLine={false}
-                  axisLine={{ stroke: '#E2E8F0' }}
-                />
+                <CartesianGrid {...chart.grid} />
+                <XAxis dataKey="date" {...chart.xAxis} />
                 <Tooltip
-                  contentStyle={{
-                    borderRadius: 12,
-                    border: '1px solid #E2E8F0',
-                    fontSize: 12,
-                  }}
+                  {...chart.tooltip}
                   formatter={(value) => [
                     formatNumber(Number(value)),
                     'Conversions',
                   ]}
-                  cursor={{ fill: 'rgba(14, 165, 233, 0.08)' }}
                 />
-                <Bar
-                  dataKey="convertedConversations"
-                  fill="#0EA5E9"
-                  radius={[6, 6, 0, 0]}
-                />
+                <Bar dataKey="convertedConversations" {...chart.bar} />
               </BarChart>
             </ResponsiveContainer>
           </div>

@@ -8,6 +8,20 @@ export default {
         display: ['Inter', 'system-ui', 'sans-serif'],
       },
       colors: {
+        // Brand tokens pulled from the LIVE Botscrew analytics page
+        // (bots.getskitickets.com/admin/bot/2/analytics). Authoritative source
+        // for our visual identity — charts + text + canvas match the tool
+        // resorts already use. See src/lib/chartTheme.ts for the chart presets.
+        brand: {
+          blue: '#2182BF', // primary — KPI numbers, primary series, CTAs
+          blueSoft: '#7FB9DD',
+          gold: '#F3B116', // accent — secondary series
+          slate: '#354052', // line series + strong marks
+          heading: '#3A3F62', // card titles
+          muted: '#616581', // secondary text + axis labels
+          ink: '#212529', // body text
+        },
+        canvas: '#F4F7FA', // app background (soft blue-grey)
         // Botscrew dashboard palette (matches the existing admin shell).
         // Medium-blue chrome + bright cobalt CTAs.
         botscrew: {

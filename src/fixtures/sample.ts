@@ -7,6 +7,7 @@
 import type {
   ActiveUsersPoint,
   ConversationCoverage,
+  ConversationCountsProps,
   ConversionPulseProps,
   DayOfWeek,
   DemandHeatmapCell,
@@ -520,6 +521,7 @@ export interface PeriodFixtures {
   resolution: ResolutionStats
   engagement: EngagementSummary
   kpis: KpiTileData[]
+  conversationCounts: ConversationCountsProps
   outcomeTimeline: OutcomeTimelineProps
   conversionPulse: ConversionPulseProps
   knowledgeSourceLeaderboard: KnowledgeSourceLeaderboardProps
@@ -780,6 +782,32 @@ export function buildPeriodFixturesForDays(
     })),
   }
 
+  // ── Conversation counts (§1 Extended Conversation Counts) ──────────
+  const sessionsByDay = distributeAcrossDates(totalConversations, dates)
+  const msgsByDay = distributeAcrossDates(totalMsgs, dates)
+  const singleUserMsgSessions = Math.round(engaged * 0.34)
+  const conversationCounts: ConversationCountsProps = {
+    sessions: totalConversations,
+    messages: totalMsgs,
+    userMessages: userMsgs,
+    engagedSessions: engaged,
+    singleUserMsgSessions,
+    singleMsgShareOfEngaged: engaged > 0 ? singleUserMsgSessions / engaged : 0,
+    messagesPerSession: totalConversations > 0 ? totalMsgs / totalConversations : 0,
+    userMessagesPerSession: totalConversations > 0 ? userMsgs / totalConversations : 0,
+    avgUserMsgsPerEngaged: engaged > 0 ? userMsgs / engaged : 0,
+    avgFirstResponseSec: 3.4,
+    medianFirstResponseSec: 2.1,
+    sessionsDelta: period === '30d' ? 0.086 : 0.052,
+    messagesDelta: period === '30d' ? 0.094 : 0.061,
+    trend: dates.map((date, i) => ({
+      date,
+      sessions: sessionsByDay[i],
+      messages: msgsByDay[i],
+      userMessages: userByDay[i],
+    })),
+  }
+
   // ── Guest identity (aggregate counts only) ─────────────────────────
   const known = Math.round(6800 * scale)
   const anon = totalConversations - known
@@ -932,6 +960,7 @@ export function buildPeriodFixturesForDays(
     resolution,
     engagement,
     kpis,
+    conversationCounts,
     outcomeTimeline,
     conversionPulse,
     knowledgeSourceLeaderboard,

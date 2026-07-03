@@ -163,6 +163,45 @@ export interface ConversionPulseProps {
   timeline: ConversionTimelinePoint[]
 }
 
+// § 1 — ConversationCounts  (spec: "Extended Conversation Counts")
+// Sessions vs. messages, depth per session, bounce (single-user-message)
+// sessions, and time-to-first-response. Sourced from report.conversation_depth.
+
+export interface ConversationCountsPoint {
+  date: string
+  sessions: number
+  messages: number
+  userMessages: number
+}
+
+export interface ConversationCountsProps {
+  /** Total conversations (sessions) in the period */
+  sessions: number
+  /** Total messages (real, visible) in the period */
+  messages: number
+  userMessages: number
+  /** Sessions with ≥1 real user message */
+  engagedSessions: number
+  /** Sessions where the user sent exactly one message (bounce) */
+  singleUserMsgSessions: number
+  /** Bounce rate = singleUserMsgSessions / engagedSessions (0-1) */
+  singleMsgShareOfEngaged: number
+  /** messages / sessions */
+  messagesPerSession: number
+  /** userMessages / sessions */
+  userMessagesPerSession: number
+  /** avg user messages among engaged sessions */
+  avgUserMsgsPerEngaged: number
+  /** Time from first user message to first bot/support reply, seconds */
+  avgFirstResponseSec: number | null
+  medianFirstResponseSec: number | null
+  /** Optional deltas vs prior period (omitted for live until prior-window fetch exists) */
+  sessionsDelta?: number
+  messagesDelta?: number
+  /** Daily series for the sessions-vs-messages chart */
+  trend: ConversationCountsPoint[]
+}
+
 // § 2 — KnowledgeSourceLeaderboard
 
 export interface KnowledgeSourceItem {

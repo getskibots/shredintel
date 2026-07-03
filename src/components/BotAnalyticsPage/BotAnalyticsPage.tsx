@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { AskBar } from '../AskBar'
 import { BotSelector } from '../BotSelector'
@@ -47,6 +48,7 @@ export function BotAnalyticsPage() {
   }
   const { data: f, isLive, isLoading } = useBotAnalytics(botId, selection)
   const { bots } = useAvailableBots()
+  const [voiceActive, setVoiceActive] = useState(false)
 
   // Show the bot's label from the registry when we know it; fall back to id.
   const bot = bots.find((b) => b.botId === botId)
@@ -100,8 +102,8 @@ export function BotAnalyticsPage() {
       </div>
 
       <div className="space-y-12 px-4 py-6 md:px-6 md:py-8">
-        <AskBar botId={botId} />
-        <VoiceAgent botId={botId} />
+        <AskBar botId={botId} onVoice={() => setVoiceActive(true)} />
+        <VoiceAgent botId={botId} active={voiceActive} onEnd={() => setVoiceActive(false)} />
 
         <section id="core" className="scroll-mt-40 space-y-5">
           <SectionHeader number="1" name="Conversation Core" tagline="What happened?" />

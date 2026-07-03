@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { Sparkles, ArrowUp, Mic, ChevronDown, Loader2, TriangleAlert } from 'lucide-react'
+import { Sparkles, ArrowUp, AudioLines, Mic, ChevronDown, Loader2, TriangleAlert } from 'lucide-react'
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
 } from 'recharts'
@@ -36,7 +36,7 @@ const LENSES = [
   { id: 'whats-changed', label: 'What changed this week?' },
 ]
 
-export function AskBar({ botId }: { botId: number }) {
+export function AskBar({ botId, onVoice }: { botId: number; onVoice?: () => void }) {
   const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<AskResult | null>(null)
@@ -138,9 +138,9 @@ export function AskBar({ botId }: { botId: number }) {
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Ask your resort’s data…  e.g. where am I losing revenue?"
           aria-label="Ask your resort’s data"
-          className="w-full rounded-full border border-slate-200 bg-white py-4 pl-14 pr-28 text-base text-slate-800 shadow-sm outline-none placeholder:text-slate-400 focus:border-botscrew-400 focus:ring-2 focus:ring-botscrew-100"
+          className="w-full rounded-full border border-slate-200 bg-white py-4 pl-14 pr-40 text-base text-slate-800 shadow-sm outline-none placeholder:text-slate-400 focus:border-botscrew-400 focus:ring-2 focus:ring-botscrew-100"
         />
-        <div className="absolute right-2.5 top-1/2 flex -translate-y-1/2 items-center gap-2">
+        <div className="absolute right-2.5 top-1/2 flex -translate-y-1/2 items-center gap-1.5">
           {SR && (
             <button
               type="button"
@@ -154,6 +154,17 @@ export function AskBar({ botId }: { botId: number }) {
               ].join(' ')}
             >
               <Mic className="h-5 w-5" strokeWidth={2} />
+            </button>
+          )}
+          {SR && (
+            <button
+              type="button"
+              onClick={onVoice}
+              aria-label="Talk to ShredIntel by voice"
+              title="Talk to ShredIntel"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-botscrew-200 bg-botscrew-50 text-botscrew-600 transition hover:bg-botscrew-100"
+            >
+              <AudioLines className="h-5 w-5" strokeWidth={2} />
             </button>
           )}
           <button
@@ -187,7 +198,7 @@ export function AskBar({ botId }: { botId: number }) {
       </div>
 
       <p className="mt-3 text-center text-[11px] text-slate-400">
-        Ask by typing, by voice with the mic, or tap a starter above.
+        Type it, dictate with the mic, or talk to ShredIntel — or tap a starter above.
       </p>
 
       {loading && (

@@ -55,7 +55,7 @@ export function AskBar({ botId }: { botId: number }) {
       try {
         data = await res.json()
       } catch {
-        throw new Error(`AI endpoint unavailable (${res.status}) — this works on the deployed preview.`)
+        throw new Error(`The AI service returned a ${res.status} error. If this persists, check the /api/ask function logs in Vercel.`)
       }
       if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`)
       setResult(data)

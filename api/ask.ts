@@ -11,9 +11,9 @@
  * TODO(hardening): per-bot/session rate limit + token cap before public embed.
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { chat } from './_lib/llm'
-import { runReadOnly, schemaCatalog, validateSql } from './_lib/db'
-import { PROMPT_LIBRARY, systemPrompt, SQL_INSTRUCTION, ANSWER_INSTRUCTION } from './_lib/prompts'
+import { chat } from './_lib/llm.js'
+import { runReadOnly, schemaCatalog, validateSql } from './_lib/db.js'
+import { PROMPT_LIBRARY, systemPrompt, SQL_INSTRUCTION, ANSWER_INSTRUCTION } from './_lib/prompts.js'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'GET') {

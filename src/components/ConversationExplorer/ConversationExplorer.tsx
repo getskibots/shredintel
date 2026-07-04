@@ -10,7 +10,13 @@ import { sentimentColors } from '../../lib/chartTheme'
  * bot-scoped, PII-scrubbed /api/transcript. Every number becomes evidence.
  */
 
-interface ConvRow { conversation_id: number; topic: string | null; sentiment: string | null; day: string }
+interface ConvRow { bot_id: number; conversation_id: number; topic: string | null; sentiment: string | null; day: string }
+
+/** The Botscrew support deep-link for a conversation. Always built from the
+ *  conversation's OWN bot_id (authoritative — verified 0 mismatches against
+ *  admin_conversation→admin_user) so the URL can never point at the wrong bot. */
+const botscrewSupportUrl = (botId: number, conversationId: number) =>
+  `https://bots.getskitickets.com/admin/bot/${botId}/support/${conversationId}`
 interface Msg { sender: string; text: string }
 
 const sentColor = (s: string | null): string => {
@@ -48,7 +54,7 @@ export function ConversationExplorer({
       const base = sb
         .schema('report')
         .from('conversation_intel')
-        .select('conversation_id, topic, sentiment, day', { count: 'exact' })
+        .select('bot_id, conversation_id, topic, sentiment, day', { count: 'exact' })
         .eq('bot_id', botId)
         .ilike(filter.dim, filter.value)
         .eq('substantive', true)
@@ -156,7 +162,7 @@ export function ConversationExplorer({
                       <div className="mb-2.5 flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
                         <span className="text-[11px] font-medium text-slate-400">Conversation {r.conversation_id}</span>
                         <a
-                          href={`https://bots.getskitickets.com/admin/bot/${botId}/support/${r.conversation_id}`}
+                          href={botscrewSupportUrl(r.bot_id, r.conversation_id)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 text-xs font-semibold text-botscrew-600 transition hover:text-botscrew-700"

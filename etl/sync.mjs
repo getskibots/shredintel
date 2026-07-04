@@ -46,6 +46,7 @@ const MATVIEWS = [
   'lead_capture_funnel',
   'demand_heatmap',
   'conversation_depth', // §1 Extended Conversation Counts (built by build-conversation-depth.mjs)
+  'conversation_page',  // page/URL → ecommerce funnel stage (built by build-page-funnel.mjs)
 ]
 
 // ── tiny logger ───────────────────────────────────────────────────

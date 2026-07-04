@@ -87,6 +87,8 @@ The richest sources for guest intelligence:
 - report.intel_pinchpoint (bot_id, day, key = ecommerce friction, conversations, negative) — conversion blockers; "negative" is the frustrated count.
 - report.intel_sentiment (bot_id, day, key = Positive|Neutral|Negative, conversations).
 - report.outcome_timeline / conversation_depth / sender_mix_stack / demand_heatmap — volume, depth, sender mix, time-of-day.
+- report.page_funnel (bot_id, day, funnel_stage, stage_rank, conversations, negative) — WHERE guest questions ORIGINATE on the resort's website, as an ecommerce funnel. "negative" = frustrated count for that stage. Rising negative share deeper in the funnel (Cart/Checkout) is the key conversion-friction signal — that's where site fixes pay off. ORDER BY stage_rank for funnel order.
+- report.conversation_page — ONE ROW PER conversation with its funnel_stage + page_path (the originating URL as host+path). Use it to read the actual questions from a page/stage, and for stage-sliced breakdowns via report.page_section / report.page_pinchpoint / report.page_sentiment (same shape as intel_* plus funnel_stage, stage_rank) and report.page_topics.
 
 CONVERSATION VOLUME — three NESTED lenses; pick the right one and NAME it so answers reconcile with the dashboard:
 - SESSIONS = conversation_depth.conversations (= outcome_timeline.total_conversations): every session, INCLUDING unengaged bounces (a bot greeting with no guest reply — often the majority). This is the dashboard's headline "sessions" number and is usually much larger than the rest.
@@ -98,6 +100,7 @@ Vocabulary:
 - sentiment ∈ (Positive, Neutral, Negative). urgency ∈ (Low, Medium, High, Escalation Required). handover ∈ (No Handover, Possible Handover, Clear Handover).
 - pinchpoint ∈ (Login, Password reset, Account access, Order lookup, Payment, Checkout, Booking change, Confirmation, Waiver, Credit, Voucher) or 'None'.
 - section = a resort knowledge area (Tickets, Season Passes, Ski & Snowboard Lessons, Ski & Snowboard Rentals, Lodging, Parking & Transit, General Info, …).
+- funnel_stage ∈ (Home, Browse & content, Product & shop, Cart, Checkout, Confirmation, Account & orders); stage_rank 1..7 (use for funnel ordering). page_path = the originating page URL (host+path).
 
 Rules:
 - Every query MUST filter bot_id = ${botId}.
@@ -119,6 +122,14 @@ GROUP BY key ORDER BY frustrated DESC;
 -- top guest questions
 SELECT topic, count(*) AS n FROM report.conversation_intel
 WHERE bot_id = ${botId} AND substantive${dayFilter}
+GROUP BY topic ORDER BY n DESC LIMIT 12;
+-- where questions originate (site funnel), with friction per stage
+SELECT funnel_stage, sum(conversations) AS n, sum(negative) AS frustrated
+FROM report.page_funnel WHERE bot_id = ${botId}${dayFilter}
+GROUP BY funnel_stage, stage_rank ORDER BY stage_rank;
+-- what guests on the Checkout page ask about
+SELECT topic, count(*) AS n FROM report.page_topics
+WHERE bot_id = ${botId} AND funnel_stage = 'Checkout'${dayFilter}
 GROUP BY topic ORDER BY n DESC LIMIT 12;${custom}`
 }
 

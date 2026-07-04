@@ -40,7 +40,7 @@ const LENSES = [
   { id: 'revenue-risk', label: 'Capture more revenue', Icon: TrendingUp },
 ]
 
-export function AskBar({ botId, onVoice }: { botId: number; onVoice?: () => void }) {
+export function AskBar({ botId, range, onVoice }: { botId: number; range?: { from: string; to: string; label: string }; onVoice?: () => void }) {
   const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<AskResult | null>(null)
@@ -62,7 +62,7 @@ export function AskBar({ botId, onVoice }: { botId: number; onVoice?: () => void
       const res = await fetch('/api/ask', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ botId, ...body }),
+        body: JSON.stringify({ botId, from: range?.from, to: range?.to, ...body }),
       })
       let data: AskResult & { error?: string }
       try {
@@ -221,6 +221,7 @@ export function AskBar({ botId, onVoice }: { botId: number; onVoice?: () => void
             <div className="mb-2 flex items-center gap-2 text-xs text-slate-400">
               <Sparkles className="h-3.5 w-3.5 text-botscrew-500" strokeWidth={2} />
               ShredIntel
+              {range?.label && <span className="text-slate-300">· {range.label}</span>}
             </div>
             <p className="text-[15px] leading-relaxed text-slate-800">{result.answer}</p>
 

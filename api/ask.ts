@@ -51,7 +51,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const catalog = await schemaCatalog()
     if (!catalog) return res.status(503).json({ error: 'no report views available yet' })
-    const system = systemPrompt(botId, catalog)
+    // Scope every generated query to the dashboard's selected date range so the
+    // answer reconciles with the panels below. Only accept well-formed ISO dates.
+    const ISO = /^\d{4}-\d{2}-\d{2}$/
+    const from = String(body.from ?? '')
+    const to = String(body.to ?? '')
+    const window = ISO.test(from) && ISO.test(to) && from <= to ? { from, to } : undefined
+    const system = systemPrompt(botId, catalog, window)
 
     // 1) question → SQL
     const sqlJson = await chat({ system, user: `${question}\n\n${SQL_INSTRUCTION}`, json: true, maxTokens: 500 })

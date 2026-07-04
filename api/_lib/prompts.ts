@@ -56,7 +56,12 @@ export const PROMPT_LIBRARY: PromptTemplate[] = [
   },
 ]
 
-export function systemPrompt(botId: number, catalog: string): string {
+export function systemPrompt(botId: number, catalog: string, window?: { from: string; to: string }): string {
+  const win = window && /^\d{4}-\d{2}-\d{2}$/.test(window.from) && /^\d{4}-\d{2}-\d{2}$/.test(window.to) ? window : null
+  const dayRule = win
+    ? `- DATE WINDOW (REQUIRED): the manager is viewing ${win.from} through ${win.to}. EVERY query MUST restrict to this window — on any table that has a "day" column, add "day BETWEEN '${win.from}' AND '${win.to}'" to the WHERE clause. Never return data from outside it; the answer must match the dashboard's date range.`
+    : `- "day" is the date; for "recent"/"last 30 days" use day >= current_date - interval '30 days'.`
+  const dayFilter = win ? ` AND day BETWEEN '${win.from}' AND '${win.to}'` : ''
   return `You are ShredIntel, a guest-intelligence analyst for a ski-resort AI assistant. You answer questions about bot #${botId} by querying a read-only Postgres database.
 
 You may query ONLY these views/tables (columns listed). All are in the report schema, pre-curated and PII-free:
@@ -77,23 +82,23 @@ Vocabulary:
 Rules:
 - Every query MUST filter bot_id = ${botId}.
 - SELECT or WITH only. Never write. Reference only the report.* views above. Views are tables — SELECT FROM them, never call with parentheses.
-- "day" is the date; for "recent"/"last 30 days" use day >= current_date - interval '30 days'.
+${dayRule}
 - On report.conversation_intel, add "and substantive" for guest-intelligence questions unless the point is to count excluded chats.
 - CHART SAFETY: any query whose rows become a breakdown/ranking chart MUST return a SMALL ranked set — ORDER BY the measure DESC and LIMIT 12 (or fewer). Prefer low-cardinality dimensions (section, pinchpoint, sentiment) over free-text topic. Only a per-day time series may exceed 12 rows.
 - If the views can't answer the question, say so instead of guessing.
 
-Examples:
+Examples${win ? ` (note the required date window ${win.from}..${win.to})` : ''}:
 -- what guests are frustrated about, by section
 SELECT section, count(*) AS n FROM report.conversation_intel
-WHERE bot_id = ${botId} AND substantive AND sentiment = 'Negative'
+WHERE bot_id = ${botId} AND substantive AND sentiment = 'Negative'${dayFilter}
 GROUP BY section ORDER BY n DESC LIMIT 10;
 -- conversion blockers by impact
 SELECT key AS pinchpoint, sum(conversations) AS total, sum(negative) AS frustrated
-FROM report.intel_pinchpoint WHERE bot_id = ${botId}
+FROM report.intel_pinchpoint WHERE bot_id = ${botId}${dayFilter}
 GROUP BY key ORDER BY frustrated DESC;
 -- top guest questions
 SELECT topic, count(*) AS n FROM report.conversation_intel
-WHERE bot_id = ${botId} AND substantive
+WHERE bot_id = ${botId} AND substantive${dayFilter}
 GROUP BY topic ORDER BY n DESC LIMIT 12;`
 }
 

@@ -18,6 +18,7 @@ import { SenderMixStack } from '../SenderMixStack'
 import { RealtimeAgent } from '../RealtimeAgent'
 import { useBotAnalytics } from '../../data/useAnalytics'
 import {
+  resolveSelection,
   selectionFromSearchParams,
   writeSelectionToSearchParams,
   type PeriodSelection,
@@ -39,6 +40,9 @@ export function BotAnalyticsPage() {
     setSearchParams(params, { replace: true })
   }
   const { data: f, isLive, isLoading } = useBotAnalytics(botId, selection)
+  // Scope the AI (ask + voice) to the same window the dashboard is showing.
+  const resolved = resolveSelection(selection)
+  const askRange = { from: resolved.from, to: resolved.to, label: resolved.label }
   const [voiceActive, setVoiceActive] = useState(false)
 
   if (Number.isNaN(botId)) {
@@ -85,8 +89,8 @@ export function BotAnalyticsPage() {
       </div>
 
       <div className="space-y-12 px-4 py-6 md:px-6 md:py-8">
-        <AskBar botId={botId} onVoice={() => setVoiceActive(true)} />
-        <RealtimeAgent botId={botId} active={voiceActive} onEnd={() => setVoiceActive(false)} />
+        <AskBar botId={botId} range={askRange} onVoice={() => setVoiceActive(true)} />
+        <RealtimeAgent botId={botId} range={askRange} active={voiceActive} onEnd={() => setVoiceActive(false)} />
 
         <section id="core" className="scroll-mt-40 space-y-5">
           <SectionHeader number="1" name="Conversation Core" tagline="What happened?" />

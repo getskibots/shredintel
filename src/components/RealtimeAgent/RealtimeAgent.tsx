@@ -84,7 +84,7 @@ function VoiceOrb({ state }: { state: OrbState }) {
   )
 }
 
-export function RealtimeAgent({ botId, active, onEnd }: { botId: number; active: boolean; onEnd: () => void }) {
+export function RealtimeAgent({ botId, range, active, onEnd }: { botId: number; range?: { from: string; to: string; label: string }; active: boolean; onEnd: () => void }) {
   const [status, setStatus] = useState<Status>('connecting')
   const [busy, setBusy] = useState(false)
   const [ended, setEnded] = useState(false)
@@ -149,7 +149,7 @@ export function RealtimeAgent({ botId, active, onEnd }: { botId: number; active:
     try {
       const res = await fetch('/api/ask', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ botId, question, mode: 'voice' }),
+        body: JSON.stringify({ botId, question, mode: 'voice', from: range?.from, to: range?.to }),
       })
       const data = await res.json()
       const d = data.drill && ['section', 'pinchpoint', 'sentiment'].includes(data.drill.dimension) && data.drill.value
@@ -268,6 +268,7 @@ export function RealtimeAgent({ botId, active, onEnd }: { botId: number; active:
           <Sparkles className="h-5 w-5 text-botscrew-500" strokeWidth={2} />
           <span className="text-sm font-semibold text-slate-800">ShredIntel</span>
           <span className="rounded-full bg-botscrew-50 px-2 py-0.5 text-[11px] font-medium text-botscrew-700">{persona}</span>
+          {range?.label && <span className="hidden text-[11px] text-slate-400 sm:inline">· {range.label}</span>}
         </div>
         <div className="flex items-center gap-2">
           <button type="button" onClick={handleSave} disabled={!cards.length}

@@ -11,17 +11,9 @@ import { LeadCaptureFunnel } from '../LeadCaptureFunnel'
 import { OutcomeTimeline } from '../OutcomeTimeline'
 import { ResolutionHero } from '../ResolutionHero'
 import { SectionHeader } from '../SectionHeader'
-import { SectionNav } from '../SectionNav'
 import { SenderMixStack } from '../SenderMixStack'
 import { useJHChatAnalytics } from '../../data/useAnalytics'
 import { type PeriodKey } from '../../fixtures/sample'
-
-const sections = [
-  { id: 'core', number: '1', name: 'Conversation Core' },
-  { id: 'intelligence', number: '2', name: 'Message Intelligence' },
-  { id: 'identity', number: '3', name: 'User Identity' },
-  { id: 'context', number: '4', name: 'Behavioral Context' },
-]
 
 export function ShredIntelReportGrid() {
   const [period, setPeriod] = useState<PeriodKey>('7d')
@@ -100,7 +92,6 @@ export function ShredIntelReportGrid() {
             </button>
           </div>
         </div>
-        <SectionNav items={sections} />
       </div>
 
       <div className="space-y-12 px-6 py-8">

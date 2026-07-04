@@ -20,9 +20,7 @@ export function SectionHeader({ number, name, tagline, id, action }: SectionHead
       className="flex flex-wrap items-end justify-between gap-3 border-b border-slate-200 pb-3 pt-2"
     >
       <div className="flex items-baseline gap-3">
-        <span className="font-mono text-xs font-semibold tracking-widest text-botscrew-500">
-          § {number}
-        </span>
+        <span className="text-xs font-semibold text-botscrew-500">{number}</span>
         <h2 className="text-lg font-semibold tracking-tight text-slate-900">
           {name}
         </h2>

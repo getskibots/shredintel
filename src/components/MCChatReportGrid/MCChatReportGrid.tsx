@@ -5,7 +5,6 @@ import { IntentCategoryBreakdown } from '../IntentCategoryBreakdown'
 import { KnowledgeGaps } from '../KnowledgeGaps'
 import { KnowledgeSourceLeaderboard } from '../KnowledgeSourceLeaderboard'
 import { SectionHeader } from '../SectionHeader'
-import { SectionNav } from '../SectionNav'
 import { VoiceGeography } from '../VoiceGeography'
 import { VoiceIntentHero } from '../VoiceIntentHero'
 import { useMCChatAnalytics } from '../../data/useAnalytics'
@@ -15,13 +14,6 @@ import {
   type MCChatPeriodKey,
 } from '../../fixtures/mc-chat'
 import { clampPercent, formatNumber, formatPercent } from '../../lib/formatters'
-
-const sections = [
-  { id: 'guest-intent', number: '1', name: 'Guest Intent' },
-  { id: 'customer-needs', number: '2', name: 'Customer Needs' },
-  { id: 'audience', number: '3', name: 'Audience' },
-  { id: 'demand', number: '4', name: 'Demand Patterns' },
-]
 
 const PERIODS: Array<{ key: MCChatPeriodKey; label: string }> = [
   { key: '7d', label: 'Last 7 days' },
@@ -70,8 +62,8 @@ function ChatIntentBreakdown({ categories }: { categories: IntentCategorySummary
     <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <div className="font-mono text-[10px] font-semibold uppercase tracking-widest text-botscrew-500">
-            § 1 Guest Intent
+          <div className="text-[10px] font-semibold uppercase tracking-widest text-botscrew-500">
+            Guest Intent
           </div>
           <h3 className="mt-1 text-base font-semibold tracking-tight text-slate-900">
             What your guests are chatting about
@@ -216,7 +208,6 @@ export function MCChatReportGrid() {
             </button>
           </div>
         </div>
-        <SectionNav items={sections} />
       </div>
 
       <div className="space-y-12 px-6 py-8">
@@ -282,8 +273,8 @@ export function MCChatReportGrid() {
           />
           <VoiceGeography rows={f.geography} />
           <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-            <div className="font-mono text-[10px] font-semibold uppercase tracking-widest text-botscrew-500">
-              § 3 Audience
+            <div className="text-[10px] font-semibold uppercase tracking-widest text-botscrew-500">
+              Audience
             </div>
             <h3 className="mt-1 text-base font-semibold tracking-tight text-slate-900">
               Device mix

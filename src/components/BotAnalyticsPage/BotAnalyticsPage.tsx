@@ -17,7 +17,6 @@ import { KnowledgeSourceLeaderboard } from '../KnowledgeSourceLeaderboard'
 import { LeadCaptureFunnel } from '../LeadCaptureFunnel'
 import { PeriodPicker } from '../PeriodPicker'
 import { SectionHeader } from '../SectionHeader'
-import { SectionNav } from '../SectionNav'
 import { SenderMixStack } from '../SenderMixStack'
 import { RealtimeAgent } from '../RealtimeAgent'
 import { useAvailableBots, useBotAnalytics } from '../../data/useAnalytics'
@@ -33,13 +32,6 @@ import {
  *
  * Uses the same layout as ShredIntelReportGrid (all 8 report.* views).
  */
-const sections = [
-  { id: 'core', number: '1', name: 'Conversation Core' },
-  { id: 'intelligence', number: '2', name: 'Message Intelligence' },
-  { id: 'identity', number: '3', name: 'User Identity' },
-  { id: 'context', number: '4', name: 'Behavioral Context' },
-]
-
 export function BotAnalyticsPage() {
   const { botId: botIdParam } = useParams<{ botId: string }>()
   const botId = Number(botIdParam)
@@ -106,7 +98,6 @@ export function BotAnalyticsPage() {
           </div>
           <PeriodPicker value={selection} onChange={setSelection} align="end" />
         </div>
-        <SectionNav items={sections} />
       </div>
 
       <div className="space-y-12 px-4 py-6 md:px-6 md:py-8">

@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react'
 
 export interface PanelProps {
-  /** Tiny label above the title, e.g. "§ 2 Message Intelligence" */
+  /** Tiny label above the title, e.g. "Message Intelligence". A legacy
+   *  "§ N " prefix (from the old section framework) is stripped automatically. */
   eyebrow?: string
   title: string
   description?: string
@@ -29,9 +30,9 @@ export function Panel({
     >
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
-          {eyebrow && (
-            <div className="font-mono text-[10px] font-semibold uppercase tracking-widest text-botscrew-500">
-              {eyebrow}
+          {eyebrow?.replace(/^§\s*\d+\s*/, '').trim() && (
+            <div className="text-[10px] font-semibold uppercase tracking-widest text-botscrew-500">
+              {eyebrow.replace(/^§\s*\d+\s*/, '').trim()}
             </div>
           )}
           <h3 className="mt-1 text-base font-semibold tracking-tight text-slate-900">

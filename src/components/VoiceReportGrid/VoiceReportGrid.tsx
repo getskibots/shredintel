@@ -7,7 +7,6 @@ import { KnowledgeGaps } from '../KnowledgeGaps'
 import { KnowledgeSourceLeaderboard } from '../KnowledgeSourceLeaderboard'
 import { PeriodPicker } from '../PeriodPicker'
 import { SectionHeader } from '../SectionHeader'
-import { SectionNav } from '../SectionNav'
 import { VoiceGeography } from '../VoiceGeography'
 import { VoiceIntentHero } from '../VoiceIntentHero'
 import { useVoiceAnalytics } from '../../data/useAnalytics'
@@ -17,13 +16,6 @@ import {
   writeSelectionToSearchParams,
   type PeriodSelection,
 } from '../../lib/period'
-
-const sections = [
-  { id: 'guest-intent', number: '1', name: 'Guest Intent' },
-  { id: 'customer-needs', number: '2', name: 'Customer Needs' },
-  { id: 'audience', number: '3', name: 'Audience' },
-  { id: 'demand', number: '4', name: 'Demand Patterns' },
-]
 
 export function VoiceReportGrid() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -91,7 +83,6 @@ export function VoiceReportGrid() {
             </button>
           </div>
         </div>
-        <SectionNav items={sections} />
       </div>
 
       <div className="space-y-12 px-4 py-6 md:px-6 md:py-8">

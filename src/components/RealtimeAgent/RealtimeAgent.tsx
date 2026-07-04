@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Radio, Square, Sparkles, Loader2, Bookmark, Check, Download, Mail, Copy } from 'lucide-react'
-import { brand } from '../../lib/chartTheme'
+import { Square, Sparkles, Loader2, Bookmark, Check, Download, Mail, Copy, Pause, Play } from 'lucide-react'
 import { DEFAULT_VOICE_ID, profileFor } from '../../lib/voices'
 import { ReportCardView } from '../ReportCards'
 import { ConversationExplorer } from '../ConversationExplorer'
@@ -16,22 +15,47 @@ import {
 } from '../../lib/savedReports'
 
 /**
- * TRUE OpenAI Realtime speech-to-speech agent (gpt-realtime, WebRTC), rendered
- * as a FULL-SCREEN TAKEOVER: talk, and ShredIntel builds a live report on screen
- * — each answer + chart is appended as a card. The manager can drill into the
- * real conversations behind any slice (by voice via the show_conversations tool,
- * or by clicking a card), and Save / Share the whole session.
+ * Modern realtime Voice AI overlay (OpenAI gpt-realtime, WebRTC speech-to-speech)
+ * rendered as a FULL-SCREEN TAKEOVER. The REPORT is the main content: each spoken
+ * answer + chart appends as a card the manager can read, drill into (real
+ * conversations), and keep asking about — hands-free. Voice controls live in a
+ * bottom dock (activity indicator + Pause/Resume + End); Save / Share up top.
  *
- * Controlled (active/onEnd). WebRTC/audio can't run in CI — GA-spec; if a live
- * run needs tweaks, the version-sensitive bits are the SDP endpoint
- * (/v1/realtime/calls) and the function-call event name.
+ * Controlled (active/onEnd). WebRTC/audio can't run in CI — GA-spec; the
+ * version-sensitive bits are the SDP endpoint (/v1/realtime/calls) and the
+ * function-call event name.
  */
 
 type Status = 'connecting' | 'live' | 'error'
 
+/** Animated voice-activity equalizer (replaces the old static orb). */
+function Equalizer({ active, size = 'md' }: { active: boolean; size?: 'sm' | 'md' }) {
+  const bars = [0, 1, 2, 3, 4]
+  const wrap = size === 'sm' ? 'h-4 gap-1' : 'h-9 gap-1.5'
+  const bar = size === 'sm' ? 'w-1' : 'w-1.5'
+  return (
+    <div className={`flex items-end ${wrap}`} aria-hidden>
+      {bars.map((i) => (
+        <span
+          key={i}
+          className={`${bar} rounded-full`}
+          style={{
+            height: '100%',
+            background: active ? '#2E9B6B' : '#CBD5E1',
+            transformOrigin: 'bottom',
+            transform: active ? undefined : 'scaleY(0.3)',
+            animation: active ? `shredintel-eq 0.9s ease-in-out ${i * 0.11}s infinite` : 'none',
+          }}
+        />
+      ))}
+    </div>
+  )
+}
+
 export function RealtimeAgent({ botId, active, onEnd }: { botId: number; active: boolean; onEnd: () => void }) {
   const [status, setStatus] = useState<Status>('connecting')
   const [busy, setBusy] = useState(false)
+  const [paused, setPaused] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [caption, setCaption] = useState('')
   const [cards, setCards] = useState<ReportCard[]>([])
@@ -63,6 +87,14 @@ export function RealtimeAgent({ botId, active, onEnd }: { botId: number; active:
     try { pcRef.current?.close() } catch { /* */ }
     try { streamRef.current?.getTracks().forEach((t) => t.stop()) } catch { /* */ }
     pcRef.current = null; dcRef.current = null; streamRef.current = null
+  }
+
+  /** Pause = hold the mic (stop listening) and mute playback; Resume flips back. */
+  function togglePause() {
+    const next = !paused
+    setPaused(next)
+    try { streamRef.current?.getAudioTracks().forEach((t) => { t.enabled = !next }) } catch { /* */ }
+    try { if (audioRef.current) audioRef.current.muted = next } catch { /* */ }
   }
 
   function currentReport(): SavedReport {
@@ -109,10 +141,9 @@ export function RealtimeAgent({ botId, active, onEnd }: { botId: number; active:
   }
 
   async function connect() {
-    setStatus('connecting'); setError(null); setCards([]); setCaption(''); setSaved(false); setDrill(null)
+    setStatus('connecting'); setError(null); setCards([]); setCaption(''); setSaved(false); setDrill(null); setPaused(false)
     idRef.current = newReportId()
     try {
-      // Persona selector was removed — Old Man Winter is the default voice.
       const voiceId = DEFAULT_VOICE_ID
       setPersona(profileFor(voiceId).name)
       const sess = await (await fetch('/api/realtime-session', {
@@ -178,15 +209,20 @@ export function RealtimeAgent({ botId, active, onEnd }: { botId: number; active:
 
   if (!active) return null
 
-  const orbColor = status === 'error' ? brand.gold : status === 'connecting' ? brand.muted : busy ? brand.gold : '#2E9B6B'
-  const statusText = status === 'connecting' ? 'Connecting realtime voice…'
-    : status === 'error' ? 'Realtime voice unavailable'
-    : busy ? 'Analyzing your data…' : 'Live — just talk'
+  const eqActive = status === 'live' && !paused
+  const dockLabel = status === 'connecting' ? 'Connecting…'
+    : status === 'error' ? 'Offline'
+    : paused ? 'Paused'
+    : busy ? 'Thinking…' : 'Listening'
+  const emptyStatus = status === 'connecting' ? 'Connecting…'
+    : status === 'error' ? 'Voice unavailable'
+    : paused ? 'Paused' : busy ? 'Analyzing…' : 'Listening — just talk'
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-canvas">
       <audio ref={audioRef} autoPlay className="hidden" />
 
+      {/* Top bar — report actions */}
       <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3.5 md:px-6">
         <div className="flex items-center gap-2.5">
           <Sparkles className="h-5 w-5 text-botscrew-500" strokeWidth={2} />
@@ -217,32 +253,49 @@ export function RealtimeAgent({ botId, active, onEnd }: { botId: number; active:
               </div>
             )}
           </div>
-          <button type="button" onClick={onEnd} aria-label="End voice session"
-            className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50">
-            <Square className="h-3.5 w-3.5" strokeWidth={2} /> End
-          </button>
         </div>
       </div>
 
+      {/* Report — the main content */}
       <div className="flex-1 overflow-y-auto" onClick={() => shareOpen && setShareOpen(false)}>
-        <div className="mx-auto max-w-3xl px-4 py-8 md:px-6">
-          <div className="flex flex-col items-center py-4 text-center">
-            <span className={`flex h-20 w-20 items-center justify-center rounded-full text-white ${status === 'live' ? 'animate-pulse' : ''}`}
-              style={{ backgroundColor: orbColor }} aria-hidden>
-              {status === 'connecting' ? <Loader2 className="h-8 w-8 animate-spin" /> : <Radio className="h-8 w-8" />}
-            </span>
-            <div className="mt-4 text-base font-semibold text-slate-800">{statusText}</div>
-            <div className="mt-1 max-w-lg text-sm text-slate-500">
-              {error ? error : caption ? `“${caption}”` : 'Ask anything about your resort — I’ll answer out loud, chart it, and you can say “show me those conversations” to read the real transcripts.'}
+        <div className="mx-auto max-w-3xl px-4 py-8 pb-36 md:px-6">
+          {cards.length === 0 ? (
+            <div className="flex min-h-[46vh] flex-col items-center justify-center text-center">
+              {status === 'connecting'
+                ? <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+                : <Equalizer active={eqActive} size="md" />}
+              <div className="mt-5 text-base font-semibold text-slate-800">{emptyStatus}</div>
+              <div className="mt-1.5 max-w-md text-sm text-slate-500">
+                {error ? error : 'Ask anything about your resort — I’ll answer out loud, chart it here, and pull up the real conversations when you ask.'}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="space-y-4">
+              {cards.map((c, i) => (
+                <ReportCardView key={i} card={c} onDrill={setDrill} />
+              ))}
+              <div ref={endRef} />
+            </div>
+          )}
+        </div>
+      </div>
 
-          <div className="mt-6 space-y-4">
-            {cards.map((c, i) => (
-              <ReportCardView key={i} card={c} onDrill={setDrill} />
-            ))}
-            <div ref={endRef} />
-          </div>
+      {/* Voice control dock — activate / pause / stop */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-6 z-10 flex flex-col items-center gap-2 px-4">
+        {caption && (
+          <div className="max-w-xl rounded-full bg-slate-900/80 px-4 py-1.5 text-center text-xs text-white shadow-sm">“{caption}”</div>
+        )}
+        <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-slate-200 bg-white/95 py-2 pl-4 pr-2 shadow-lg backdrop-blur">
+          <Equalizer active={eqActive} size="sm" />
+          <span className="min-w-[64px] text-xs font-medium text-slate-600">{dockLabel}</span>
+          <button type="button" onClick={togglePause} disabled={status !== 'live'}
+            className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-40">
+            {paused ? <><Play className="h-3.5 w-3.5" /> Resume</> : <><Pause className="h-3.5 w-3.5" /> Pause</>}
+          </button>
+          <button type="button" onClick={onEnd} aria-label="End voice session"
+            className="inline-flex items-center gap-1.5 rounded-full bg-rose-500 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-rose-600">
+            <Square className="h-3.5 w-3.5" strokeWidth={2} /> End
+          </button>
         </div>
       </div>
 

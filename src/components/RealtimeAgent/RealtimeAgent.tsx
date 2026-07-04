@@ -112,7 +112,8 @@ export function RealtimeAgent({ botId, active, onEnd }: { botId: number; active:
     setStatus('connecting'); setError(null); setCards([]); setCaption(''); setSaved(false); setDrill(null)
     idRef.current = newReportId()
     try {
-      const voiceId = (() => { try { return localStorage.getItem(`shredintel_voice_${botId}`) || DEFAULT_VOICE_ID } catch { return DEFAULT_VOICE_ID } })()
+      // Persona selector was removed — Old Man Winter is the default voice.
+      const voiceId = DEFAULT_VOICE_ID
       setPersona(profileFor(voiceId).name)
       const sess = await (await fetch('/api/realtime-session', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ voiceId }),

@@ -56,3 +56,18 @@ export function voiceAnswerInstruction(voiceId?: string): string {
   const p = VOICE_PERSONAS.find((v) => v.id === voiceId) ?? VOICE_PERSONAS[0]
   return `${VOICE_BASE}\n${p.persona}`
 }
+
+/** OpenAI Realtime voice for a persona (ash / alloy / cedar). */
+export function openaiVoiceFor(voiceId?: string): string {
+  return (VOICE_PERSONAS.find((v) => v.id === voiceId) ?? VOICE_PERSONAS[0]).openaiVoice
+}
+
+/** Session instructions for the OpenAI Realtime agent (speech-to-speech). */
+export function realtimeInstruction(voiceId?: string): string {
+  const p = VOICE_PERSONAS.find((v) => v.id === voiceId) ?? VOICE_PERSONAS[0]
+  return `You are ShredIntel, a guest-intelligence analyst speaking with a ski-resort manager by voice.
+- When they ask ANYTHING about their resort's chat data, call the query_shredintel function with their question, then speak the tool's "answer" in 1-2 short sentences. Use ONLY the numbers the tool returns; never invent figures.
+- If the tool can't answer, say so briefly and offer what you can look up.
+- Keep it conversational and brief — you are talking, not writing a report.
+Speak entirely in this character: ${p.persona}`
+}

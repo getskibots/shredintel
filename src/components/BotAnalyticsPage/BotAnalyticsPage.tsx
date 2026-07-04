@@ -16,7 +16,7 @@ import { PeriodPicker } from '../PeriodPicker'
 import { SectionHeader } from '../SectionHeader'
 import { SectionNav } from '../SectionNav'
 import { SenderMixStack } from '../SenderMixStack'
-import { VoiceAgent } from '../VoiceAgent'
+import { RealtimeAgent } from '../RealtimeAgent'
 import { useAvailableBots, useBotAnalytics } from '../../data/useAnalytics'
 import {
   selectionFromSearchParams,
@@ -103,7 +103,7 @@ export function BotAnalyticsPage() {
 
       <div className="space-y-12 px-4 py-6 md:px-6 md:py-8">
         <AskBar botId={botId} onVoice={() => setVoiceActive(true)} />
-        <VoiceAgent botId={botId} active={voiceActive} onEnd={() => setVoiceActive(false)} />
+        <RealtimeAgent botId={botId} active={voiceActive} onEnd={() => setVoiceActive(false)} />
 
         <section id="core" className="scroll-mt-40 space-y-5">
           <SectionHeader number="1" name="Conversation Core" tagline="What happened?" />

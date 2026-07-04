@@ -15,6 +15,7 @@ import { LeadCaptureFunnel } from '../LeadCaptureFunnel'
 import { PeriodPicker } from '../PeriodPicker'
 import { SenderMixStack } from '../SenderMixStack'
 import { RealtimeAgent } from '../RealtimeAgent'
+import { ShreddingOverlay, useShredPulse } from '../ShreddingOverlay'
 import { useBotAnalytics } from '../../data/useAnalytics'
 import {
   resolveSelection,
@@ -42,6 +43,8 @@ export function BotAnalyticsPage() {
   // Scope the AI (ask + voice) to the same window the dashboard is showing.
   const resolved = resolveSelection(selection)
   const askRange = { from: resolved.from, to: resolved.to, label: resolved.label }
+  // "Shredding the data" pulse — fires on any date-range change (both surfaces).
+  const shredding = useShredPulse(`${askRange.from}|${askRange.to}`)
   const [voiceActive, setVoiceActive] = useState(false)
 
   if (Number.isNaN(botId)) {
@@ -89,34 +92,48 @@ export function BotAnalyticsPage() {
 
       <div className="space-y-12 px-4 py-6 md:px-6 md:py-8">
         <AskBar botId={botId} range={askRange} onVoice={() => setVoiceActive(true)} />
-        <RealtimeAgent botId={botId} range={askRange} active={voiceActive} onEnd={() => setVoiceActive(false)} />
+        <RealtimeAgent
+          botId={botId}
+          range={askRange}
+          selection={selection}
+          onSelectionChange={setSelection}
+          shredding={shredding}
+          active={voiceActive}
+          onEnd={() => setVoiceActive(false)}
+        />
 
-        <section id="core" className="scroll-mt-40 space-y-5">
-          {/* Extended Conversation Counts — the spec's §1 (sessions vs. messages, depth, bounce). */}
-          <ConversationCounts {...f.conversationCounts} />
-          <ConversionPulse {...f.conversionPulse} />
-          {/* Benched until the SOLVED outcome derivation is settled (see reference_shredintel_data_model):
-              ResolutionHero, KpiStrip, OutcomeTimeline all read outcome=SOLVED, which is 0 for every live bot. */}
-        </section>
+        {/* Data sections — the scan sweeps + dims these on any date-range change */}
+        <div className="relative">
+          <ShreddingOverlay active={shredding} label={askRange.label} />
+          <div className={`space-y-12 transition-opacity duration-300 ${shredding ? 'opacity-60' : 'opacity-100'}`}>
+            <section id="core" className="scroll-mt-40 space-y-5">
+              {/* Extended Conversation Counts — the spec's §1 (sessions vs. messages, depth, bounce). */}
+              <ConversationCounts {...f.conversationCounts} />
+              <ConversionPulse {...f.conversionPulse} />
+              {/* Benched until the SOLVED outcome derivation is settled (see reference_shredintel_data_model):
+                  ResolutionHero, KpiStrip, OutcomeTimeline all read outcome=SOLVED, which is 0 for every live bot. */}
+            </section>
 
-        <section id="intelligence" className="scroll-mt-40 space-y-5">
-          {/* ShredIntel enrichment — what guests ask about, where they get stuck, how they feel */}
-          <KnowledgeSectionDemand {...f.knowledgeSectionDemand} botId={botId} range={askRange} />
-          <ConversionBlockers {...f.conversionBlockers} botId={botId} range={askRange} />
-          <GuestSentiment {...f.guestSentiment} />
-          <KnowledgeSourceLeaderboard {...f.knowledgeSourceLeaderboard} />
-          <SenderMixStack {...f.senderMixStack} />
-        </section>
+            <section id="intelligence" className="scroll-mt-40 space-y-5">
+              {/* ShredIntel enrichment — what guests ask about, where they get stuck, how they feel */}
+              <KnowledgeSectionDemand {...f.knowledgeSectionDemand} botId={botId} range={askRange} />
+              <ConversionBlockers {...f.conversionBlockers} botId={botId} range={askRange} />
+              <GuestSentiment {...f.guestSentiment} />
+              <KnowledgeSourceLeaderboard {...f.knowledgeSourceLeaderboard} />
+              <SenderMixStack {...f.senderMixStack} />
+            </section>
 
-        <section id="identity" className="scroll-mt-40 space-y-5">
-          <GuestIdentitySplit {...f.guestIdentitySplit} />
-          <LeadCaptureFunnel {...f.leadCaptureFunnel} />
-        </section>
+            <section id="identity" className="scroll-mt-40 space-y-5">
+              <GuestIdentitySplit {...f.guestIdentitySplit} />
+              <LeadCaptureFunnel {...f.leadCaptureFunnel} />
+            </section>
 
-        <section id="context" className="scroll-mt-40 space-y-5">
-          <DeviceExperienceMix {...f.deviceExperienceMix} />
-          <DemandHeatmap {...f.demandHeatmap} />
-        </section>
+            <section id="context" className="scroll-mt-40 space-y-5">
+              <DeviceExperienceMix {...f.deviceExperienceMix} />
+              <DemandHeatmap {...f.demandHeatmap} />
+            </section>
+          </div>
+        </div>
       </div>
     </div>
   )

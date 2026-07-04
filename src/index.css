@@ -47,3 +47,11 @@ html.shredintel-embed #root {
   0% { transform: translateX(-120%); }
   100% { transform: translateX(120%); }
 }
+
+/* "Shredding the data" — a scan band sweeps top→bottom on any date-range change. */
+@keyframes shredintel-scan {
+  0% { top: -25%; opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}

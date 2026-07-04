@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { Square, Sparkles, Loader2, Bookmark, Check, Download, Mail, Copy, ArrowLeft } from 'lucide-react'
 import { DEFAULT_VOICE_ID, profileFor } from '../../lib/voices'
+import { PeriodPicker } from '../PeriodPicker'
+import { ShreddingOverlay } from '../ShreddingOverlay'
 import { ReportCardView } from '../ReportCards'
 import { ConversationExplorer } from '../ConversationExplorer'
+import type { PeriodSelection } from '../../lib/period'
 import {
   saveReport,
   newReportId,
@@ -84,7 +87,15 @@ function VoiceOrb({ state }: { state: OrbState }) {
   )
 }
 
-export function RealtimeAgent({ botId, range, active, onEnd }: { botId: number; range?: { from: string; to: string; label: string }; active: boolean; onEnd: () => void }) {
+export function RealtimeAgent({ botId, range, selection, onSelectionChange, shredding, active, onEnd }: {
+  botId: number
+  range?: { from: string; to: string; label: string }
+  selection?: PeriodSelection
+  onSelectionChange?: (next: PeriodSelection) => void
+  shredding?: boolean
+  active: boolean
+  onEnd: () => void
+}) {
   const [status, setStatus] = useState<Status>('connecting')
   const [busy, setBusy] = useState(false)
   const [ended, setEnded] = useState(false)
@@ -102,6 +113,10 @@ export function RealtimeAgent({ botId, range, active, onEnd }: { botId: number; 
   const streamRef = useRef<MediaStream | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const endRef = useRef<HTMLDivElement | null>(null)
+  // The data channel is wired once at connect, so runTool must read the CURRENT
+  // range via a ref — otherwise changing the date mid-session would be ignored.
+  const rangeRef = useRef(range)
+  useEffect(() => { rangeRef.current = range }, [range])
 
   useEffect(() => {
     if (active) connect()
@@ -149,7 +164,7 @@ export function RealtimeAgent({ botId, range, active, onEnd }: { botId: number; 
     try {
       const res = await fetch('/api/ask', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ botId, question, mode: 'voice', from: range?.from, to: range?.to }),
+        body: JSON.stringify({ botId, question, mode: 'voice', from: rangeRef.current?.from, to: rangeRef.current?.to }),
       })
       const data = await res.json()
       const d = data.drill && ['section', 'pinchpoint', 'sentiment'].includes(data.drill.dimension) && data.drill.value
@@ -255,7 +270,7 @@ export function RealtimeAgent({ botId, range, active, onEnd }: { botId: number; 
     : caption && !ended ? `“${caption}”`
     : ended ? 'Your report is below — save or share it, or head back to the dashboard.'
     : busy ? 'Reading the conversations and charting the answer.'
-    : 'Ask anything about your resort — I’ll answer out loud, chart it here, and pull up the real conversations when you ask.'
+    : `Ask anything about your resort — I’ll answer out loud and chart it here, for ${range?.label ?? 'the selected range'}.`
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-canvas">
@@ -267,7 +282,6 @@ export function RealtimeAgent({ botId, range, active, onEnd }: { botId: number; 
           <Sparkles className="h-5 w-5 text-botscrew-500" strokeWidth={2} />
           <span className="text-sm font-semibold text-slate-800">ShredIntel</span>
           <span className="rounded-full bg-botscrew-50 px-2 py-0.5 text-[11px] font-medium text-botscrew-700">{persona}</span>
-          {range?.label && <span className="hidden text-[11px] text-slate-400 sm:inline">· {range.label}</span>}
         </div>
         <div className="flex items-center gap-2">
           <button type="button" onClick={handleSave} disabled={!cards.length}
@@ -296,8 +310,19 @@ export function RealtimeAgent({ botId, range, active, onEnd }: { botId: number; 
         </div>
       </div>
 
-      {/* Orb cluster — the voice's face + its state + End, all inline; report builds downward */}
-      <div className="flex-1 overflow-y-auto" onClick={() => shareOpen && setShareOpen(false)}>
+      {/* Date range — change the window mid-conversation; the AI's next answer uses it */}
+      {selection && onSelectionChange && (
+        <div className="flex items-center justify-center gap-2 border-b border-slate-200 bg-white px-4 py-2">
+          <span className="hidden text-[11px] font-medium uppercase tracking-wider text-slate-400 sm:inline">Answers cover</span>
+          <PeriodPicker value={selection} onChange={onSelectionChange} align="start" />
+        </div>
+      )}
+
+      {/* Orb cluster — the voice's face + its state + End, all inline; report builds downward.
+          The "shredding" scan sweeps this region on a date change (same as the dashboard). */}
+      <div className="relative min-h-0 flex-1">
+        <ShreddingOverlay active={!!shredding} label={range?.label} />
+        <div className="h-full overflow-y-auto" onClick={() => shareOpen && setShareOpen(false)}>
         <div className="mx-auto max-w-3xl px-4 pt-12 pb-16 md:px-6">
           <div className="flex flex-col items-center text-center">
             <VoiceOrb state={orbState} />
@@ -328,6 +353,7 @@ export function RealtimeAgent({ botId, range, active, onEnd }: { botId: number; 
               <div ref={endRef} />
             </div>
           )}
+        </div>
         </div>
       </div>
 

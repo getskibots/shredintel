@@ -137,7 +137,7 @@ export function ShredIntelReportGrid() {
         </section>
 
         <footer className="pt-2 text-xs text-slate-400">
-          shredintel · GSB Analytics 2.0 · concept build for Botscrew handoff
+          shredintel · GSB Analytics 2.0
         </footer>
       </div>
     </div>

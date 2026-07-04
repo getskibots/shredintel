@@ -167,7 +167,7 @@ export function ConversationExplorer({
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 text-xs font-semibold text-botscrew-600 transition hover:text-botscrew-700"
                         >
-                          Open in Botscrew support <ExternalLink className="h-3 w-3" />
+                          Open full conversation <ExternalLink className="h-3 w-3" />
                         </a>
                       </div>
                       {loadingT ? (

@@ -93,7 +93,7 @@ export function ConversationCounts({
     <Panel
       eyebrow="§ 1 Conversation Core"
       title="Conversation funnel"
-      description="Visitors → conversations → engaged → real questions. Users matches the “Active users” count in your Botscrew admin."
+      description="Visitors → conversations → engaged → real questions. Users matches the “Active users” count in your admin."
     >
       {empty ? (
         <EmptyState

@@ -163,7 +163,7 @@ export function VoiceReportGrid() {
               </div>
             </div>
             <p className="mt-3 text-[11px] text-slate-400">
-              Note: handoff signal in the export is currently limited (Botscrew
+              Note: handoff signal in the export is currently limited (the source
               field <code className="rounded bg-slate-100 px-1">is_redirect_phone_number_provided</code>
               {' '}is not populated yet). Numbers above reflect{' '}
               <code className="rounded bg-slate-100 px-1">sender_type=SUPPORT</code>{' '}

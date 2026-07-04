@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Square, Sparkles, Loader2, Bookmark, Check, Download, Mail, Copy, Pause, Play } from 'lucide-react'
+import { Square, Sparkles, Loader2, Bookmark, Check, Download, Mail, Copy, ArrowLeft } from 'lucide-react'
 import { DEFAULT_VOICE_ID, profileFor } from '../../lib/voices'
 import { ReportCardView } from '../ReportCards'
 import { ConversationExplorer } from '../ConversationExplorer'
@@ -16,10 +16,11 @@ import {
 
 /**
  * Modern realtime Voice AI overlay (OpenAI gpt-realtime, WebRTC speech-to-speech)
- * rendered as a FULL-SCREEN TAKEOVER. The REPORT is the main content: each spoken
- * answer + chart appends as a card the manager can read, drill into (real
- * conversations), and keep asking about — hands-free. Voice controls live in a
- * bottom dock (activity indicator + Pause/Resume + End); Save / Share up top.
+ * rendered as a FULL-SCREEN TAKEOVER. A brand orb (subtle gradient mountains) is
+ * the voice's face — it breathes while listening and runs a scanner shimmer while
+ * analyzing/building the report. The REPORT builds beneath it: each answer + chart
+ * is a card the manager can read, drill into, and keep asking about, hands-free.
+ * End STOPS the voice but keeps the report up; "Back to dashboard" closes it.
  *
  * Controlled (active/onEnd). WebRTC/audio can't run in CI — GA-spec; the
  * version-sensitive bits are the SDP endpoint (/v1/realtime/calls) and the
@@ -27,27 +28,58 @@ import {
  */
 
 type Status = 'connecting' | 'live' | 'error'
+type OrbState = 'connecting' | 'listening' | 'analyzing' | 'ended'
 
-/** Animated voice-activity equalizer (replaces the old static orb). */
-function Equalizer({ active, size = 'md' }: { active: boolean; size?: 'sm' | 'md' }) {
-  const bars = [0, 1, 2, 3, 4]
-  const wrap = size === 'sm' ? 'h-4 gap-1' : 'h-9 gap-1.5'
-  const bar = size === 'sm' ? 'w-1' : 'w-1.5'
+/** The voice's face — a circular orb with a super-subtle mountain gradient. */
+function VoiceOrb({ state }: { state: OrbState }) {
+  const analyzing = state === 'analyzing'
+  const listening = state === 'listening'
   return (
-    <div className={`flex items-end ${wrap}`} aria-hidden>
-      {bars.map((i) => (
-        <span
-          key={i}
-          className={`${bar} rounded-full`}
-          style={{
-            height: '100%',
-            background: active ? '#2E9B6B' : '#CBD5E1',
-            transformOrigin: 'bottom',
-            transform: active ? undefined : 'scaleY(0.3)',
-            animation: active ? `shredintel-eq 0.9s ease-in-out ${i * 0.11}s infinite` : 'none',
-          }}
+    <div className="relative h-28 w-28">
+      {/* scanner ring — spins while analyzing the data */}
+      {analyzing && (
+        <div
+          className="absolute -inset-1.5 animate-spin rounded-full [animation-duration:1.2s]"
+          style={{ background: 'conic-gradient(from 0deg, transparent 0deg, rgba(33,130,191,0.45) 70deg, transparent 150deg)' }}
         />
-      ))}
+      )}
+      {/* soft glow — breathes while listening */}
+      {listening && (
+        <div className="absolute -inset-2 animate-[shredintel-breathe_2.8s_ease-in-out_infinite] rounded-full bg-botscrew-200/40 blur-xl" />
+      )}
+      {/* orb body */}
+      <div
+        className={`absolute inset-0 overflow-hidden rounded-full shadow-sm ring-1 ring-white/70 ${listening ? 'animate-[shredintel-breathe_2.8s_ease-in-out_infinite]' : ''} ${state === 'ended' ? 'opacity-60 saturate-50' : ''}`}
+        style={{ background: 'radial-gradient(125% 125% at 50% 15%, #F2F8FC 0%, #DEEDF8 45%, #C9E0F1 100%)' }}
+      >
+        <svg viewBox="0 0 112 112" preserveAspectRatio="none" className="absolute inset-0 h-full w-full">
+          <defs>
+            <linearGradient id="orbMtn" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stopColor="#2182BF" stopOpacity="0.16" />
+              <stop offset="1" stopColor="#2182BF" stopOpacity="0.05" />
+            </linearGradient>
+          </defs>
+          <path d="M0 74 L24 50 L42 64 L62 38 L82 62 L112 42 L112 112 L0 112 Z" fill="url(#orbMtn)" />
+          <path d="M0 90 L32 66 L56 84 L84 60 L112 82 L112 112 L0 112 Z" fill="#2182BF" fillOpacity="0.11" />
+        </svg>
+        {/* shimmer sweep across the mountains — reads as "scanning" */}
+        {analyzing && (
+          <div
+            className="absolute inset-0"
+            style={{ background: 'linear-gradient(110deg, transparent 35%, rgba(255,255,255,0.6) 50%, transparent 65%)', animation: 'shredintel-sweep 1.2s linear infinite' }}
+          />
+        )}
+      </div>
+      {state === 'connecting' && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Loader2 className="h-6 w-6 animate-spin text-botscrew-500/70" />
+        </div>
+      )}
+      {state === 'ended' && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Check className="h-8 w-8 text-emerald-500/80" strokeWidth={2.5} />
+        </div>
+      )}
     </div>
   )
 }
@@ -55,7 +87,7 @@ function Equalizer({ active, size = 'md' }: { active: boolean; size?: 'sm' | 'md
 export function RealtimeAgent({ botId, active, onEnd }: { botId: number; active: boolean; onEnd: () => void }) {
   const [status, setStatus] = useState<Status>('connecting')
   const [busy, setBusy] = useState(false)
-  const [paused, setPaused] = useState(false)
+  const [ended, setEnded] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [caption, setCaption] = useState('')
   const [cards, setCards] = useState<ReportCard[]>([])
@@ -89,12 +121,10 @@ export function RealtimeAgent({ botId, active, onEnd }: { botId: number; active:
     pcRef.current = null; dcRef.current = null; streamRef.current = null
   }
 
-  /** Pause = hold the mic (stop listening) and mute playback; Resume flips back. */
-  function togglePause() {
-    const next = !paused
-    setPaused(next)
-    try { streamRef.current?.getAudioTracks().forEach((t) => { t.enabled = !next }) } catch { /* */ }
-    try { if (audioRef.current) audioRef.current.muted = next } catch { /* */ }
+  /** End = stop the voice session, but keep the report on screen. */
+  function endVoice() {
+    teardown()
+    setEnded(true)
   }
 
   function currentReport(): SavedReport {
@@ -141,7 +171,7 @@ export function RealtimeAgent({ botId, active, onEnd }: { botId: number; active:
   }
 
   async function connect() {
-    setStatus('connecting'); setError(null); setCards([]); setCaption(''); setSaved(false); setDrill(null); setPaused(false)
+    setStatus('connecting'); setError(null); setCards([]); setCaption(''); setSaved(false); setDrill(null); setEnded(false)
     idRef.current = newReportId()
     try {
       const voiceId = DEFAULT_VOICE_ID
@@ -209,14 +239,24 @@ export function RealtimeAgent({ botId, active, onEnd }: { botId: number; active:
 
   if (!active) return null
 
-  const eqActive = status === 'live' && !paused
-  const dockLabel = status === 'connecting' ? 'Connecting…'
-    : status === 'error' ? 'Offline'
-    : paused ? 'Paused'
-    : busy ? 'Thinking…' : 'Listening'
-  const emptyStatus = status === 'connecting' ? 'Connecting…'
+  const orbState: OrbState = status === 'connecting' ? 'connecting'
+    : ended || status === 'error' ? 'ended'
+    : busy ? 'analyzing'
+    : 'listening'
+
+  const statusTitle = status === 'connecting' ? 'Connecting…'
     : status === 'error' ? 'Voice unavailable'
-    : paused ? 'Paused' : busy ? 'Analyzing…' : 'Listening — just talk'
+    : ended ? 'Session ended'
+    : busy ? 'Analyzing your conversations…'
+    : 'Listening — just talk'
+
+  const statusSub = error ? error
+    : ended ? 'Your report is below — save or share it, or head back to the dashboard.'
+    : busy ? 'Reading the matching conversations and charting the answer.'
+    : 'Ask anything about your resort — I’ll answer out loud, chart it here, and pull up the real conversations when you ask.'
+
+  const dotClass = status === 'connecting' ? 'bg-slate-400' : busy ? 'bg-amber-500' : 'bg-emerald-500'
+  const dockLabel = status === 'connecting' ? 'Connecting' : busy ? 'Analyzing' : 'Listening'
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-canvas">
@@ -256,21 +296,17 @@ export function RealtimeAgent({ botId, active, onEnd }: { botId: number; active:
         </div>
       </div>
 
-      {/* Report — the main content */}
+      {/* Orb + report — content sits up top; report builds downward */}
       <div className="flex-1 overflow-y-auto" onClick={() => shareOpen && setShareOpen(false)}>
-        <div className="mx-auto max-w-3xl px-4 py-8 pb-36 md:px-6">
-          {cards.length === 0 ? (
-            <div className="flex min-h-[46vh] flex-col items-center justify-center text-center">
-              {status === 'connecting'
-                ? <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
-                : <Equalizer active={eqActive} size="md" />}
-              <div className="mt-5 text-base font-semibold text-slate-800">{emptyStatus}</div>
-              <div className="mt-1.5 max-w-md text-sm text-slate-500">
-                {error ? error : 'Ask anything about your resort — I’ll answer out loud, chart it here, and pull up the real conversations when you ask.'}
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-4">
+        <div className="mx-auto max-w-3xl px-4 pt-8 pb-36 md:px-6">
+          <div className="flex flex-col items-center text-center">
+            <VoiceOrb state={orbState} />
+            <div className="mt-5 text-lg font-semibold text-slate-800">{statusTitle}</div>
+            <div className="mt-1.5 max-w-md text-sm text-slate-500">{statusSub}</div>
+          </div>
+
+          {cards.length > 0 && (
+            <div className="mt-8 space-y-4">
               {cards.map((c, i) => (
                 <ReportCardView key={i} card={c} onDrill={setDrill} />
               ))}
@@ -280,22 +316,31 @@ export function RealtimeAgent({ botId, active, onEnd }: { botId: number; active:
         </div>
       </div>
 
-      {/* Voice control dock — activate / pause / stop */}
+      {/* Control dock — Begin/End while live; Back to dashboard once ended */}
       <div className="pointer-events-none absolute inset-x-0 bottom-6 z-10 flex flex-col items-center gap-2 px-4">
-        {caption && (
+        {caption && !ended && (
           <div className="max-w-xl rounded-full bg-slate-900/80 px-4 py-1.5 text-center text-xs text-white shadow-sm">“{caption}”</div>
         )}
         <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-slate-200 bg-white/95 py-2 pl-4 pr-2 shadow-lg backdrop-blur">
-          <Equalizer active={eqActive} size="sm" />
-          <span className="min-w-[64px] text-xs font-medium text-slate-600">{dockLabel}</span>
-          <button type="button" onClick={togglePause} disabled={status !== 'live'}
-            className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-40">
-            {paused ? <><Play className="h-3.5 w-3.5" /> Resume</> : <><Pause className="h-3.5 w-3.5" /> Pause</>}
-          </button>
-          <button type="button" onClick={onEnd} aria-label="End voice session"
-            className="inline-flex items-center gap-1.5 rounded-full bg-rose-500 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-rose-600">
-            <Square className="h-3.5 w-3.5" strokeWidth={2} /> End
-          </button>
+          {ended ? (
+            <>
+              <Check className="ml-1 h-4 w-4 text-emerald-500" />
+              <span className="text-xs font-medium text-slate-600">Session ended</span>
+              <button type="button" onClick={onEnd}
+                className="inline-flex items-center gap-1.5 rounded-full bg-botscrew-500 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-botscrew-600">
+                <ArrowLeft className="h-3.5 w-3.5" strokeWidth={2.2} /> Back to dashboard
+              </button>
+            </>
+          ) : (
+            <>
+              <span className={`ml-1 h-2 w-2 rounded-full ${dotClass} ${status === 'live' && !busy ? 'animate-pulse' : ''}`} aria-hidden />
+              <span className="min-w-[64px] text-xs font-medium text-slate-600">{dockLabel}</span>
+              <button type="button" onClick={endVoice} disabled={status === 'connecting'} aria-label="End voice session"
+                className="inline-flex items-center gap-1.5 rounded-full bg-rose-500 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-rose-600 disabled:opacity-50">
+                <Square className="h-3.5 w-3.5" strokeWidth={2} /> End
+              </button>
+            </>
+          )}
         </div>
       </div>
 

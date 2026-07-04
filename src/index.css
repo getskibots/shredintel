@@ -38,8 +38,12 @@ html.shredintel-embed #root {
   45% { box-shadow: 0 0 0 4px rgba(33, 130, 191, 0.16); }
 }
 
-/* Realtime voice activity — animated equalizer bars in the Voice AI dock. */
-@keyframes shredintel-eq {
-  0%, 100% { transform: scaleY(0.35); }
-  50% { transform: scaleY(1); }
+/* Realtime Voice AI orb — breathing while listening, shimmer-sweep while analyzing. */
+@keyframes shredintel-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+@keyframes shredintel-sweep {
+  0% { transform: translateX(-120%); }
+  100% { transform: translateX(120%); }
 }

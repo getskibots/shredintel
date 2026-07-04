@@ -10,7 +10,6 @@ import { KpiStrip } from '../KpiStrip'
 import { LeadCaptureFunnel } from '../LeadCaptureFunnel'
 import { OutcomeTimeline } from '../OutcomeTimeline'
 import { ResolutionHero } from '../ResolutionHero'
-import { SectionHeader } from '../SectionHeader'
 import { SenderMixStack } from '../SenderMixStack'
 import { useJHChatAnalytics } from '../../data/useAnalytics'
 import { type PeriodKey } from '../../fixtures/sample'
@@ -97,11 +96,6 @@ export function ShredIntelReportGrid() {
       <div className="space-y-12 px-6 py-8">
         {/* ── § 1 Conversation Core ───────────────────────────────── */}
         <section id="core" className="scroll-mt-40 space-y-5">
-          <SectionHeader
-            number="1"
-            name="Conversation Core"
-            tagline="What happened?"
-          />
           <ResolutionHero
             stats={f.resolution}
             scopeLabel="Jackson Hole Mountain Resort"
@@ -114,11 +108,6 @@ export function ShredIntelReportGrid() {
 
         {/* ── § 2 Message Intelligence ────────────────────────────── */}
         <section id="intelligence" className="scroll-mt-40 space-y-5">
-          <SectionHeader
-            number="2"
-            name="Message Intelligence"
-            tagline="How did the bot perform?"
-          />
           <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
             <KnowledgeSourceLeaderboard {...f.knowledgeSourceLeaderboard} />
             <KnowledgeGaps gaps={f.knowledgeGaps} gapRate={f.knowledgeSourceLeaderboard.knowledgeGapRate} />
@@ -128,11 +117,6 @@ export function ShredIntelReportGrid() {
 
         {/* ── § 3 User Identity ───────────────────────────────────── */}
         <section id="identity" className="scroll-mt-40 space-y-5">
-          <SectionHeader
-            number="3"
-            name="User Identity"
-            tagline="Who's chatting?"
-          />
           <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
             <GuestIdentitySplit {...f.guestIdentitySplit} />
             <LeadCaptureFunnel {...f.leadCaptureFunnel} />
@@ -141,11 +125,6 @@ export function ShredIntelReportGrid() {
 
         {/* ── § 4 Behavioral Context ──────────────────────────────── */}
         <section id="context" className="scroll-mt-40 space-y-5">
-          <SectionHeader
-            number="4"
-            name="Behavioral Context"
-            tagline="Where, how, when?"
-          />
           <FrictionMap pages={f.frictionPages} />
           <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
             <DeviceExperienceMix {...f.deviceExperienceMix} />

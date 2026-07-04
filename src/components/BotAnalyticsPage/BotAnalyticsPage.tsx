@@ -13,7 +13,6 @@ import { GuestIdentitySplit } from '../GuestIdentitySplit'
 import { KnowledgeSourceLeaderboard } from '../KnowledgeSourceLeaderboard'
 import { LeadCaptureFunnel } from '../LeadCaptureFunnel'
 import { PeriodPicker } from '../PeriodPicker'
-import { SectionHeader } from '../SectionHeader'
 import { SenderMixStack } from '../SenderMixStack'
 import { RealtimeAgent } from '../RealtimeAgent'
 import { useBotAnalytics } from '../../data/useAnalytics'
@@ -93,7 +92,6 @@ export function BotAnalyticsPage() {
         <RealtimeAgent botId={botId} range={askRange} active={voiceActive} onEnd={() => setVoiceActive(false)} />
 
         <section id="core" className="scroll-mt-40 space-y-5">
-          <SectionHeader number="1" name="Conversation Core" tagline="What happened?" />
           {/* Extended Conversation Counts — the spec's §1 (sessions vs. messages, depth, bounce). */}
           <ConversationCounts {...f.conversationCounts} />
           <ConversionPulse {...f.conversionPulse} />
@@ -102,7 +100,6 @@ export function BotAnalyticsPage() {
         </section>
 
         <section id="intelligence" className="scroll-mt-40 space-y-5">
-          <SectionHeader number="2" name="Message Intelligence" tagline="How did the bot perform?" />
           {/* ShredIntel enrichment — what guests ask about, where they get stuck, how they feel */}
           <KnowledgeSectionDemand {...f.knowledgeSectionDemand} botId={botId} />
           <ConversionBlockers {...f.conversionBlockers} botId={botId} />
@@ -112,13 +109,11 @@ export function BotAnalyticsPage() {
         </section>
 
         <section id="identity" className="scroll-mt-40 space-y-5">
-          <SectionHeader number="3" name="User Identity" tagline="Who's chatting?" />
           <GuestIdentitySplit {...f.guestIdentitySplit} />
           <LeadCaptureFunnel {...f.leadCaptureFunnel} />
         </section>
 
         <section id="context" className="scroll-mt-40 space-y-5">
-          <SectionHeader number="4" name="Behavioral Context" tagline="Where, how, when?" />
           <DeviceExperienceMix {...f.deviceExperienceMix} />
           <DemandHeatmap {...f.demandHeatmap} />
         </section>

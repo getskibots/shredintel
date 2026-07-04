@@ -4,7 +4,6 @@ import { FrictionMap } from '../FrictionMap'
 import { IntentCategoryBreakdown } from '../IntentCategoryBreakdown'
 import { KnowledgeGaps } from '../KnowledgeGaps'
 import { KnowledgeSourceLeaderboard } from '../KnowledgeSourceLeaderboard'
-import { SectionHeader } from '../SectionHeader'
 import { VoiceGeography } from '../VoiceGeography'
 import { VoiceIntentHero } from '../VoiceIntentHero'
 import { useMCChatAnalytics } from '../../data/useAnalytics'
@@ -213,11 +212,6 @@ export function MCChatReportGrid() {
       <div className="space-y-12 px-6 py-8">
         {/* ── § 1 Guest Intent ───────────────────────────────────────── */}
         <section id="guest-intent" className="scroll-mt-40 space-y-5">
-          <SectionHeader
-            number="1"
-            name="Guest Intent"
-            tagline="What are your guests trying to do?"
-          />
           <VoiceIntentHero
             stats={f.resolution}
             topCategory={f.topCategory as never /* shapes match */}
@@ -233,11 +227,6 @@ export function MCChatReportGrid() {
 
         {/* ── § 2 Customer Needs ─────────────────────────────────────── */}
         <section id="customer-needs" className="scroll-mt-40 space-y-5">
-          <SectionHeader
-            number="2"
-            name="Customer Needs"
-            tagline="What answers are they looking for?"
-          />
           <KnowledgeSourceLeaderboard
             sourcedBotMessages={f.intentTotalMessages}
             unsourcedBotMessages={Math.round(f.intentTotalMessages * 0.4)}
@@ -266,11 +255,6 @@ export function MCChatReportGrid() {
 
         {/* ── § 3 Audience ───────────────────────────────────────────── */}
         <section id="audience" className="scroll-mt-40 space-y-5">
-          <SectionHeader
-            number="3"
-            name="Audience"
-            tagline="Who's reaching out?"
-          />
           <VoiceGeography rows={f.geography} />
           <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             <div className="text-[10px] font-semibold uppercase tracking-widest text-botscrew-500">
@@ -311,11 +295,6 @@ export function MCChatReportGrid() {
 
         {/* ── § 4 Demand Patterns ────────────────────────────────────── */}
         <section id="demand" className="scroll-mt-40 space-y-5">
-          <SectionHeader
-            number="4"
-            name="Demand Patterns"
-            tagline="When are they chatting?"
-          />
           <DemandHeatmap {...f.demandHeatmap} />
         </section>
 

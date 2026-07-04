@@ -6,7 +6,6 @@ import { IntentCategoryBreakdown } from '../IntentCategoryBreakdown'
 import { KnowledgeGaps } from '../KnowledgeGaps'
 import { KnowledgeSourceLeaderboard } from '../KnowledgeSourceLeaderboard'
 import { PeriodPicker } from '../PeriodPicker'
-import { SectionHeader } from '../SectionHeader'
 import { VoiceGeography } from '../VoiceGeography'
 import { VoiceIntentHero } from '../VoiceIntentHero'
 import { useVoiceAnalytics } from '../../data/useAnalytics'
@@ -88,11 +87,6 @@ export function VoiceReportGrid() {
       <div className="space-y-12 px-4 py-6 md:px-6 md:py-8">
         {/* ── § 1 Guest Intent ───────────────────────────────────────── */}
         <section id="guest-intent" className="scroll-mt-40 space-y-5">
-          <SectionHeader
-            number="1"
-            name="Guest Intent"
-            tagline="What are your guests trying to do?"
-          />
           <VoiceIntentHero
             stats={f.resolution}
             topCategory={f.topCategory}
@@ -104,11 +98,6 @@ export function VoiceReportGrid() {
 
         {/* ── § 2 Customer Needs ─────────────────────────────────────── */}
         <section id="customer-needs" className="scroll-mt-40 space-y-5">
-          <SectionHeader
-            number="2"
-            name="Customer Needs"
-            tagline="What answers are they looking for?"
-          />
           <KnowledgeSourceLeaderboard
             sourcedBotMessages={f.intentTotalCalls}
             unsourcedBotMessages={Math.round(f.intentTotalCalls * 0.18)}
@@ -136,21 +125,11 @@ export function VoiceReportGrid() {
 
         {/* ── § 3 Audience ───────────────────────────────────────────── */}
         <section id="audience" className="scroll-mt-40 space-y-5">
-          <SectionHeader
-            number="3"
-            name="Audience"
-            tagline="Who's calling you?"
-          />
           <VoiceGeography rows={f.geography} />
         </section>
 
         {/* ── § 4 Demand Patterns ────────────────────────────────────── */}
         <section id="demand" className="scroll-mt-40 space-y-5">
-          <SectionHeader
-            number="4"
-            name="Demand Patterns"
-            tagline="When are they calling?"
-          />
           <DemandHeatmap {...f.demandHeatmap} />
         </section>
 

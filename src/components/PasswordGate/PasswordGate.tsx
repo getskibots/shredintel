@@ -1,4 +1,4 @@
-import { useState, type ReactNode, type FormEvent } from 'react'
+import { useEffect, useState, type ReactNode, type FormEvent } from 'react'
 import logoUrl from '../../assets/logo.png'
 
 /**
@@ -24,6 +24,26 @@ import logoUrl from '../../assets/logo.png'
 const PASSWORD_HASH = '684e789c00a440e197e44ac882173a459345b0e793d3899313a07649211e361e'
 const STORAGE_KEY = 'shredintel_gate_v1'
 
+// Embed token — lets a TRUSTED host (the Botscrew admin iframe) auto-unlock the
+// gate via ?k=<token> in the URL, without exposing the human password. The token
+// itself never lives in the bundle — only its SHA-256 hash. Rotate the same way:
+//   node -e 'console.log(require("crypto").createHash("sha256").update("NEWTOKEN").digest("hex"))'
+const EMBED_TOKEN_HASH = 'e4271f0e899fab2132495a480665625ff37cd602877630d3527606d13820f512'
+
+/** Read the embed token (?k=…) from the top-level query OR the hash query. */
+function readEmbedToken(): string | null {
+  if (typeof window === 'undefined') return null
+  const top = new URLSearchParams(window.location.search).get('k')
+  if (top) return top
+  const hash = window.location.hash
+  const qIdx = hash.indexOf('?')
+  if (qIdx >= 0) {
+    const inHash = new URLSearchParams(hash.slice(qIdx + 1)).get('k')
+    if (inHash) return inHash
+  }
+  return null
+}
+
 async function sha256Hex(input: string): Promise<string> {
   const bytes = new TextEncoder().encode(input)
   const digest = await crypto.subtle.digest('SHA-256', bytes)
@@ -33,18 +53,36 @@ async function sha256Hex(input: string): Promise<string> {
 }
 
 export function PasswordGate({ children }: { children: ReactNode }) {
-  const [authed, setAuthed] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem(STORAGE_KEY) === PASSWORD_HASH
-    } catch {
-      return false
-    }
-  })
+  const initialAuthed = (() => {
+    try { return localStorage.getItem(STORAGE_KEY) === PASSWORD_HASH } catch { return false }
+  })()
+  const [authed, setAuthed] = useState(initialAuthed)
+  // If a host embeds us with ?k=<token>, verify it before rendering anything so
+  // the password form never flashes inside the iframe.
+  const [verifying, setVerifying] = useState(!initialAuthed && !!readEmbedToken())
   const [value, setValue] = useState('')
   const [error, setError] = useState(false)
   const [checking, setChecking] = useState(false)
 
+  useEffect(() => {
+    if (authed) return
+    const token = readEmbedToken()
+    if (!token) return
+    let cancelled = false
+    ;(async () => {
+      const hash = await sha256Hex(token)
+      if (cancelled) return
+      if (hash === EMBED_TOKEN_HASH) {
+        try { localStorage.setItem(STORAGE_KEY, PASSWORD_HASH) } catch { /* private mode — session-only ok */ }
+        setAuthed(true)
+      }
+      setVerifying(false)
+    })()
+    return () => { cancelled = true }
+  }, [authed])
+
   if (authed) return <>{children}</>
+  if (verifying) return null // brief token check — avoid flashing the gate in the iframe
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()

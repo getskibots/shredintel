@@ -1,11 +1,12 @@
 import { useRef, useState, type FormEvent } from 'react'
-import { Sparkles, ArrowUp, AudioLines, Mic, ChevronDown, Loader2, TriangleAlert, Target, Zap, TrendingUp } from 'lucide-react'
+import { Sparkles, ArrowUp, AudioLines, Mic, ChevronDown, Loader2, TriangleAlert, Target, Zap, TrendingUp, MessagesSquare } from 'lucide-react'
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
 } from 'recharts'
 import { brand } from '../../lib/chartTheme'
 import { VegaLiteChart } from '../VegaLiteChart'
-import { focusSection } from '../../lib/focus'
+import { ConversationExplorer } from '../ConversationExplorer'
+import type { DrillFilter } from '../../lib/savedReports'
 
 /**
  * ShredIntel hero — the dashboard's spine and its identity. A centered,
@@ -25,6 +26,7 @@ interface AskResult {
   chart: ChartHint | null
   vegaLite?: Record<string, unknown> | null
   focus?: string | null
+  drill?: { dimension: string; value: string; label: string } | null
   sql: string
   rows: Record<string, unknown>[]
 }
@@ -42,6 +44,7 @@ export function AskBar({ botId, onVoice }: { botId: number; onVoice?: () => void
   const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<AskResult | null>(null)
+  const [drill, setDrill] = useState<DrillFilter | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [showData, setShowData] = useState(false)
   const [listening, setListening] = useState(false)
@@ -53,6 +56,7 @@ export function AskBar({ botId, onVoice }: { botId: number; onVoice?: () => void
     setLoading(true)
     setError(null)
     setResult(null)
+    setDrill(null)
     setShowData(false)
     try {
       const res = await fetch('/api/ask', {
@@ -68,7 +72,6 @@ export function AskBar({ botId, onVoice }: { botId: number; onVoice?: () => void
       }
       if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`)
       setResult(data)
-      focusSection(data.focus)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong')
     } finally {
@@ -247,6 +250,18 @@ export function AskBar({ botId, onVoice }: { botId: number; onVoice?: () => void
               </div>
             ) : null}
 
+            {result.drill && (
+              <div className="mt-4">
+                <button
+                  type="button"
+                  onClick={() => result.drill && setDrill({ dim: result.drill.dimension as DrillFilter['dim'], value: result.drill.value, label: result.drill.label })}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-botscrew-200 bg-botscrew-50 px-3.5 py-1.5 text-xs font-semibold text-botscrew-700 transition hover:bg-botscrew-100"
+                >
+                  <MessagesSquare className="h-3.5 w-3.5" /> Read the {result.drill.label} conversations
+                </button>
+              </div>
+            )}
+
             <button
               type="button"
               onClick={() => setShowData((s) => !s)}
@@ -286,6 +301,8 @@ export function AskBar({ botId, onVoice }: { botId: number; onVoice?: () => void
           </div>
         )}
       </div>
+
+      {drill && <ConversationExplorer botId={botId} filter={drill} onClose={() => setDrill(null)} />}
     </div>
   )
 }

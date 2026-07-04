@@ -52,13 +52,6 @@ export function BotSelector() {
         <span className="whitespace-nowrap">
           {active?.label ?? 'Select bot'}
         </span>
-        {isLive && (
-          <span
-            aria-hidden
-            title="Bot list is live from Supabase"
-            className="h-1.5 w-1.5 rounded-full bg-emerald-500"
-          />
-        )}
         <ChevronDown className="h-3.5 w-3.5 text-slate-400" strokeWidth={2} />
       </button>
 

@@ -19,7 +19,7 @@ import { PeriodPicker } from '../PeriodPicker'
 import { SectionHeader } from '../SectionHeader'
 import { SenderMixStack } from '../SenderMixStack'
 import { RealtimeAgent } from '../RealtimeAgent'
-import { useAvailableBots, useBotAnalytics } from '../../data/useAnalytics'
+import { useBotAnalytics } from '../../data/useAnalytics'
 import {
   selectionFromSearchParams,
   writeSelectionToSearchParams,
@@ -42,19 +42,12 @@ export function BotAnalyticsPage() {
     setSearchParams(params, { replace: true })
   }
   const { data: f, isLive, isLoading } = useBotAnalytics(botId, selection)
-  const { bots } = useAvailableBots()
   const [voiceActive, setVoiceActive] = useState(false)
   const [savedOpen, setSavedOpen] = useState(false)
   const [savedCount, setSavedCount] = useState(0)
   useEffect(() => {
     setSavedCount(listSavedReports(botId).length)
   }, [botId, voiceActive, savedOpen])
-
-  // Show the bot's label from the registry when we know it; fall back to id.
-  const bot = bots.find((b) => b.botId === botId)
-  const pageTitle = bot?.label
-    ? bot.label.replace(/^Bot \d+ · /, '')
-    : `Bot ${botId}`
 
   if (Number.isNaN(botId)) {
     return (
@@ -77,8 +70,7 @@ export function BotAnalyticsPage() {
         <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 md:px-6">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-lg font-semibold tracking-tight text-slate-900 md:text-xl">
-              Analytics <span className="hidden text-slate-400 sm:inline">·</span>{' '}
-              <span className="hidden text-slate-600 sm:inline">{pageTitle}</span>
+              Analytics
             </h1>
             <BotSelector />
             <span

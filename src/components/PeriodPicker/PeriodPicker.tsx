@@ -11,6 +11,8 @@ import {
 import { DateRangeCalendar } from './DateRangeCalendar'
 
 const PRESETS: Array<{ key: PresetKey; label: string; shortLabel: string }> = [
+  { key: '1d',  label: 'Yesterday',    shortLabel: '1d'  },
+  { key: '3d',  label: 'Last 3 days',  shortLabel: '3d'  },
   { key: '7d',  label: 'Last 7 days',  shortLabel: '7d'  },
   { key: '30d', label: 'Last 30 days', shortLabel: '30d' },
   { key: '90d', label: 'Last 90 days', shortLabel: '90d' },

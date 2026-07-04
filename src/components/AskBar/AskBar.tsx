@@ -303,7 +303,7 @@ export function AskBar({ botId, range, onVoice }: { botId: number; range?: { fro
         )}
       </div>
 
-      {drill && <ConversationExplorer botId={botId} filter={drill} onClose={() => setDrill(null)} />}
+      {drill && <ConversationExplorer botId={botId} range={range} filter={drill} onClose={() => setDrill(null)} />}
     </div>
   )
 }

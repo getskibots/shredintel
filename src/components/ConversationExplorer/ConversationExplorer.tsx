@@ -18,16 +18,22 @@ const sentColor = (s: string | null): string => {
   return sentimentColors[k] || '#94A3B8'
 }
 
+const LIST_CAP = 60
+
 export function ConversationExplorer({
   botId,
   filter,
+  range,
   onClose,
 }: {
   botId: number
   filter: { dim: 'section' | 'pinchpoint' | 'sentiment'; value: string; label: string }
+  /** Scope to the same window as the dashboard/AI. Omit for all-time. */
+  range?: { from: string; to: string }
   onClose: () => void
 }) {
   const [rows, setRows] = useState<ConvRow[] | null>(null)
+  const [count, setCount] = useState<number | null>(null)
   const [openCid, setOpenCid] = useState<number | null>(null)
   const [transcript, setTranscript] = useState<Msg[] | null>(null)
   const [loadingT, setLoadingT] = useState(false)
@@ -36,20 +42,24 @@ export function ConversationExplorer({
     let cancelled = false
     ;(async () => {
       const sb = getSupabase()
-      if (!sb) { setRows([]); return }
-      const { data } = await sb
+      if (!sb) { setRows([]); setCount(0); return }
+      // count:'exact' → true total for the header; .limit caps only the LIST.
+      const base = sb
         .schema('report')
         .from('conversation_intel')
-        .select('conversation_id, topic, sentiment, day')
+        .select('conversation_id, topic, sentiment, day', { count: 'exact' })
         .eq('bot_id', botId)
         .ilike(filter.dim, filter.value)
         .eq('substantive', true)
-        .order('day', { ascending: false })
-        .limit(60)
-      if (!cancelled) setRows((data as ConvRow[]) ?? [])
+      const scoped = range ? base.gte('day', range.from).lte('day', range.to) : base
+      const { data, count: total } = await scoped.order('day', { ascending: false }).limit(LIST_CAP)
+      if (!cancelled) {
+        setRows((data as ConvRow[]) ?? [])
+        setCount(total ?? (data?.length ?? 0))
+      }
     })()
     return () => { cancelled = true }
-  }, [botId, filter.dim, filter.value])
+  }, [botId, filter.dim, filter.value, range?.from, range?.to])
 
   async function openConv(cid: number) {
     if (openCid === cid) { setOpenCid(null); setTranscript(null); return }
@@ -78,7 +88,7 @@ export function ConversationExplorer({
             <div className="text-[11px] font-medium uppercase tracking-wider text-slate-400">{dimLabel}</div>
             <div className="text-base font-semibold text-slate-900">
               {filter.label}
-              {rows ? <span className="ml-2 text-sm font-normal text-slate-400">{rows.length} conversations</span> : null}
+              {count != null ? <span className="ml-2 text-sm font-normal text-slate-400">{count} conversations</span> : null}
             </div>
           </div>
           <button onClick={onClose} aria-label="Close" className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700">
@@ -92,8 +102,12 @@ export function ConversationExplorer({
               <Loader2 className="h-4 w-4 animate-spin" /> Loading conversations…
             </div>
           ) : rows.length === 0 ? (
-            <div className="p-6 text-center text-sm text-slate-500">No conversations for this filter in the enriched set.</div>
+            <div className="p-6 text-center text-sm text-slate-500">No conversations for this filter in the selected range.</div>
           ) : (
+            <>
+            {count != null && count > rows.length && (
+              <p className="mb-2 px-1 text-xs text-slate-400">Showing the most recent {rows.length} of {count} conversations.</p>
+            )}
             <ul className="space-y-1.5">
               {rows.map((r) => (
                 <li key={r.conversation_id} className="rounded-lg border border-slate-200">
@@ -137,6 +151,7 @@ export function ConversationExplorer({
                 </li>
               ))}
             </ul>
+            </>
           )}
         </div>
       </div>

@@ -34,7 +34,8 @@ export function ConversionBlockers({
   affectedConversations,
   affectedShare,
   botId,
-}: ConversionBlockersProps & { botId?: number }) {
+  range,
+}: ConversionBlockersProps & { botId?: number; range?: { from: string; to: string } }) {
   const storeKey = `shredintel_aov_${botId ?? 'default'}`
   const [aov, setAov] = useState<number>(() => {
     try {
@@ -163,6 +164,7 @@ export function ConversionBlockers({
       {drill && botId && (
         <ConversationExplorer
           botId={botId}
+          range={range}
           filter={{ dim: 'pinchpoint', value: drill, label: drill }}
           onClose={() => setDrill(null)}
         />

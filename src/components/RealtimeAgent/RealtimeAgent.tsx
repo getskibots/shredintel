@@ -345,7 +345,7 @@ export function RealtimeAgent({ botId, range, active, onEnd }: { botId: number; 
         </div>
       </div>
 
-      {drill && <ConversationExplorer botId={botId} filter={drill} onClose={() => setDrill(null)} />}
+      {drill && <ConversationExplorer botId={botId} range={range} filter={drill} onClose={() => setDrill(null)} />}
     </div>
   )
 }

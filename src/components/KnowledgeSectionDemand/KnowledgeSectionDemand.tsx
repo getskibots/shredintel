@@ -10,7 +10,7 @@ export type { KnowledgeSectionDemandProps } from '../../types/analytics'
  * § 2 — guest demand across the resort knowledge sections (topic taxonomy).
  * Sourced from report.intel_section. Click a section → its conversations.
  */
-export function KnowledgeSectionDemand({ sections, botId }: KnowledgeSectionDemandProps & { botId?: number }) {
+export function KnowledgeSectionDemand({ sections, botId, range }: KnowledgeSectionDemandProps & { botId?: number; range?: { from: string; to: string } }) {
   const [drill, setDrill] = useState<string | null>(null)
   const empty = !sections || sections.length === 0
   return (
@@ -30,6 +30,7 @@ export function KnowledgeSectionDemand({ sections, botId }: KnowledgeSectionDema
       {drill && botId && (
         <ConversationExplorer
           botId={botId}
+          range={range}
           filter={{ dim: 'section', value: drill, label: drill }}
           onClose={() => setDrill(null)}
         />

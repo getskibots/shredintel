@@ -321,7 +321,7 @@ export function RealtimeAgent({ botId, range, selection, onSelectionChange, shre
       {/* Orb cluster — the voice's face + its state + End, all inline; report builds downward.
           The "shredding" scan sweeps this region on a date change (same as the dashboard). */}
       <div className="relative min-h-0 flex-1">
-        <ShreddingOverlay active={!!shredding} label={range?.label} />
+        <ShreddingOverlay active={!!shredding} />
         <div className="h-full overflow-y-auto" onClick={() => shareOpen && setShareOpen(false)}>
         <div className="mx-auto max-w-3xl px-4 pt-12 pb-16 md:px-6">
           <div className="flex flex-col items-center text-center">

@@ -22,11 +22,11 @@ export function useShredPulse(key: string): boolean {
 }
 
 /**
- * Branded "shredding the data" overlay: a scan band sweeps top→bottom over the
- * content, plus a centered pill naming the range. The parent must be `relative`;
- * this is pointer-events-none so it never blocks interaction.
+ * Branded "shredding through the conversations" overlay: a scan band sweeps
+ * top→bottom over the content, plus a centered pill. The parent must be
+ * `relative`; this is pointer-events-none so it never blocks interaction.
  */
-export function ShreddingOverlay({ active, label }: { active: boolean; label?: string }) {
+export function ShreddingOverlay({ active }: { active: boolean }) {
   if (!active) return null
   return (
     <div className="pointer-events-none absolute inset-0 z-30 overflow-hidden">
@@ -37,7 +37,7 @@ export function ShreddingOverlay({ active, label }: { active: boolean; label?: s
       <div className="absolute left-1/2 top-16 -translate-x-1/2">
         <div className="flex items-center gap-2 rounded-full border border-botscrew-100 bg-white/95 px-4 py-2 text-xs font-semibold text-botscrew-700 shadow-lg backdrop-blur">
           <Sparkles className="h-3.5 w-3.5 animate-pulse" strokeWidth={2.2} />
-          Shredding{label ? ` · ${label}` : ''}…
+          Shredding through the conversations…
         </div>
       </div>
     </div>

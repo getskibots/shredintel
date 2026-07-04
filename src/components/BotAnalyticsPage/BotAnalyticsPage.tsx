@@ -104,7 +104,7 @@ export function BotAnalyticsPage() {
 
         {/* Data sections — the scan sweeps + dims these on any date-range change */}
         <div className="relative">
-          <ShreddingOverlay active={shredding} label={askRange.label} />
+          <ShreddingOverlay active={shredding} />
           <div className={`space-y-12 transition-opacity duration-300 ${shredding ? 'opacity-60' : 'opacity-100'}`}>
             <section id="core" className="scroll-mt-40 space-y-5">
               {/* Extended Conversation Counts — the spec's §1 (sessions vs. messages, depth, bounce). */}

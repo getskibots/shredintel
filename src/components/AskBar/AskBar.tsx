@@ -7,7 +7,6 @@ import { brand } from '../../lib/chartTheme'
 import { VegaLiteChart } from '../VegaLiteChart'
 import { ConversationExplorer } from '../ConversationExplorer'
 import { PromptEditor } from '../PromptEditor'
-import { getPromptOverride } from '../../lib/aiPrompt'
 import type { DrillFilter } from '../../lib/savedReports'
 
 /**
@@ -64,7 +63,7 @@ export function AskBar({ botId, range, onVoice }: { botId: number; range?: { fro
       const res = await fetch('/api/ask', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ botId, from: range?.from, to: range?.to, instructions: getPromptOverride(botId) || undefined, ...body }),
+        body: JSON.stringify({ botId, from: range?.from, to: range?.to, ...body }),
       })
       let data: AskResult & { error?: string }
       try {

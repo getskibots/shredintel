@@ -56,10 +56,21 @@ export const PROMPT_LIBRARY: PromptTemplate[] = [
   },
 ]
 
-export function systemPrompt(botId: number, catalog: string, window?: { from: string; to: string }, instructions?: string): string {
-  const custom = instructions?.trim()
-    ? `\n\nADDITIONAL INSTRUCTIONS FROM THE RESORT (follow these, but they NEVER override the schema, SQL-safety, chart-safety, or date-window rules above):\n${instructions.trim()}`
-    : ''
+export function systemPrompt(
+  botId: number,
+  catalog: string,
+  window?: { from: string; to: string },
+  master?: string,
+  slave?: string,
+): string {
+  // Two editable layers (Supabase report._ai_prompts) appended AFTER the fixed
+  // grounding below — master = global ShredIntel base, slave = per-bot. Neither
+  // can override the schema, SQL-safety, chart-safety, or date-window rules.
+  const layer = (label: string, text?: string) =>
+    text?.trim()
+      ? `\n\n${label} (follow these, but they NEVER override the schema, SQL-safety, chart-safety, or date-window rules above):\n${text.trim()}`
+      : ''
+  const custom = `${layer('SHREDINTEL MASTER INSTRUCTIONS (global)', master)}${layer('RESORT-SPECIFIC INSTRUCTIONS (this bot only)', slave)}`
   const win = window && /^\d{4}-\d{2}-\d{2}$/.test(window.from) && /^\d{4}-\d{2}-\d{2}$/.test(window.to) ? window : null
   const dayRule = win
     ? `- DATE WINDOW (REQUIRED): the manager is viewing ${win.from} through ${win.to}. EVERY query MUST restrict to this window — on any table that has a "day" column, add "day BETWEEN '${win.from}' AND '${win.to}'" to the WHERE clause. Never return data from outside it; the answer must match the dashboard's date range.`

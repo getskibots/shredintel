@@ -12,7 +12,7 @@
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { chat } from './_lib/llm.js'
-import { runReadOnly, schemaCatalog, validateSql } from './_lib/db.js'
+import { runReadOnly, schemaCatalog, validateSql, getPrompts } from './_lib/db.js'
 import { PROMPT_LIBRARY, systemPrompt, SQL_INSTRUCTION, ANSWER_INSTRUCTION } from './_lib/prompts.js'
 import { voiceAnswerInstruction } from './_lib/voices.js'
 
@@ -57,10 +57,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const from = String(body.from ?? '')
     const to = String(body.to ?? '')
     const window = ISO.test(from) && ISO.test(to) && from <= to ? { from, to } : undefined
-    // Optional custom instructions (from the in-app AI-instructions editor) —
-    // appended after the fixed grounding; capped to bound the prompt.
-    const instructions = String(body.instructions || '').slice(0, 2000).trim()
-    const system = systemPrompt(botId, catalog, window, instructions || undefined)
+    // Two editable prompt layers from Supabase (report._ai_prompts): master =
+    // global ShredIntel base, slave = per-bot. Appended after the fixed grounding.
+    const { master, slave } = await getPrompts(botId)
+    const system = systemPrompt(botId, catalog, window, master, slave)
 
     // 1) question → SQL
     const sqlJson = await chat({ system, user: `${question}\n\n${SQL_INSTRUCTION}`, json: true, maxTokens: 500 })

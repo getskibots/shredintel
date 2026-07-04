@@ -30,6 +30,38 @@ function getPool(): pg.Pool {
   return pool
 }
 
+/**
+ * Two-tier AI prompt layers from report._ai_prompts (bot_id 0 = MASTER/global,
+ * else per-bot SLAVE). The table is `_`-prefixed so schemaCatalog() never exposes
+ * it to the model. Reads are graceful — empty if the table is missing/unreachable,
+ * so the AI always falls back to the fixed grounding in code.
+ */
+export interface PromptPair { master: string; slave: string }
+
+export async function getPrompts(botId: number): Promise<PromptPair> {
+  try {
+    const { rows } = await getPool().query<{ bot_id: number; prompt: string }>(
+      `select bot_id, prompt from report._ai_prompts where bot_id in (0, $1)`,
+      [botId],
+    )
+    return {
+      master: rows.find((r) => r.bot_id === 0)?.prompt?.trim() || '',
+      slave: rows.find((r) => r.bot_id === botId)?.prompt?.trim() || '',
+    }
+  } catch {
+    return { master: '', slave: '' }
+  }
+}
+
+/** Upsert a prompt layer. botId 0 = master (global); else per-bot slave. */
+export async function upsertPrompt(botId: number, prompt: string): Promise<void> {
+  await getPool().query(
+    `insert into report._ai_prompts (bot_id, prompt, updated_at) values ($1, $2, now())
+       on conflict (bot_id) do update set prompt = excluded.prompt, updated_at = now()`,
+    [botId, String(prompt || '').slice(0, 4000)],
+  )
+}
+
 const WRITE_KW = /\b(insert|update|delete|drop|alter|create|truncate|grant|revoke|copy|call|do|merge|vacuum|reindex|comment|refresh)\b/i
 
 export function validateSql(sql: string): { ok: boolean; reason?: string } {

@@ -4,10 +4,11 @@
  * the real API key. Configured with the selected persona's voice (ash/alloy/
  * cedar) + instructions + the query_shredintel tool (the browser executes the
  * tool by calling /api/ask, bot-scoped client-side).
- *   body: { voiceId }
+ *   body: { voiceId, botId }
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { realtimeInstruction, openaiVoiceFor } from './_lib/voices.js'
+import { getPrompts } from './_lib/db.js'
 
 export const maxDuration = 15
 
@@ -15,7 +16,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body || {}
     const voiceId = String(body.voiceId ?? req.query.voiceId ?? 'autumn')
-    const custom = String(body.instructions ?? '').slice(0, 2000).trim()
+    // Same two editable layers the text AI uses (report._ai_prompts).
+    const botId = Number(body.botId ?? req.query.botId ?? 0)
+    const { master, slave } = await getPrompts(botId)
     const KEY = (process.env.OPENAI_API_KEY || '').trim()
     if (!KEY) return res.status(500).json({ error: 'OPENAI_API_KEY missing' })
 
@@ -26,7 +29,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         session: {
           type: 'realtime',
           model: 'gpt-realtime',
-          instructions: realtimeInstruction(voiceId, custom || undefined),
+          instructions: realtimeInstruction(voiceId, master, slave),
           audio: { output: { voice: openaiVoiceFor(voiceId) } },
           tools: [
             {

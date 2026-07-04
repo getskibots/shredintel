@@ -1,32 +1,45 @@
 /**
- * Custom AI instructions — a free-text layer a resort can append to ShredIntel's
- * system prompt. It powers BOTH surfaces: it's sent to /api/ask (text search) and
- * /api/realtime-session (voice), where the server appends it after the fixed
- * grounding (schema + SQL safety stay locked). Stored per-bot.
- *
- * Demo-grade storage (localStorage). Production: move to Supabase per bot so it
- * persists across browsers and is server-authoritative (like Sendy's
- * accounts.ai_instructions).
+ * Client for the two editable AI-instruction layers, stored in Supabase
+ * (report._ai_prompts) and served by /api/prompt:
+ *   - MASTER (global): the ShredIntel base — persona + report methodology.
+ *     GetSkiBots-controlled; shared by every bot.
+ *   - SLAVE (per-bot): resort-specific guidance for one bot.
+ * The server appends both AFTER the fixed grounding (schema + SQL/date/chart
+ * safety stay locked) for BOTH text search (/api/ask) and voice
+ * (/api/realtime-session), so an edit here changes both surfaces.
  */
 
-const key = (botId: number) => `shredintel_prompt_${botId}`
+export type PromptScope = 'master' | 'bot'
 
-export const PROMPT_MAX = 2000
+export interface Prompts {
+  master: string
+  slave: string
+}
 
-export function getPromptOverride(botId: number): string {
+export const PROMPT_MAX = 4000
+
+/** Read both layers for a bot. Never throws — empty strings on failure. */
+export async function fetchPrompts(botId: number): Promise<Prompts> {
   try {
-    return localStorage.getItem(key(botId)) || ''
+    const r = await fetch(`/api/prompt?botId=${botId}`)
+    if (!r.ok) return { master: '', slave: '' }
+    const d = await r.json()
+    return { master: String(d.master || ''), slave: String(d.slave || '') }
   } catch {
-    return ''
+    return { master: '', slave: '' }
   }
 }
 
-export function setPromptOverride(botId: number, text: string): void {
+/** Persist one layer. scope 'master' ignores botId (writes the global row). */
+export async function savePrompt(scope: PromptScope, botId: number, prompt: string): Promise<boolean> {
   try {
-    const trimmed = text.trim()
-    if (trimmed) localStorage.setItem(key(botId), trimmed.slice(0, PROMPT_MAX))
-    else localStorage.removeItem(key(botId))
+    const r = await fetch('/api/prompt', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ scope, botId, prompt: prompt.slice(0, PROMPT_MAX) }),
+    })
+    return r.ok
   } catch {
-    /* private mode — non-fatal */
+    return false
   }
 }

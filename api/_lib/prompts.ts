@@ -63,7 +63,7 @@ You may query ONLY these views/tables (columns listed). All are in the report sc
 ${catalog}
 
 The richest sources for guest intelligence:
-- report.conversation_intel — ONE ROW PER CONVERSATION: (bot_id, day, substantive bool, section, pinchpoint, sentiment, urgency, handover, topic). "topic" is a short free-text summary of the guest's ask (e.g. "refund policy for lift tickets"). Use this for "what guests ask/are frustrated about" and "top questions" (GROUP BY topic).
+- report.conversation_intel — ONE ROW PER CONVERSATION: (bot_id, day, substantive bool, section, pinchpoint, sentiment, urgency, handover, topic). "topic" is a short free-text summary of the guest's ask (e.g. "refund policy for lift tickets") — it is HIGH-CARDINALITY (nearly unique per conversation). Only GROUP BY topic for an explicit "exact/most common questions guests ask" request, and ALWAYS ORDER BY count DESC LIMIT 12. For "what are guests frustrated about", rank by section or pinchpoint (low-cardinality) filtered to sentiment = 'Negative' — do NOT chart raw topic.
 - report.intel_section (bot_id, day, key = resort knowledge section, conversations) — demand per section.
 - report.intel_pinchpoint (bot_id, day, key = ecommerce friction, conversations, negative) — conversion blockers; "negative" is the frustrated count.
 - report.intel_sentiment (bot_id, day, key = Positive|Neutral|Negative, conversations).
@@ -79,6 +79,7 @@ Rules:
 - SELECT or WITH only. Never write. Reference only the report.* views above. Views are tables — SELECT FROM them, never call with parentheses.
 - "day" is the date; for "recent"/"last 30 days" use day >= current_date - interval '30 days'.
 - On report.conversation_intel, add "and substantive" for guest-intelligence questions unless the point is to count excluded chats.
+- CHART SAFETY: any query whose rows become a breakdown/ranking chart MUST return a SMALL ranked set — ORDER BY the measure DESC and LIMIT 12 (or fewer). Prefer low-cardinality dimensions (section, pinchpoint, sentiment) over free-text topic. Only a per-day time series may exceed 12 rows.
 - If the views can't answer the question, say so instead of guessing.
 
 Examples:
@@ -97,12 +98,14 @@ GROUP BY topic ORDER BY n DESC LIMIT 12;`
 }
 
 export const SQL_INSTRUCTION =
-  'Write ONE Postgres query (SELECT or WITH) that answers the question. Respond as JSON: {"sql":"..."}. No prose.'
+  'Write ONE Postgres query (SELECT or WITH) that answers the question. If it is a breakdown/ranking, ORDER BY the measure DESC and LIMIT 12, and prefer grouping by a low-cardinality column (section, pinchpoint, sentiment) over the high-cardinality free-text topic. Respond as JSON: {"sql":"..."}. No prose.'
 
 export const ANSWER_INSTRUCTION =
   `You are given the question and the query result rows as JSON. Write a concise answer for a resort manager: one or two sentences, lead with the key insight, plain English, no jargon. Use the EXACT numbers from the rows — never round, truncate, or invent figures; if you cite a count, copy it verbatim from the data.
 Then choose a visualization. Use the simple "chart" hint ONLY for a single-measure ranking or trend. Whenever the rows have TWO OR MORE numeric measures worth comparing, or a natural grouping/series, return a richer Vega-Lite v5 "vegaLite" spec instead — never drop a measure. Give only "mark", "encoding", optional "transform" and short "title"; reference the row column names; DO NOT include "data" (rows are injected).
 Recipes:
+- Single categorical ranking → HORIZONTAL bar so labels stay readable: {"mark":"bar","encoding":{"y":{"field":"<category>","type":"nominal","sort":"-x"},"x":{"field":"<count>","type":"quantitative"}}}. Assume the rows are already a small ranked set (≤12).
 - Two measures per category → grouped bars via fold: {"mark":"bar","transform":[{"fold":["total","frustrated"],"as":["metric","value"]}],"encoding":{"x":{"field":"<category>","type":"nominal","sort":"-y"},"y":{"field":"value","type":"quantitative"},"xOffset":{"field":"metric"},"color":{"field":"metric","type":"nominal"}}}.
 - Part-to-whole → stacked bar (color = the part). Multi-series over time → line with color=series. Distribution → bar/area.
+- NEVER put a high-cardinality free-text column (e.g. topic) on an axis without it already being ranked+limited to a handful of rows.
 Respond as JSON: {"answer":"...","chart":{"type":"bar|line|none","x":"<column>","y":"<column>"},"vegaLite":<spec or null>,"focus":"core|intelligence|identity|context|none"}. Set "focus" to the dashboard section this answer is about so it scrolls into view — core = volume/depth/conversions; intelligence = topics/sections/sentiment/conversion blockers; identity = known vs anonymous guests; context = device/location/time-of-day — else "none".`

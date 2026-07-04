@@ -31,6 +31,35 @@ const THEME = {
   view: { stroke: 'transparent' },
 }
 
+// Safety net: an LLM spec can still hand a bar/pie chart hundreds of rows
+// (e.g. a group-by on a high-cardinality free-text column), which renders as an
+// unreadable pileup of labels. For categorical marks with no time axis, keep
+// only the top-N rows by numeric magnitude. Time series (line/area/temporal)
+// are never trimmed — every day matters there.
+const MAX_CATEGORIES = 25
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function markType(spec: Record<string, unknown>): string {
+  const m = spec.mark as any
+  if (typeof m === 'string') return m
+  if (m && typeof m === 'object') return String(m.type || '')
+  return ''
+}
+
+function hasTemporal(spec: Record<string, unknown>): boolean {
+  const enc = (spec.encoding as Record<string, unknown>) || {}
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return Object.values(enc).some((c: any) => c && typeof c === 'object' && c.type === 'temporal')
+}
+
+function limitRows(spec: Record<string, unknown>, rows: Record<string, unknown>[]): Record<string, unknown>[] {
+  if (!['bar', 'arc'].includes(markType(spec))) return rows
+  if (hasTemporal(spec) || rows.length <= MAX_CATEGORIES) return rows
+  const magnitude = (r: Record<string, unknown>) =>
+    Object.values(r).reduce((s: number, v) => s + (typeof v === 'number' ? v : 0), 0)
+  return [...rows].sort((a, b) => magnitude(b) - magnitude(a)).slice(0, MAX_CATEGORIES)
+}
+
 export function VegaLiteChart({
   spec,
   rows,
@@ -58,7 +87,7 @@ export function VegaLiteChart({
           height,
           autosize: { type: 'fit', contains: 'padding' },
           ...spec,
-          data: { values: rows }, // override: real rows from the query
+          data: { values: limitRows(spec, rows) }, // override: real rows from the query (capped for categorical marks)
           config: { ...THEME, ...specConfig },
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

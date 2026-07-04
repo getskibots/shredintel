@@ -6,6 +6,7 @@ import {
 import { brand } from '../../lib/chartTheme'
 import { DEFAULT_VOICE_ID, profileFor, pickBrowserVoice } from '../../lib/voices'
 import { VegaLiteChart } from '../VegaLiteChart'
+import { focusSection } from '../../lib/focus'
 
 /**
  * ShredIntel realtime voice session — controlled by the parent (opened from the
@@ -107,6 +108,7 @@ export function VoiceAgent({ botId, active, onEnd }: { botId: number; active: bo
       if (!runningRef.current) return
       const answer = String(data.answer || (data.error ? `I hit a problem: ${data.error}` : 'I could not find an answer.'))
       setTurn({ q: question, answer, chart: data.chart ?? null, vegaLite: data.vegaLite ?? null, rows: Array.isArray(data.rows) ? data.rows : [] })
+      focusSection(data.focus)
       speak(answer)
     } catch {
       if (!runningRef.current) return

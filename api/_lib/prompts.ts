@@ -105,4 +105,4 @@ Then choose a visualization. Use the simple "chart" hint ONLY for a single-measu
 Recipes:
 - Two measures per category → grouped bars via fold: {"mark":"bar","transform":[{"fold":["total","frustrated"],"as":["metric","value"]}],"encoding":{"x":{"field":"<category>","type":"nominal","sort":"-y"},"y":{"field":"value","type":"quantitative"},"xOffset":{"field":"metric"},"color":{"field":"metric","type":"nominal"}}}.
 - Part-to-whole → stacked bar (color = the part). Multi-series over time → line with color=series. Distribution → bar/area.
-Respond as JSON: {"answer":"...","chart":{"type":"bar|line|none","x":"<column>","y":"<column>"},"vegaLite":<spec or null>}.`
+Respond as JSON: {"answer":"...","chart":{"type":"bar|line|none","x":"<column>","y":"<column>"},"vegaLite":<spec or null>,"focus":"core|intelligence|identity|context|none"}. Set "focus" to the dashboard section this answer is about so it scrolls into view — core = volume/depth/conversions; intelligence = topics/sections/sentiment/conversion blockers; identity = known vs anonymous guests; context = device/location/time-of-day — else "none".`

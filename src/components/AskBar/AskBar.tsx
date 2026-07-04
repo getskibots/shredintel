@@ -6,6 +6,7 @@ import {
 import { brand } from '../../lib/chartTheme'
 import { VOICE_PROFILES, DEFAULT_VOICE_ID } from '../../lib/voices'
 import { VegaLiteChart } from '../VegaLiteChart'
+import { focusSection } from '../../lib/focus'
 
 /**
  * ShredIntel hero search — the dashboard's spine. Ask any question about the
@@ -24,6 +25,7 @@ interface AskResult {
   answer: string
   chart: ChartHint | null
   vegaLite?: Record<string, unknown> | null
+  focus?: string | null
   sql: string
   rows: Record<string, unknown>[]
 }
@@ -70,6 +72,7 @@ export function AskBar({ botId, onVoice }: { botId: number; onVoice?: () => void
       }
       if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`)
       setResult(data)
+      focusSection(data.focus)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong')
     } finally {

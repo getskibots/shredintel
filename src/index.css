@@ -26,3 +26,14 @@ html.shredintel-embed body,
 html.shredintel-embed #root {
   height: auto;
 }
+
+/* ShredIntel "show you where the data lives" — pulse the section the AI focused. */
+.shredintel-focus {
+  border-radius: 16px;
+  animation: shredintel-focus 2.4s ease;
+}
+@keyframes shredintel-focus {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(33, 130, 191, 0); }
+  12% { box-shadow: 0 0 0 4px rgba(33, 130, 191, 0.3); }
+  45% { box-shadow: 0 0 0 4px rgba(33, 130, 191, 0.16); }
+}

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Square, Sparkles, Loader2, Bookmark, Check, Download, Mail, Copy, ArrowLeft } from 'lucide-react'
 import { DEFAULT_VOICE_ID, profileFor } from '../../lib/voices'
+import { getPromptOverride } from '../../lib/aiPrompt'
 import { PeriodPicker } from '../PeriodPicker'
 import { ShreddingOverlay } from '../ShreddingOverlay'
 import { ReportCardView } from '../ReportCards'
@@ -192,7 +193,7 @@ export function RealtimeAgent({ botId, range, selection, onSelectionChange, shre
       const voiceId = DEFAULT_VOICE_ID
       setPersona(profileFor(voiceId).name)
       const sess = await (await fetch('/api/realtime-session', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ voiceId }),
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ voiceId, instructions: getPromptOverride(botId) || undefined }),
       })).json()
       const token = sess?.value
       if (!token) throw new Error(sess?.error?.message || 'could not start a realtime session')

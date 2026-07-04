@@ -57,7 +57,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const from = String(body.from ?? '')
     const to = String(body.to ?? '')
     const window = ISO.test(from) && ISO.test(to) && from <= to ? { from, to } : undefined
-    const system = systemPrompt(botId, catalog, window)
+    // Optional custom instructions (from the in-app AI-instructions editor) —
+    // appended after the fixed grounding; capped to bound the prompt.
+    const instructions = String(body.instructions || '').slice(0, 2000).trim()
+    const system = systemPrompt(botId, catalog, window, instructions || undefined)
 
     // 1) question → SQL
     const sqlJson = await chat({ system, user: `${question}\n\n${SQL_INSTRUCTION}`, json: true, maxTokens: 500 })

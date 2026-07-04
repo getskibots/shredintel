@@ -6,6 +6,8 @@ import {
 import { brand } from '../../lib/chartTheme'
 import { VegaLiteChart } from '../VegaLiteChart'
 import { ConversationExplorer } from '../ConversationExplorer'
+import { PromptEditor } from '../PromptEditor'
+import { getPromptOverride } from '../../lib/aiPrompt'
 import type { DrillFilter } from '../../lib/savedReports'
 
 /**
@@ -62,7 +64,7 @@ export function AskBar({ botId, range, onVoice }: { botId: number; range?: { fro
       const res = await fetch('/api/ask', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ botId, from: range?.from, to: range?.to, ...body }),
+        body: JSON.stringify({ botId, from: range?.from, to: range?.to, instructions: getPromptOverride(botId) || undefined, ...body }),
       })
       let data: AskResult & { error?: string }
       try {
@@ -199,6 +201,9 @@ export function AskBar({ botId, range, onVoice }: { botId: number; range?: { fro
         <p className="mt-3.5 text-[11px] text-slate-400">
           Type it, dictate with the mic, or talk to ShredIntel — or tap a starter above.
         </p>
+        <div className="mt-1.5">
+          <PromptEditor botId={botId} />
+        </div>
       </div>
 
       {/* Answer + states — readable column below the hero */}

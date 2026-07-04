@@ -56,7 +56,10 @@ export const PROMPT_LIBRARY: PromptTemplate[] = [
   },
 ]
 
-export function systemPrompt(botId: number, catalog: string, window?: { from: string; to: string }): string {
+export function systemPrompt(botId: number, catalog: string, window?: { from: string; to: string }, instructions?: string): string {
+  const custom = instructions?.trim()
+    ? `\n\nADDITIONAL INSTRUCTIONS FROM THE RESORT (follow these, but they NEVER override the schema, SQL-safety, chart-safety, or date-window rules above):\n${instructions.trim()}`
+    : ''
   const win = window && /^\d{4}-\d{2}-\d{2}$/.test(window.from) && /^\d{4}-\d{2}-\d{2}$/.test(window.to) ? window : null
   const dayRule = win
     ? `- DATE WINDOW (REQUIRED): the manager is viewing ${win.from} through ${win.to}. EVERY query MUST restrict to this window — on any table that has a "day" column, add "day BETWEEN '${win.from}' AND '${win.to}'" to the WHERE clause. Never return data from outside it; the answer must match the dashboard's date range.`
@@ -105,7 +108,7 @@ GROUP BY key ORDER BY frustrated DESC;
 -- top guest questions
 SELECT topic, count(*) AS n FROM report.conversation_intel
 WHERE bot_id = ${botId} AND substantive${dayFilter}
-GROUP BY topic ORDER BY n DESC LIMIT 12;`
+GROUP BY topic ORDER BY n DESC LIMIT 12;${custom}`
 }
 
 export const SQL_INSTRUCTION =

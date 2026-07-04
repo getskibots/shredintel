@@ -15,6 +15,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body || {}
     const voiceId = String(body.voiceId ?? req.query.voiceId ?? 'autumn')
+    const custom = String(body.instructions ?? '').slice(0, 2000).trim()
     const KEY = (process.env.OPENAI_API_KEY || '').trim()
     if (!KEY) return res.status(500).json({ error: 'OPENAI_API_KEY missing' })
 
@@ -25,7 +26,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         session: {
           type: 'realtime',
           model: 'gpt-realtime',
-          instructions: realtimeInstruction(voiceId),
+          instructions: realtimeInstruction(voiceId, custom || undefined),
           audio: { output: { voice: openaiVoiceFor(voiceId) } },
           tools: [
             {

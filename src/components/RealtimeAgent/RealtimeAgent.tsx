@@ -247,16 +247,15 @@ export function RealtimeAgent({ botId, range, active, onEnd }: { botId: number; 
   const statusTitle = status === 'connecting' ? 'Connecting…'
     : status === 'error' ? 'Voice unavailable'
     : ended ? 'Session ended'
-    : busy ? 'Analyzing your conversations…'
+    : busy ? 'Thinking…'
     : 'Listening — just talk'
 
-  const statusSub = error ? error
+  // The line under the orb: the assistant's live caption while it speaks, else a hint.
+  const statusLine = error ? error
+    : caption && !ended ? `“${caption}”`
     : ended ? 'Your report is below — save or share it, or head back to the dashboard.'
-    : busy ? 'Reading the matching conversations and charting the answer.'
+    : busy ? 'Reading the conversations and charting the answer.'
     : 'Ask anything about your resort — I’ll answer out loud, chart it here, and pull up the real conversations when you ask.'
-
-  const dotClass = status === 'connecting' ? 'bg-slate-400' : busy ? 'bg-amber-500' : 'bg-emerald-500'
-  const dockLabel = status === 'connecting' ? 'Connecting' : busy ? 'Analyzing' : 'Listening'
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-canvas">
@@ -297,13 +296,28 @@ export function RealtimeAgent({ botId, range, active, onEnd }: { botId: number; 
         </div>
       </div>
 
-      {/* Orb + report — content sits up top; report builds downward */}
+      {/* Orb cluster — the voice's face + its state + End, all inline; report builds downward */}
       <div className="flex-1 overflow-y-auto" onClick={() => shareOpen && setShareOpen(false)}>
-        <div className="mx-auto max-w-3xl px-4 pt-8 pb-36 md:px-6">
+        <div className="mx-auto max-w-3xl px-4 pt-12 pb-16 md:px-6">
           <div className="flex flex-col items-center text-center">
             <VoiceOrb state={orbState} />
             <div className="mt-5 text-lg font-semibold text-slate-800">{statusTitle}</div>
-            <div className="mt-1.5 max-w-md text-sm text-slate-500">{statusSub}</div>
+            <div className={`mt-1.5 min-h-[2.75rem] max-w-md text-sm ${caption && !ended ? 'font-medium text-slate-600' : 'text-slate-500'}`}>
+              {statusLine}
+            </div>
+            <div className="mt-4">
+              {ended ? (
+                <button type="button" onClick={onEnd}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-botscrew-500 px-4 py-2 text-xs font-semibold text-white transition hover:bg-botscrew-600">
+                  <ArrowLeft className="h-3.5 w-3.5" strokeWidth={2.2} /> Back to dashboard
+                </button>
+              ) : (
+                <button type="button" onClick={endVoice} disabled={status === 'connecting'} aria-label="End voice session"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-rose-200 bg-white px-4 py-2 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 disabled:opacity-40">
+                  <Square className="h-3.5 w-3.5" strokeWidth={2} /> End
+                </button>
+              )}
+            </div>
           </div>
 
           {cards.length > 0 && (
@@ -313,34 +327,6 @@ export function RealtimeAgent({ botId, range, active, onEnd }: { botId: number; 
               ))}
               <div ref={endRef} />
             </div>
-          )}
-        </div>
-      </div>
-
-      {/* Control dock — Begin/End while live; Back to dashboard once ended */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-6 z-10 flex flex-col items-center gap-2 px-4">
-        {caption && !ended && (
-          <div className="max-w-xl rounded-full bg-slate-900/80 px-4 py-1.5 text-center text-xs text-white shadow-sm">“{caption}”</div>
-        )}
-        <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-slate-200 bg-white/95 py-2 pl-4 pr-2 shadow-lg backdrop-blur">
-          {ended ? (
-            <>
-              <Check className="ml-1 h-4 w-4 text-emerald-500" />
-              <span className="text-xs font-medium text-slate-600">Session ended</span>
-              <button type="button" onClick={onEnd}
-                className="inline-flex items-center gap-1.5 rounded-full bg-botscrew-500 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-botscrew-600">
-                <ArrowLeft className="h-3.5 w-3.5" strokeWidth={2.2} /> Back to dashboard
-              </button>
-            </>
-          ) : (
-            <>
-              <span className={`ml-1 h-2 w-2 rounded-full ${dotClass} ${status === 'live' && !busy ? 'animate-pulse' : ''}`} aria-hidden />
-              <span className="min-w-[64px] text-xs font-medium text-slate-600">{dockLabel}</span>
-              <button type="button" onClick={endVoice} disabled={status === 'connecting'} aria-label="End voice session"
-                className="inline-flex items-center gap-1.5 rounded-full bg-rose-500 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-rose-600 disabled:opacity-50">
-                <Square className="h-3.5 w-3.5" strokeWidth={2} /> End
-              </button>
-            </>
           )}
         </div>
       </div>

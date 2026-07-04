@@ -1,5 +1,5 @@
 import { useRef, useState, type FormEvent } from 'react'
-import { Sparkles, ArrowUp, AudioLines, Mic, ChevronDown, Loader2, TriangleAlert } from 'lucide-react'
+import { Sparkles, ArrowUp, AudioLines, Mic, ChevronDown, Loader2, TriangleAlert, Target, Zap, TrendingUp } from 'lucide-react'
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
 } from 'recharts'
@@ -29,12 +29,13 @@ interface AskResult {
   rows: Record<string, unknown>[]
 }
 
-// Curated lenses — ids mirror the backend prompt library (api/_lib/prompts.ts).
+// Three action-oriented starters (rule-of-thirds trio): diagnose → act → grow.
+// The punchy label is what the manager sees; `id` maps to the specific question
+// in the backend prompt library (api/_lib/prompts.ts).
 const LENSES = [
-  { id: 'frustrations', label: 'What are guests most frustrated about?' },
-  { id: 'revenue-risk', label: 'Where am I losing revenue?' },
-  { id: 'kb-gaps', label: 'What should I add to my knowledge base?' },
-  { id: 'whats-changed', label: 'What changed this week?' },
+  { id: 'frustrations', label: 'Find pain points', Icon: Target },
+  { id: 'kb-gaps', label: 'Get quick wins', Icon: Zap },
+  { id: 'revenue-risk', label: 'Capture more revenue', Icon: TrendingUp },
 ]
 
 export function AskBar({ botId, onVoice }: { botId: number; onVoice?: () => void }) {
@@ -176,16 +177,17 @@ export function AskBar({ botId, onVoice }: { botId: number; onVoice?: () => void
           </div>
         </form>
 
-        {/* Starter lenses */}
-        <div className="mt-4 flex flex-wrap justify-center gap-2">
+        {/* Starter lenses — three action items: diagnose → act → grow */}
+        <div className="mt-4 flex flex-wrap justify-center gap-2.5">
           {LENSES.map((l) => (
             <button
               key={l.id}
               type="button"
               onClick={() => !loading && ask({ templateId: l.id })}
               disabled={loading}
-              className="rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-[13px] text-botscrew-700 transition hover:border-botscrew-300 hover:bg-botscrew-50 disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-botscrew-300 hover:bg-botscrew-50 hover:text-botscrew-700 disabled:opacity-50"
             >
+              <l.Icon className="h-4 w-4 text-botscrew-500" strokeWidth={2} />
               {l.label}
             </button>
           ))}

@@ -104,6 +104,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           order by h."timestamp"`,
         [cid],
       )
+      // The Botscrew support tab is keyed by MESSAGE id (admin_chat_history.id),
+      // not conversation_id — the "support number" is the conversation's first
+      // message. Return it so the drill can deep-link correctly.
+      const firstMsg = await client.query(
+        `select min(id)::text as sid from raw.admin_chat_history where conversation_id = $1`,
+        [cid],
+      )
       await client.query('rollback')
 
       const messages = msgs.rows
@@ -113,7 +120,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }))
         .filter((m) => m.text)
 
-      return res.status(200).json({ conversationId: cid, meta: meta.rows[0], messages })
+      const supportId = firstMsg.rows[0]?.sid ?? null
+      return res.status(200).json({ conversationId: cid, meta: meta.rows[0], messages, supportId })
     } catch (e) {
       try { await client.query('rollback') } catch { /* noop */ }
       throw e

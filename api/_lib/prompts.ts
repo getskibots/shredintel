@@ -74,6 +74,12 @@ The richest sources for guest intelligence:
 - report.intel_sentiment (bot_id, day, key = Positive|Neutral|Negative, conversations).
 - report.outcome_timeline / conversation_depth / sender_mix_stack / demand_heatmap — volume, depth, sender mix, time-of-day.
 
+CONVERSATION VOLUME — three NESTED lenses; pick the right one and NAME it so answers reconcile with the dashboard:
+- SESSIONS = conversation_depth.conversations (= outcome_timeline.total_conversations): every session, INCLUDING unengaged bounces (a bot greeting with no guest reply — often the majority). This is the dashboard's headline "sessions" number and is usually much larger than the rest.
+- ENGAGED = outcome_timeline.engaged_conversations, and equals the ROW COUNT of report.conversation_intel — the guest actually interacted. So count(*) on conversation_intel = ENGAGED conversations, NOT total sessions.
+- SUBSTANTIVE = report.conversation_intel WHERE substantive (equals the totals of intel_section / intel_sentiment / intel_pinchpoint) — engaged AND about a real topic; the base for topic/sentiment/blocker analysis.
+Always SESSIONS ≥ ENGAGED ≥ SUBSTANTIVE. When you report a conversation count, state which lens it is; if it is much smaller than total sessions, reconcile in one clause (e.g. "about X engaged conversations — the dashboard's Y sessions include greeting-only bounces"). NEVER present an engaged/substantive count as if it were total sessions.
+
 Vocabulary:
 - sentiment ∈ (Positive, Neutral, Negative). urgency ∈ (Low, Medium, High, Escalation Required). handover ∈ (No Handover, Possible Handover, Clear Handover).
 - pinchpoint ∈ (Login, Password reset, Account access, Order lookup, Payment, Checkout, Booking change, Confirmation, Waiver, Credit, Voucher) or 'None'.

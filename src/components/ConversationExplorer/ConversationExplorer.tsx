@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { X, Loader2, ChevronRight, ExternalLink } from 'lucide-react'
+import { X, Loader2, ChevronRight } from 'lucide-react'
 import { getSupabase } from '../../lib/supabase'
 import { sentimentColors } from '../../lib/chartTheme'
 
@@ -12,12 +12,10 @@ import { sentimentColors } from '../../lib/chartTheme'
 
 interface ConvRow { bot_id: number; conversation_id: number; topic: string | null; sentiment: string | null; day: string }
 
-/** Deep-link to the full conversation in the GSB admin. The support route is
- *  keyed by the conversation's FIRST MESSAGE id (admin_chat_history.id) — NOT
- *  conversation_id — plus the conversation's own bot_id (authoritative). Both
- *  come from /api/transcript so the URL always resolves to the right bot+chat. */
-const conversationDeepLink = (botId: number, firstMessageId: string) =>
-  `https://bots.getskitickets.com/admin/bot/${botId}/support/${firstMessageId}`
+// "Open full conversation" deep-link is DEFERRED — the admin /support/{N} route's
+// id mapping is unconfirmed (need one known-good URL to match against). We show a
+// "coming soon" hint for now. /api/transcript still returns supportId (the first
+// message id) so re-enabling is a one-liner once the route is confirmed.
 interface Msg { sender: string; text: string }
 
 const sentColor = (s: string | null): string => {
@@ -44,7 +42,6 @@ export function ConversationExplorer({
   const [sentFilter, setSentFilter] = useState<'all' | 'Positive' | 'Neutral' | 'Negative'>('all')
   const [openCid, setOpenCid] = useState<number | null>(null)
   const [transcript, setTranscript] = useState<Msg[] | null>(null)
-  const [supportId, setSupportId] = useState<string | null>(null)
   const [loadingT, setLoadingT] = useState(false)
 
   useEffect(() => {
@@ -72,13 +69,12 @@ export function ConversationExplorer({
   }, [botId, filter.dim, filter.value, range?.from, range?.to, sentFilter])
 
   async function openConv(cid: number) {
-    if (openCid === cid) { setOpenCid(null); setTranscript(null); setSupportId(null); return }
-    setOpenCid(cid); setTranscript(null); setSupportId(null); setLoadingT(true)
+    if (openCid === cid) { setOpenCid(null); setTranscript(null); return }
+    setOpenCid(cid); setTranscript(null); setLoadingT(true)
     try {
       const res = await fetch(`/api/transcript?botId=${botId}&cid=${cid}`)
       const data = await res.json()
       setTranscript(Array.isArray(data.messages) ? data.messages : [])
-      setSupportId(typeof data.supportId === 'string' ? data.supportId : null)
     } catch {
       setTranscript([])
     } finally {
@@ -164,16 +160,10 @@ export function ConversationExplorer({
                     <div className="border-t border-slate-100 bg-slate-50/60 px-3 py-3">
                       <div className="mb-2.5 flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
                         <span className="text-[11px] font-medium text-slate-400">Conversation {r.conversation_id}</span>
-                        {supportId && (
-                          <a
-                            href={conversationDeepLink(r.bot_id, supportId)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-xs font-semibold text-botscrew-600 transition hover:text-botscrew-700"
-                          >
-                            Open full conversation <ExternalLink className="h-3 w-3" />
-                          </a>
-                        )}
+                        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400">
+                          Open full conversation
+                          <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">Soon</span>
+                        </span>
                       </div>
                       {loadingT ? (
                         <div className="flex items-center gap-2 text-xs text-slate-500">

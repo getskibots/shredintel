@@ -29,6 +29,46 @@ const scrub = (s: string) =>
     .replace(/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/gi, '[email]')
     .replace(/(\+?\d[\d\s().-]{7,}\d)/g, '[phone]')
 
+// Bot turns are stored as a structured message object ({text, texts:[{values}],
+// atomId, buttons, …}); guest turns are plain strings. Pull the human-readable
+// text out of whatever shape we get, tolerating double-encoded JSON.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function textFromObj(o: any): string {
+  if (o == null) return ''
+  if (typeof o === 'string') return o
+  if (Array.isArray(o)) return o.map(textFromObj).filter(Boolean).join(' ')
+  if (typeof o === 'object') {
+    if (typeof o.text === 'string' && o.text.trim()) return o.text.trim()
+    if (Array.isArray(o.texts)) {
+      const vals = o.texts
+        .flatMap((t: { values?: unknown }) => (Array.isArray(t?.values) ? t.values : []))
+        .filter((v: unknown) => typeof v === 'string')
+      if (vals.length) return vals.join(' ')
+    }
+    if (typeof o.message === 'string') return o.message
+  }
+  return ''
+}
+
+function pickText(raw: unknown): string {
+  if (raw == null) return ''
+  let s = String(raw).trim()
+  if (!s) return ''
+  for (let i = 0; i < 2; i++) {
+    if (!(s.startsWith('{') || s.startsWith('[') || (s.startsWith('"') && s.endsWith('"')))) break
+    try {
+      const parsed = JSON.parse(s)
+      const t = textFromObj(parsed)
+      if (t) return t
+      if (typeof parsed === 'string') { s = parsed; continue } // double-encoded → re-parse
+      return ''
+    } catch {
+      break
+    }
+  }
+  return s
+}
+
 export const maxDuration = 15
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -57,7 +97,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const msgs = await client.query(
         `select case when coalesce(h.is_from_support,0)=1 then 'support'
                      when coalesce(h.is_echo,false) then 'bot' else 'user' end as sender,
-                coalesce(nullif(h.formatted_chat_history->>'text',''), h.message->>'text', h.message #>> '{}') as txt
+                h.formatted_chat_history #>> '{}' as fch,
+                h.message #>> '{}' as msg
            from raw.admin_chat_history h
           where h.conversation_id = $1 and h.is_message = 1 and coalesce(h.visible,1) = 1
           order by h."timestamp"`,
@@ -66,7 +107,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       await client.query('rollback')
 
       const messages = msgs.rows
-        .map((r) => ({ sender: r.sender as string, text: scrub((r.txt || '').replace(/\s+/g, ' ').trim()) }))
+        .map((r) => ({
+          sender: r.sender as string,
+          text: scrub((pickText(r.fch) || pickText(r.msg)).replace(/\s+/g, ' ').trim()),
+        }))
         .filter((m) => m.text)
 
       return res.status(200).json({ conversationId: cid, meta: meta.rows[0], messages })

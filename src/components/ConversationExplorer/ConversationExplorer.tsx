@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { X, Loader2, ChevronRight } from 'lucide-react'
+import { X, Loader2, ChevronRight, ExternalLink } from 'lucide-react'
 import { getSupabase } from '../../lib/supabase'
 import { sentimentColors } from '../../lib/chartTheme'
 
@@ -153,6 +153,17 @@ export function ConversationExplorer({
                   </button>
                   {openCid === r.conversation_id && (
                     <div className="border-t border-slate-100 bg-slate-50/60 px-3 py-3">
+                      <div className="mb-2.5 flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
+                        <span className="text-[11px] font-medium text-slate-400">Conversation {r.conversation_id}</span>
+                        <a
+                          href={`https://bots.getskitickets.com/admin/bot/${botId}/support/${r.conversation_id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-botscrew-600 transition hover:text-botscrew-700"
+                        >
+                          Open in Botscrew support <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </div>
                       {loadingT ? (
                         <div className="flex items-center gap-2 text-xs text-slate-500">
                           <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading transcript…

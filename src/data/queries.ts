@@ -137,6 +137,9 @@ export interface LiveBundle {
   intelSection: IntelBreakdownRow[]
   intelPinchpoint: IntelBreakdownRow[]
   intelSentiment: IntelBreakdownRow[]
+  /** Distinct users in the window (report.active_users RPC) — matches the
+   *  Botscrew admin "Active users" count. null if the RPC isn't available. */
+  activeUsers: number | null
 }
 
 /**
@@ -176,9 +179,15 @@ export async function fetchLiveBundle(
       .gte('day', from)
       .lte('day', to) as unknown as Promise<{ data: T[] | null; error: unknown }>
 
+  // Distinct users in the window — window-level distinct can't be summed from
+  // daily rows, so it's a small read-only RPC (report.active_users).
+  const usersRpc = supabase
+    .schema('report')
+    .rpc('active_users', { p_bot_id: botId, p_from: from, p_to: to }) as unknown as Promise<{ data: number | string | null; error: unknown }>
+
   try {
     const [outcome, conversion, knowledge, sender, identity, funnel, device, heatmap, depth,
-           iSection, iPinch, iSent] =
+           iSection, iPinch, iSent, users] =
       await withTimeout(Promise.all([
         q<OutcomeRow>('outcome_timeline'),
         q<ConversionRow>('conversion_pulse'),
@@ -192,6 +201,7 @@ export async function fetchLiveBundle(
         q<IntelBreakdownRow>('intel_section'),
         q<IntelBreakdownRow>('intel_pinchpoint'),
         q<IntelBreakdownRow>('intel_sentiment'),
+        usersRpc,
       ]))
 
     // Any of the 8 ORIGINAL views erroring = "schema unreachable" → bail to fixtures.
@@ -224,6 +234,8 @@ export async function fetchLiveBundle(
       intelSection: iSection.error ? [] : (iSection.data ?? []),
       intelPinchpoint: iPinch.error ? [] : (iPinch.data ?? []),
       intelSentiment: iSent.error ? [] : (iSent.data ?? []),
+      // active_users RPC — non-fatal; null falls back to no Users tile
+      activeUsers: users.error || users.data == null ? null : Number(users.data),
     }
   } catch (err) {
     // eslint-disable-next-line no-console

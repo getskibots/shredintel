@@ -793,6 +793,8 @@ export function buildPeriodFixturesForDays(
   const msgsByDay = distributeAcrossDates(totalMsgs, dates)
   const singleUserMsgSessions = Math.round(engaged * 0.34)
   const conversationCounts: ConversationCountsProps = {
+    users: Math.round(totalConversations * 0.72), // ~1.4 conversations per user
+    substantive: Math.round(engaged * 0.9),
     sessions: totalConversations,
     messages: totalMsgs,
     userMessages: userMsgs,

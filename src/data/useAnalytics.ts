@@ -351,9 +351,18 @@ function overlayJHChatLive(base: PeriodFixtures, live: LiveBundle): PeriodFixtur
     const singleUserMsgSessions = sum(rows.map((r) => Number(r.single_user_msg_sessions)))
     const userMessages = sum(rows.map((r) => Number(r.user_messages)))
     const messages = sum(rows.map((r) => Number(r.total_messages)))
+    // Users = distinct visitors in the window (matches Botscrew "Active users").
+    // Substantive = the AI's analysis base = Σ intel_section (each substantive
+    // conversation appears once) — same number the enrichment panels use.
+    const users = live.activeUsers ?? undefined
+    const substantive = live.intelSection.length > 0
+      ? sum(live.intelSection.map((r) => Number(r.conversations)))
+      : undefined
     // Exact period avg first-response = Σ(sum_sec) / Σ(responded); NULL until the
     // response-time enrichment view lands (columns arrive null for now).
     out.conversationCounts = {
+      users,
+      substantive,
       sessions,
       messages,
       userMessages,

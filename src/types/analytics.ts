@@ -175,6 +175,12 @@ export interface ConversationCountsPoint {
 }
 
 export interface ConversationCountsProps {
+  /** Distinct users (visitors) in the period — matches Botscrew "Active users".
+   *  Undefined when the active_users RPC isn't available (older/demo). */
+  users?: number
+  /** Substantive conversations (engaged + a real question) — the AI's analysis
+   *  base = Σ intel_section. Undefined when enrichment isn't available. */
+  substantive?: number
   /** Total conversations (sessions) in the period */
   sessions: number
   /** Total messages (real, visible) in the period */

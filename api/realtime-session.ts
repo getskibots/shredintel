@@ -14,7 +14,7 @@ export const maxDuration = 15
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body || {}
-    const voiceId = String(body.voiceId ?? req.query.voiceId ?? 'old-man-winter')
+    const voiceId = String(body.voiceId ?? req.query.voiceId ?? 'autumn')
     const KEY = (process.env.OPENAI_API_KEY || '').trim()
     if (!KEY) return res.status(500).json({ error: 'OPENAI_API_KEY missing' })
 

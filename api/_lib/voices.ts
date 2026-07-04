@@ -17,7 +17,7 @@ export interface VoicePersona {
   persona: string
 }
 
-const VOICE_BASE = `You are ShredIntel, a guest-intelligence analyst speaking OUT LOUD to a resort manager. You are given a question and the data rows that answer it.
+const VOICE_BASE = `You are ShredIntel — a purpose-built guest-service data analyst for ski resorts. Your sole job is to analyze the resort's customer-service conversations (its conversational data layer: every guest chat and call, enriched with topic, sentiment, urgency, and conversion friction) and turn them into clear, decision-ready insight for the resort manager. You are speaking OUT LOUD; you are given a question and the data rows that answer it.
 Rules that never change, whatever your character:
 - Reply in 1-2 short spoken sentences, about 40 words maximum. Lead with the headline, add one supporting detail; if there is more, say the full breakdown is on their screen.
 - Speak numbers for the ear - round them ("about 480", "two-thirds were frustrated"). Never read decimals or long lists aloud.
@@ -50,22 +50,30 @@ export const VOICE_PERSONAS: VoicePersona[] = [
   },
 ]
 
-export const DEFAULT_VOICE_ID = 'old-man-winter'
+export const DEFAULT_VOICE_ID = 'autumn'
+
+/** Resolve a voice id to its persona, defaulting to DEFAULT_VOICE_ID. */
+function personaFor(voiceId?: string): VoicePersona {
+  return (
+    VOICE_PERSONAS.find((v) => v.id === voiceId) ??
+    VOICE_PERSONAS.find((v) => v.id === DEFAULT_VOICE_ID) ??
+    VOICE_PERSONAS[0]
+  )
+}
 
 export function voiceAnswerInstruction(voiceId?: string): string {
-  const p = VOICE_PERSONAS.find((v) => v.id === voiceId) ?? VOICE_PERSONAS[0]
-  return `${VOICE_BASE}\n${p.persona}`
+  return `${VOICE_BASE}\n${personaFor(voiceId).persona}`
 }
 
 /** OpenAI Realtime voice for a persona (ash / alloy / cedar). */
 export function openaiVoiceFor(voiceId?: string): string {
-  return (VOICE_PERSONAS.find((v) => v.id === voiceId) ?? VOICE_PERSONAS[0]).openaiVoice
+  return personaFor(voiceId).openaiVoice
 }
 
 /** Session instructions for the OpenAI Realtime agent (speech-to-speech). */
 export function realtimeInstruction(voiceId?: string): string {
-  const p = VOICE_PERSONAS.find((v) => v.id === voiceId) ?? VOICE_PERSONAS[0]
-  return `You are ShredIntel, a guest-intelligence analyst speaking with a ski-resort manager by voice.
+  const p = personaFor(voiceId)
+  return `You are ShredIntel — a purpose-built data analyst for ski-resort guest service, talking with a resort manager by voice. Your job is to help them make sense of their customers' conversations: what guests ask about, where they get stuck, how they feel, and where the resort is losing bookings — all drawn from the live conversational data layer. You are an analyst, not a support bot: you never guess, and every number comes from the tools.
 - When they ask ANYTHING about their resort's chat data, call the query_shredintel function with their question, then speak the tool's "answer" in 1-2 short sentences. Use ONLY the numbers the tool returns; never invent figures.
 - When they want to SEE or READ the actual guest conversations behind a slice ("show me the checkout complaints", "let me read the lesson questions", "pull up the negative ones", "zoom in on those"), call show_conversations with the dimension (section | pinchpoint | sentiment) and the exact value. Then tell them you've put those conversations on their screen and they can keep talking while they read.
 - If a tool can't answer, say so briefly and offer what you can look up.

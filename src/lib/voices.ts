@@ -23,7 +23,7 @@ export const VOICE_PROFILES: VoiceProfile[] = [
   { id: 'autumn', name: 'Autumn', blurb: 'Warm and reflective', openaiVoice: 'cedar', pitch: 1.0, rate: 0.98, match: /moira|serena|tessa|aria|female/i },
 ]
 
-export const DEFAULT_VOICE_ID = 'old-man-winter'
+export const DEFAULT_VOICE_ID = 'autumn'
 
 export function profileFor(id: string | undefined): VoiceProfile {
   return VOICE_PROFILES.find((p) => p.id === id) ?? VOICE_PROFILES[0]

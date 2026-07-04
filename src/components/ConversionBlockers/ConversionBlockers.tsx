@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { EmptyState, Panel } from '../shared'
+import { ConversationExplorer } from '../ConversationExplorer'
 import { brand } from '../../lib/chartTheme'
 import { formatNumber, formatPercent } from '../../lib/formatters'
 import type { ConversionBlockersProps } from '../../types/analytics'
@@ -50,6 +51,7 @@ export function ConversionBlockers({
       /* private mode */
     }
   }, [storeKey, aov])
+  const [drill, setDrill] = useState<string | null>(null)
 
   const empty = !blockers || blockers.length === 0
   const frustrated = blockers.reduce((s, b) => s + (b.negative ?? 0), 0)
@@ -111,7 +113,13 @@ export function ConversionBlockers({
           {/* Per-blocker bars with dollar impact */}
           <div className="space-y-2">
             {blockers.slice(0, 12).map((b) => (
-              <div key={b.label} className="flex items-center gap-3">
+              <button
+                key={b.label}
+                type="button"
+                onClick={() => setDrill(b.label)}
+                title={`View ${b.label} conversations`}
+                className="flex w-full items-center gap-3 rounded-md px-1 py-0.5 text-left transition hover:bg-amber-50/60"
+              >
                 <div className="w-32 shrink-0 truncate text-sm text-slate-700" title={b.label}>
                   {b.label}
                 </div>
@@ -127,7 +135,7 @@ export function ConversionBlockers({
                 <div className="w-24 shrink-0 text-right text-xs font-semibold tabular-nums text-amber-800">
                   {usd((b.negative ?? 0) * aov)}
                 </div>
-              </div>
+              </button>
             ))}
           </div>
 
@@ -151,6 +159,13 @@ export function ConversionBlockers({
             </div>
           )}
         </>
+      )}
+      {drill && botId && (
+        <ConversationExplorer
+          botId={botId}
+          filter={{ dim: 'pinchpoint', value: drill, label: drill }}
+          onClose={() => setDrill(null)}
+        />
       )}
     </Panel>
   )

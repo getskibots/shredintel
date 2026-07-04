@@ -34,6 +34,7 @@ export function ConversationExplorer({
 }) {
   const [rows, setRows] = useState<ConvRow[] | null>(null)
   const [count, setCount] = useState<number | null>(null)
+  const [sentFilter, setSentFilter] = useState<'all' | 'Positive' | 'Neutral' | 'Negative'>('all')
   const [openCid, setOpenCid] = useState<number | null>(null)
   const [transcript, setTranscript] = useState<Msg[] | null>(null)
   const [loadingT, setLoadingT] = useState(false)
@@ -52,14 +53,15 @@ export function ConversationExplorer({
         .ilike(filter.dim, filter.value)
         .eq('substantive', true)
       const scoped = range ? base.gte('day', range.from).lte('day', range.to) : base
-      const { data, count: total } = await scoped.order('day', { ascending: false }).limit(LIST_CAP)
+      const withSent = sentFilter !== 'all' ? scoped.eq('sentiment', sentFilter) : scoped
+      const { data, count: total } = await withSent.order('day', { ascending: false }).limit(LIST_CAP)
       if (!cancelled) {
         setRows((data as ConvRow[]) ?? [])
         setCount(total ?? (data?.length ?? 0))
       }
     })()
     return () => { cancelled = true }
-  }, [botId, filter.dim, filter.value, range?.from, range?.to])
+  }, [botId, filter.dim, filter.value, range?.from, range?.to, sentFilter])
 
   async function openConv(cid: number) {
     if (openCid === cid) { setOpenCid(null); setTranscript(null); return }
@@ -95,6 +97,27 @@ export function ConversationExplorer({
             <X className="h-5 w-5" />
           </button>
         </div>
+
+        {filter.dim !== 'sentiment' && (
+          <div className="flex items-center gap-1.5 border-b border-slate-100 px-5 py-2">
+            <span className="mr-1 text-[11px] font-medium uppercase tracking-wider text-slate-400">Sentiment</span>
+            {(['all', 'Positive', 'Neutral', 'Negative'] as const).map((s) => {
+              const active = sentFilter === s
+              const color = s === 'all' ? '#475569' : sentColor(s)
+              return (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setSentFilter(s)}
+                  className="rounded-full px-2.5 py-1 text-xs font-medium transition"
+                  style={active ? { backgroundColor: `${color}1f`, color } : { color: '#64748B' }}
+                >
+                  {s === 'all' ? 'All' : s}
+                </button>
+              )
+            })}
+          </div>
+        )}
 
         <div className="overflow-y-auto p-4">
           {rows === null ? (

@@ -39,6 +39,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 required: ['question'],
               },
             },
+            {
+              type: 'function',
+              name: 'show_conversations',
+              description:
+                "Open the actual guest conversations behind a slice of the data on the manager's screen so they can read the real transcripts. Call this when they ask to 'see', 'show me', 'read', 'dive into', 'pull up', or 'zoom in on' the conversations for a topic, blocker, or sentiment.",
+              parameters: {
+                type: 'object',
+                properties: {
+                  dimension: {
+                    type: 'string',
+                    enum: ['section', 'pinchpoint', 'sentiment'],
+                    description:
+                      'section = knowledge topic (Tickets, Lessons, Rentals, Lodging, Season Passes …); pinchpoint = conversion blocker (Login, Password reset, Account access, Order lookup, Payment, Checkout, Booking change, Confirmation, Waiver, Credit, Voucher); sentiment = Positive, Neutral, or Negative',
+                  },
+                  value: { type: 'string', description: 'The exact label to filter to, e.g. "Checkout", "Lessons", "Negative".' },
+                  label: { type: 'string', description: 'Short header for the screen, e.g. "Checkout blockers".' },
+                },
+                required: ['dimension', 'value'],
+              },
+            },
           ],
         },
       }),

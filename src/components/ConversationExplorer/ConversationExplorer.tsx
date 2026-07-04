@@ -42,7 +42,7 @@ export function ConversationExplorer({
         .from('conversation_intel')
         .select('conversation_id, topic, sentiment, day')
         .eq('bot_id', botId)
-        .eq(filter.dim, filter.value)
+        .ilike(filter.dim, filter.value)
         .eq('substantive', true)
         .order('day', { ascending: false })
         .limit(60)

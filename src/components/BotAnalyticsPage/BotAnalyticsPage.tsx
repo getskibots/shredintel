@@ -1,6 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { Bookmark } from 'lucide-react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { AskBar } from '../AskBar'
+import { SavedReportsModal } from '../SavedReports'
+import { listSavedReports } from '../../lib/savedReports'
 import { BotSelector } from '../BotSelector'
 import { ConversationCounts } from '../ConversationCounts'
 import { ConversionBlockers } from '../ConversionBlockers'
@@ -49,6 +52,11 @@ export function BotAnalyticsPage() {
   const { data: f, isLive, isLoading } = useBotAnalytics(botId, selection)
   const { bots } = useAvailableBots()
   const [voiceActive, setVoiceActive] = useState(false)
+  const [savedOpen, setSavedOpen] = useState(false)
+  const [savedCount, setSavedCount] = useState(0)
+  useEffect(() => {
+    setSavedCount(listSavedReports(botId).length)
+  }, [botId, voiceActive, savedOpen])
 
   // Show the bot's label from the registry when we know it; fall back to id.
   const bot = bots.find((b) => b.botId === botId)
@@ -102,8 +110,20 @@ export function BotAnalyticsPage() {
       </div>
 
       <div className="space-y-12 px-4 py-6 md:px-6 md:py-8">
-        <AskBar botId={botId} onVoice={() => setVoiceActive(true)} />
+        <div>
+          <AskBar botId={botId} onVoice={() => setVoiceActive(true)} />
+          <div className="mx-auto mt-3 flex max-w-3xl justify-end px-1">
+            <button
+              type="button"
+              onClick={() => setSavedOpen(true)}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 transition hover:text-slate-700"
+            >
+              <Bookmark className="h-3.5 w-3.5" /> Saved reports{savedCount ? ` (${savedCount})` : ''}
+            </button>
+          </div>
+        </div>
         <RealtimeAgent botId={botId} active={voiceActive} onEnd={() => setVoiceActive(false)} />
+        {savedOpen && <SavedReportsModal botId={botId} onClose={() => setSavedOpen(false)} />}
 
         <section id="core" className="scroll-mt-40 space-y-5">
           <SectionHeader number="1" name="Conversation Core" tagline="What happened?" />

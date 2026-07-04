@@ -19,6 +19,16 @@ import { voiceAnswerInstruction } from './_lib/voices.js'
 // Two model calls + DB round-trips can take a bit; give the function headroom.
 export const maxDuration = 30
 
+/** Keep only a well-formed drill hint (dimension in the allowed set + a value). */
+function sanitizeDrill(d: unknown): { dimension: string; value: string; label: string } | null {
+  if (!d || typeof d !== 'object') return null
+  const o = d as Record<string, unknown>
+  const dimension = String(o.dimension || '')
+  const value = String(o.value || '').trim()
+  if (!['section', 'pinchpoint', 'sentiment'].includes(dimension) || !value) return null
+  return { dimension, value, label: String(o.label || value).slice(0, 60) }
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'GET') {
     return res.status(200).json({ templates: PROMPT_LIBRARY })
@@ -71,17 +81,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let chart: unknown = null
     let vegaLite: unknown = null
     let focus: unknown = null
+    let drill: unknown = null
     try {
       const parsed = JSON.parse(ansJson)
       answer = String(parsed.answer || '')
       chart = parsed.chart ?? null
       vegaLite = parsed.vegaLite ?? null
       focus = parsed.focus ?? null
+      drill = sanitizeDrill(parsed.drill)
     } catch {
       answer = ansJson
     }
 
-    return res.status(200).json({ answer, chart, vegaLite, focus, sql, rows: rows.slice(0, 100) })
+    return res.status(200).json({ answer, chart, vegaLite, focus, drill, sql, rows: rows.slice(0, 100) })
   } catch (e) {
     console.error('[api/ask] failed:', e)
     return res.status(500).json({ error: e instanceof Error ? e.message : 'unknown error' })

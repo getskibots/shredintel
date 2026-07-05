@@ -41,6 +41,17 @@ const LENSES = [
   { id: 'revenue-risk', label: 'Capture more revenue', Icon: TrendingUp },
 ]
 
+// One-line chart caption (lens + window) built from request context — never the
+// model — so every AI chart states what it's showing (specSanitizer policy).
+function chartCaption(focus: string | null | undefined, rangeLabel?: string): string {
+  const lens =
+    focus === 'core' ? 'Conversation volume'
+    : focus === 'identity' ? 'Guests'
+    : focus === 'context' ? 'Sessions'
+    : 'Substantive conversations'
+  return rangeLabel ? `${lens} · ${rangeLabel}` : lens
+}
+
 export function AskBar({ botId, range, onVoice }: { botId: number; range?: { from: string; to: string; label: string }; onVoice?: () => void }) {
   const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(false)
@@ -231,7 +242,7 @@ export function AskBar({ botId, range, onVoice }: { botId: number; range?: { fro
 
             {result.vegaLite && result.rows.length > 0 ? (
               <div className="mt-4">
-                <VegaLiteChart spec={result.vegaLite} rows={result.rows} />
+                <VegaLiteChart spec={result.vegaLite} rows={result.rows} caption={chartCaption(result.focus, range?.label)} />
               </div>
             ) : result.chart && result.chart.type !== 'none' && result.chart.x && result.chart.y && result.rows.length > 0 ? (
               <div className="mt-4 h-56">

@@ -34,6 +34,13 @@ export default defineConfig({
           }]
         }
       }
+    }, {
+      // Plain node unit tests (pure lib logic, e.g. specSanitizer) — fast, no browser.
+      test: {
+        name: 'unit',
+        environment: 'node',
+        include: ['src/**/*.test.ts'],
+      },
     }]
   }
 });

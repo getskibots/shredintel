@@ -93,6 +93,28 @@ describe('sanitizeChart — legibility', () => {
   })
 })
 
+describe('sanitizeChart — degenerate guard', () => {
+  const topicSpec = { mark: 'bar', encoding: { y: { field: 'topic', type: 'nominal' }, x: { field: 'n', type: 'quantitative' } } }
+
+  it('flags a bar chart where every category has the same measure (all bars equal)', () => {
+    const rows = Array.from({ length: 12 }, (_, i) => ({ topic: `Q${i}`, n: 1 }))
+    const r = sanitizeChart(topicSpec, rows)
+    expect(r.degenerate).toEqual({ categoryField: 'topic', measureField: 'n' })
+  })
+
+  it('does NOT flag a chart with a real spread of measures', () => {
+    const rows = [{ topic: 'a', n: 9 }, { topic: 'b', n: 4 }, { topic: 'c', n: 2 }, { topic: 'd', n: 1 }]
+    const r = sanitizeChart(topicSpec, rows)
+    expect(r.degenerate).toBeUndefined()
+  })
+
+  it('does NOT flag tiny charts (< 3 categories)', () => {
+    const rows = [{ topic: 'a', n: 1 }, { topic: 'b', n: 1 }]
+    const r = sanitizeChart(topicSpec, rows)
+    expect(r.degenerate).toBeUndefined()
+  })
+})
+
 describe('helpers', () => {
   it('topNCategories collapses the tail and preserves the top', () => {
     const rows = [{ k: 'a', n: 10 }, { k: 'b', n: 5 }, { k: 'c', n: 3 }, { k: 'd', n: 1 }]

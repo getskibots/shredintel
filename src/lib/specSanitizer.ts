@@ -25,6 +25,12 @@ type Chan = any
 export interface SanitizeResult {
   spec: Spec
   rows: Row[]
+  /**
+   * Set when a bar chart would be uninformative because every category has the
+   * same measure (e.g. "top questions" grouped by free-text topic → count 1 for
+   * each). The renderer should show a ranked, tappable LIST instead of flat bars.
+   */
+  degenerate?: { categoryField: string; measureField: string }
 }
 
 export const MAX_CATEGORIES = 12
@@ -181,5 +187,13 @@ export function sanitizeChart(specIn: Spec, rowsIn: Row[] = []): SanitizeResult 
     rows = topNCategories(rows, catField, measField, MAX_CATEGORIES)
   }
 
-  return { spec, rows }
+  // 8) degenerate guard — a bar chart where every category shares one measure
+  //    value (all bars equal) is noise; flag it so the renderer shows a list.
+  let degenerate: SanitizeResult['degenerate']
+  if (markType(spec) === 'bar' && catField && measField && !colorField && !hasTemporal && rows.length >= 3) {
+    const distinct = new Set(rows.map((r) => num(r[measField])))
+    if (distinct.size <= 1) degenerate = { categoryField: catField, measureField: measField }
+  }
+
+  return { spec, rows, degenerate }
 }

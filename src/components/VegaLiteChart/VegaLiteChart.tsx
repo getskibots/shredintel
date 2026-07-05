@@ -1,12 +1,15 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { brand, seriesColors } from '../../lib/chartTheme'
 import { sanitizeChart } from '../../lib/specSanitizer'
+import { formatNumber } from '../../lib/formatters'
 
 /**
  * Renders an LLM-authored Vega-Lite spec — the on-the-fly chart engine. The
  * model provides the marks + encodings; the REAL query rows are injected here as
- * the dataset (grounding: data comes from the query, never the model). Themed to
- * the brand palette. vega-embed is lazy-loaded so it stays out of the main bundle.
+ * the dataset (grounding: data comes from the query, never the model). Every spec
+ * is run through specSanitizer first (code-enforced legibility), so this one
+ * component upgrades EVERY surface at once: dashboard, chat, and the voice report
+ * cards. vega-embed is lazy-loaded so it stays out of the main bundle.
  */
 
 // Vega-Lite config → brand look (matches the Botscrew chart theme).
@@ -53,7 +56,12 @@ export function VegaLiteChart({
   const onDrillRef = useRef(onDrill)
   onDrillRef.current = onDrill
 
+  // Sanitize once (memoized) so both the embed effect and the render agree.
+  const { spec: cleanSpec, rows: cleanRows, degenerate } = useMemo(() => sanitizeChart(spec, rows), [spec, rows])
+
   useEffect(() => {
+    // Degenerate charts (all bars equal) render as a list below — no embed.
+    if (degenerate) return
     let cancelled = false
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let view: any = null
@@ -62,9 +70,6 @@ export function VegaLiteChart({
       try {
         const embed = (await import('vega-embed')).default
         if (cancelled || !ref.current) return
-        // Code-enforced legibility: repair pies/rotated labels, cap categories,
-        // strip model palettes, human axis titles (specSanitizer.ts).
-        const { spec: cleanSpec, rows: cleanRows } = sanitizeChart(spec, rows)
         const specConfig = (cleanSpec.config as Record<string, unknown>) || {}
         const full = {
           $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
@@ -95,7 +100,36 @@ export function VegaLiteChart({
       cancelled = true
       try { view?.finalize() } catch { /* noop */ }
     }
-  }, [spec, rows, height])
+  }, [cleanSpec, cleanRows, height, degenerate])
+
+  // Degenerate: a bar chart where every category shares one value would be a wall
+  // of equal bars. Show a ranked, tappable list instead (the topic-ladder UX).
+  if (degenerate) {
+    const { categoryField: cf, measureField: mf } = degenerate
+    const items = [...cleanRows].sort((a, b) => Number(b[mf]) - Number(a[mf]))
+    return (
+      <div className="w-full">
+        <ul className="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200">
+          {items.map((r, i) => (
+            <li key={i}>
+              <button
+                type="button"
+                onClick={() => onDrillRef.current?.(r)}
+                disabled={!onDrill}
+                className={`flex w-full items-center justify-between gap-3 px-3.5 py-2 text-left text-sm ${
+                  onDrill ? 'cursor-pointer transition hover:bg-slate-50' : 'cursor-default'
+                }`}
+              >
+                <span className="min-w-0 flex-1 truncate text-slate-700">{String(r[cf])}</span>
+                <span className="shrink-0 tabular-nums text-xs text-slate-400">{formatNumber(Number(r[mf]))}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+        {caption && <p className="mt-1.5 text-center text-[11px] text-slate-400">{caption}</p>}
+      </div>
+    )
+  }
 
   return (
     <div className="w-full">

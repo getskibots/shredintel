@@ -58,7 +58,7 @@ export async function upsertPrompt(botId: number, prompt: string): Promise<void>
   await getPool().query(
     `insert into report._ai_prompts (bot_id, prompt, updated_at) values ($1, $2, now())
        on conflict (bot_id) do update set prompt = excluded.prompt, updated_at = now()`,
-    [botId, String(prompt || '').slice(0, 4000)],
+    [botId, String(prompt || '').slice(0, 8000)],
   )
 }
 

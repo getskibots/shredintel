@@ -16,7 +16,7 @@ export interface Prompts {
   slave: string
 }
 
-export const PROMPT_MAX = 4000
+export const PROMPT_MAX = 8000
 
 /** Read both layers for a bot. Never throws — empty strings on failure. */
 export async function fetchPrompts(botId: number): Promise<Prompts> {

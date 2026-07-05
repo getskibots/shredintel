@@ -15,7 +15,7 @@ import { getPrompts, upsertPrompt } from './_lib/db.js'
 
 export const maxDuration = 15
 
-const PROMPT_MAX = 4000
+const PROMPT_MAX = 8000
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {

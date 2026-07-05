@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { getSupabase, supabaseConfigured } from '../lib/supabase'
-import { fetchLiveBundle, periodDates, type LiveBundle } from './queries'
+import { fetchLiveBundle, periodDates, type LiveBundle, type PageFunnelRow, type PageIntelRow, type IntelBreakdownRow } from './queries'
 import { buildMCChatFixtures, type MCChatFixtures, type MCChatPeriodKey } from '../fixtures/mc-chat'
 import { buildVoiceFixtures, buildVoiceFixturesForDays, type VoiceFixtures, type VoicePeriodKey } from '../fixtures/voice'
 import { buildPeriodFixtures, buildPeriodFixturesForDays, type PeriodFixtures, type PeriodKey } from '../fixtures/sample'
@@ -269,8 +269,21 @@ function sum(arr: number[]): number {
  * Full-coverage overlay for the ShredIntelReportGrid (JH chat page).
  * Maps all 8 report.* views to the PeriodFixtures shape.
  */
-function overlayJHChatLive(base: PeriodFixtures, live: LiveBundle): PeriodFixtures {
+function overlayJHChatLive(base: PeriodFixtures, live: LiveBundle, pageStage?: string | null): PeriodFixtures {
   const out: PeriodFixtures = { ...base }
+
+  // Global page filter: when a funnel stage is selected, the intelligence panels
+  // (§2 sections / blockers / sentiment) re-scope to conversations that originated
+  // on that stage's pages — sourced from the stage-dimensioned page_* views. When
+  // no stage is selected they use the whole-bot intel_* views.
+  const stage = pageStage && pageStage.length > 0 ? pageStage : null
+  const toIntel = (rows: PageIntelRow[]): IntelBreakdownRow[] =>
+    rows
+      .filter((r) => r.funnel_stage === stage)
+      .map((r) => ({ bot_id: r.bot_id, day: r.day, key: r.key, conversations: r.conversations, negative: r.negative }))
+  const sectionRows = stage ? toIntel(live.pageSection) : live.intelSection
+  const pinchRows = stage ? toIntel(live.pagePinchpoint) : live.intelPinchpoint
+  const sentRows = stage ? toIntel(live.pageSentiment) : live.intelSentiment
 
   // § 1 — Outcome timeline + resolution + KPI totals
   if (live.outcomeTimeline.length > 0) {
@@ -460,17 +473,17 @@ function overlayJHChatLive(base: PeriodFixtures, live: LiveBundle): PeriodFixtur
   const sumMap = (m: Map<string, { c: number; neg: number }>) =>
     [...m.values()].reduce((s, v) => s + v.c, 0)
 
-  const sentMap = aggIntel(live.intelSentiment)
-  const substantiveTotal = sumMap(sentMap) || sumMap(aggIntel(live.intelSection))
+  const sentMap = aggIntel(sentRows)
+  const substantiveTotal = sumMap(sentMap) || sumMap(aggIntel(sectionRows))
 
-  if (live.intelSection.length > 0) {
-    const sections = [...aggIntel(live.intelSection).entries()]
+  if (sectionRows.length > 0) {
+    const sections = [...aggIntel(sectionRows).entries()]
       .map(([label, v]) => ({ label, conversations: v.c, share: substantiveTotal > 0 ? v.c / substantiveTotal : 0 }))
       .sort((a, b) => b.conversations - a.conversations)
     out.knowledgeSectionDemand = { sections, totalSubstantive: substantiveTotal }
   }
-  if (live.intelPinchpoint.length > 0) {
-    const m = aggIntel(live.intelPinchpoint)
+  if (pinchRows.length > 0) {
+    const m = aggIntel(pinchRows)
     const blockers = [...m.entries()]
       .map(([label, v]) => ({ label, conversations: v.c, share: substantiveTotal > 0 ? v.c / substantiveTotal : 0, negative: v.neg }))
       .sort((a, b) => b.conversations - a.conversations)
@@ -480,7 +493,7 @@ function overlayJHChatLive(base: PeriodFixtures, live: LiveBundle): PeriodFixtur
       affectedShare: substantiveTotal > 0 ? affected / substantiveTotal : 0,
     }
   }
-  if (live.intelSentiment.length > 0) {
+  if (sentRows.length > 0) {
     const g = (k: string) => sentMap.get(k)?.c ?? 0
     const positive = g('Positive'), neutral = g('Neutral'), negative = g('Negative')
     out.guestSentiment = {
@@ -635,6 +648,49 @@ function bundleHasData(b: LiveBundle | null): boolean {
   )
 }
 
+// ─── Page funnel ─────────────────────────────────────────────────────────
+
+export interface FunnelStageSummary {
+  stage: string
+  rank: number
+  conversations: number
+  negative: number
+  negativeShare: number
+}
+
+export interface PageFunnelSummary {
+  stages: FunnelStageSummary[] // ordered by funnel rank (Home → Account)
+  totalConversations: number
+  maxConversations: number // for bar scaling
+}
+
+/** Roll daily page_funnel rows up into ordered per-stage totals + friction. */
+function summarizeFunnel(rows: PageFunnelRow[]): PageFunnelSummary | null {
+  if (!rows || rows.length === 0) return null
+  const m = new Map<string, { rank: number; conversations: number; negative: number }>()
+  for (const r of rows) {
+    const prev = m.get(r.funnel_stage) ?? { rank: r.stage_rank, conversations: 0, negative: 0 }
+    m.set(r.funnel_stage, {
+      rank: r.stage_rank,
+      conversations: prev.conversations + Number(r.conversations),
+      negative: prev.negative + Number(r.negative ?? 0),
+    })
+  }
+  const stages = [...m.entries()]
+    .map(([stage, v]) => ({
+      stage,
+      rank: v.rank,
+      conversations: v.conversations,
+      negative: v.negative,
+      negativeShare: v.conversations > 0 ? v.negative / v.conversations : 0,
+    }))
+    .sort((a, b) => a.rank - b.rank)
+  const totalConversations = stages.reduce((s, v) => s + v.conversations, 0)
+  const maxConversations = stages.reduce((mx, v) => Math.max(mx, v.conversations), 0)
+  if (totalConversations === 0) return null
+  return { stages, totalConversations, maxConversations }
+}
+
 // ─── Hooks ──────────────────────────────────────────────────────────────
 
 export function useMCChatAnalytics(period: MCChatPeriodKey): AnalyticsState<MCChatFixtures> {
@@ -757,15 +813,24 @@ function selectionKey(sel: PeriodSelection): string {
   return sel.kind === 'preset' ? `p:${sel.preset}` : `c:${sel.from}:${sel.to}`
 }
 
+export interface BotAnalyticsState extends AnalyticsState<PeriodFixtures> {
+  /** Where questions originate (ecommerce funnel). null unless live + populated. */
+  funnel: PageFunnelSummary | null
+}
+
 /**
  * Generic hook — analytics for any bot_id. Used by the /bot/:botId route.
+ * `pageStage` (a funnel_stage label, or null) re-scopes the intelligence panels
+ * to conversations that originated on that stage's pages — recomputed from the
+ * cached bundle, so toggling the stage never refetches.
  */
 export function useBotAnalytics(
   botId: number,
   selection: PeriodSelection,
-): AnalyticsState<PeriodFixtures> {
-  const [state, setState] = useState<AnalyticsState<PeriodFixtures>>({
-    data: null,
+  pageStage: string | null = null,
+): BotAnalyticsState {
+  const [raw, setRaw] = useState<{ bundle: LiveBundle | null; isLoading: boolean; isLive: boolean; error: Error | null }>({
+    bundle: null,
     isLoading: supabaseConfigured,
     isLive: false,
     error: null,
@@ -776,25 +841,32 @@ export function useBotAnalytics(
 
   useEffect(() => {
     if (!supabaseConfigured) {
-      setState({ data: fixtureFallback, isLoading: false, isLive: false, error: null })
+      setRaw({ bundle: null, isLoading: false, isLive: false, error: null })
       return
     }
     let cancelled = false
+    setRaw((s) => ({ ...s, isLoading: true }))
     ;(async () => {
       const { from, to } = resolveSelection(selection)
       const bundle = await fetchLiveBundle(botId, from, to)
       if (cancelled) return
       if (!bundleHasData(bundle)) {
-        setState({ data: fixtureFallback, isLoading: false, isLive: false, error: null })
+        setRaw({ bundle: null, isLoading: false, isLive: false, error: null })
         return
       }
-      const merged = overlayJHChatLive(blankData(fixtureFallback), bundle!)
-      setState({ data: merged, isLoading: false, isLive: true, error: null })
+      setRaw({ bundle, isLoading: false, isLive: true, error: null })
     })()
     return () => { cancelled = true }
-  }, [botId, selKey, fixtureFallback])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [botId, selKey])
 
-  return state
+  const data = useMemo(
+    () => (raw.bundle ? overlayJHChatLive(blankData(fixtureFallback), raw.bundle, pageStage) : fixtureFallback),
+    [raw.bundle, fixtureFallback, pageStage],
+  )
+  const funnel = useMemo(() => (raw.bundle ? summarizeFunnel(raw.bundle.pageFunnel) : null), [raw.bundle])
+
+  return { data, funnel, isLoading: raw.isLoading, isLive: raw.isLive, error: raw.error }
 }
 
 export function useJHChatAnalytics(selection: PeriodSelection): AnalyticsState<PeriodFixtures> {

@@ -32,7 +32,7 @@ export function ConversationExplorer({
   onClose,
 }: {
   botId: number
-  filter: { dim: 'section' | 'pinchpoint' | 'sentiment'; value: string; label: string }
+  filter: { dim: 'section' | 'pinchpoint' | 'sentiment' | 'stage'; value: string; label: string }
   /** Scope to the same window as the dashboard/AI. Omit for all-time. */
   range?: { from: string; to: string }
   onClose: () => void
@@ -50,13 +50,18 @@ export function ConversationExplorer({
       const sb = getSupabase()
       if (!sb) { setRows([]); setCount(0); return }
       // count:'exact' → true total for the header; .limit caps only the LIST.
-      const base = sb
+      // 'stage' drills read conversation_page (has funnel_stage, exact-match);
+      // all other dims read conversation_intel (ilike on the dim column).
+      const table = filter.dim === 'stage' ? 'conversation_page' : 'conversation_intel'
+      const scopedBase = sb
         .schema('report')
-        .from('conversation_intel')
+        .from(table)
         .select('bot_id, conversation_id, topic, sentiment, day', { count: 'exact' })
         .eq('bot_id', botId)
-        .ilike(filter.dim, filter.value)
         .eq('substantive', true)
+      const base = filter.dim === 'stage'
+        ? scopedBase.eq('funnel_stage', filter.value)
+        : scopedBase.ilike(filter.dim, filter.value)
       const scoped = range ? base.gte('day', range.from).lte('day', range.to) : base
       const withSent = sentFilter !== 'all' ? scoped.eq('sentiment', sentFilter) : scoped
       const { data, count: total } = await withSent.order('day', { ascending: false }).limit(LIST_CAP)
@@ -82,7 +87,11 @@ export function ConversationExplorer({
     }
   }
 
-  const dimLabel = filter.dim === 'pinchpoint' ? 'Conversion blocker' : filter.dim === 'section' ? 'Knowledge section' : 'Sentiment'
+  const dimLabel =
+    filter.dim === 'pinchpoint' ? 'Conversion blocker'
+    : filter.dim === 'section' ? 'Knowledge section'
+    : filter.dim === 'stage' ? 'Questions from this page'
+    : 'Sentiment'
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-slate-900/40 p-4 sm:p-8" onClick={onClose}>

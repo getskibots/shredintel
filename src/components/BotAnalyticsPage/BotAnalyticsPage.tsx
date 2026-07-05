@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { AskBar } from '../AskBar'
 import { BotSelector } from '../BotSelector'
 import { ConversationCounts } from '../ConversationCounts'
 import { ConversionBlockers } from '../ConversionBlockers'
+import { PageFunnel } from '../PageFunnel'
 import { ConversionPulse } from '../ConversionPulse'
 import { GuestSentiment } from '../GuestSentiment'
 import { KnowledgeSectionDemand } from '../KnowledgeSectionDemand'
@@ -39,7 +40,11 @@ export function BotAnalyticsPage() {
     const params = writeSelectionToSearchParams(new URLSearchParams(searchParams), next)
     setSearchParams(params, { replace: true })
   }
-  const { data: f, isLive, isLoading } = useBotAnalytics(botId, selection)
+  // Global page filter — a funnel_stage label (or null = all pages). Re-scopes
+  // the intelligence panels to questions that started on that stage's pages.
+  const [pageStage, setPageStage] = useState<string | null>(null)
+  useEffect(() => setPageStage(null), [botId]) // reset when switching bots
+  const { data: f, funnel, isLive, isLoading } = useBotAnalytics(botId, selection, pageStage)
   // Scope the AI (ask + voice) to the same window the dashboard is showing.
   const resolved = resolveSelection(selection)
   const askRange = { from: resolved.from, to: resolved.to, label: resolved.label }
@@ -115,6 +120,17 @@ export function BotAnalyticsPage() {
             </section>
 
             <section id="intelligence" className="scroll-mt-40 space-y-5">
+              {/* Page funnel — WHERE questions originate + the global page filter
+                  that re-scopes the panels below to a single funnel stage. Live-only. */}
+              {funnel && (
+                <PageFunnel
+                  funnel={funnel}
+                  activeStage={pageStage}
+                  onSelect={setPageStage}
+                  botId={botId}
+                  range={askRange}
+                />
+              )}
               {/* ShredIntel enrichment — what guests ask about, where they get stuck, how they feel */}
               <KnowledgeSectionDemand {...f.knowledgeSectionDemand} botId={botId} range={askRange} />
               <ConversionBlockers {...f.conversionBlockers} botId={botId} range={askRange} />

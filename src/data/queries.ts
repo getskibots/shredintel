@@ -124,6 +124,31 @@ export interface IntelBreakdownRow {
   negative?: number
 }
 
+/**
+ * report.page_funnel — where guest questions ORIGINATE on the resort site,
+ * as an ecommerce funnel stage. report.page_{section,pinchpoint,sentiment}
+ * are the same intel_* breakdowns but carrying the funnel_stage dimension,
+ * so the dashboard can re-scope the intelligence panels to a single stage.
+ */
+export interface PageFunnelRow {
+  bot_id: number
+  day: string
+  funnel_stage: string
+  stage_rank: number
+  conversations: number
+  negative: number
+}
+
+export interface PageIntelRow {
+  bot_id: number
+  day: string
+  funnel_stage: string
+  stage_rank: number
+  key: string
+  conversations: number
+  negative?: number
+}
+
 export interface LiveBundle {
   outcomeTimeline: OutcomeRow[]
   conversionPulse: ConversionRow[]
@@ -137,6 +162,13 @@ export interface LiveBundle {
   intelSection: IntelBreakdownRow[]
   intelPinchpoint: IntelBreakdownRow[]
   intelSentiment: IntelBreakdownRow[]
+  /** Page → ecommerce funnel stage (where questions originate) + the same
+   *  intelligence breakdowns sliced by stage. Empty until the page-funnel
+   *  matview is available (non-fatal, like intel_*). */
+  pageFunnel: PageFunnelRow[]
+  pageSection: PageIntelRow[]
+  pagePinchpoint: PageIntelRow[]
+  pageSentiment: PageIntelRow[]
   /** Distinct users in the window (report.active_users RPC) — matches the
    *  Botscrew admin "Active users" count. null if the RPC isn't available. */
   activeUsers: number | null
@@ -187,7 +219,7 @@ export async function fetchLiveBundle(
 
   try {
     const [outcome, conversion, knowledge, sender, identity, funnel, device, heatmap, depth,
-           iSection, iPinch, iSent, users] =
+           iSection, iPinch, iSent, pFunnel, pSection, pPinch, pSent, users] =
       await withTimeout(Promise.all([
         q<OutcomeRow>('outcome_timeline'),
         q<ConversionRow>('conversion_pulse'),
@@ -201,6 +233,10 @@ export async function fetchLiveBundle(
         q<IntelBreakdownRow>('intel_section'),
         q<IntelBreakdownRow>('intel_pinchpoint'),
         q<IntelBreakdownRow>('intel_sentiment'),
+        q<PageFunnelRow>('page_funnel'),
+        q<PageIntelRow>('page_section'),
+        q<PageIntelRow>('page_pinchpoint'),
+        q<PageIntelRow>('page_sentiment'),
         usersRpc,
       ]))
 
@@ -234,6 +270,11 @@ export async function fetchLiveBundle(
       intelSection: iSection.error ? [] : (iSection.data ?? []),
       intelPinchpoint: iPinch.error ? [] : (iPinch.data ?? []),
       intelSentiment: iSent.error ? [] : (iSent.data ?? []),
+      // page-funnel views — newest; non-fatal (empty → no funnel card / filter)
+      pageFunnel: pFunnel.error ? [] : (pFunnel.data ?? []),
+      pageSection: pSection.error ? [] : (pSection.data ?? []),
+      pagePinchpoint: pPinch.error ? [] : (pPinch.data ?? []),
+      pageSentiment: pSent.error ? [] : (pSent.data ?? []),
       // active_users RPC — non-fatal; null falls back to no Users tile
       activeUsers: users.error || users.data == null ? null : Number(users.data),
     }

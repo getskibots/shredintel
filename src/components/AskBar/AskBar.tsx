@@ -8,6 +8,7 @@ import { VegaLiteChart } from '../VegaLiteChart'
 import { ConversationExplorer } from '../ConversationExplorer'
 import { PromptEditor } from '../PromptEditor'
 import type { DrillFilter } from '../../lib/savedReports'
+import { payloadFromDatum, type DrillPayload } from '../../lib/drill'
 
 /**
  * ShredIntel hero — the dashboard's spine and its identity. A centered,
@@ -57,6 +58,12 @@ export function AskBar({ botId, range, onVoice }: { botId: number; range?: { fro
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<AskResult | null>(null)
   const [drill, setDrill] = useState<DrillFilter | null>(null)
+  const [drillPayload, setDrillPayload] = useState<DrillPayload | null>(null)
+  const drillCtx = { botId, from: range?.from, to: range?.to }
+  const openDrill = (datum: Record<string, unknown>) => {
+    const dp = payloadFromDatum(datum, drillCtx)
+    if (dp) setDrillPayload(dp)
+  }
   const [error, setError] = useState<string | null>(null)
   const [showData, setShowData] = useState(false)
   const [listening, setListening] = useState(false)
@@ -69,6 +76,7 @@ export function AskBar({ botId, range, onVoice }: { botId: number; range?: { fro
     setError(null)
     setResult(null)
     setDrill(null)
+    setDrillPayload(null)
     setShowData(false)
     try {
       const res = await fetch('/api/ask', {
@@ -242,7 +250,7 @@ export function AskBar({ botId, range, onVoice }: { botId: number; range?: { fro
 
             {result.vegaLite && result.rows.length > 0 ? (
               <div className="mt-4">
-                <VegaLiteChart spec={result.vegaLite} rows={result.rows} caption={chartCaption(result.focus, range?.label)} />
+                <VegaLiteChart spec={result.vegaLite} rows={result.rows} caption={chartCaption(result.focus, range?.label)} onDrill={openDrill} />
               </div>
             ) : result.chart && result.chart.type !== 'none' && result.chart.x && result.chart.y && result.rows.length > 0 ? (
               <div className="mt-4 h-56">
@@ -259,7 +267,13 @@ export function AskBar({ botId, range, onVoice }: { botId: number; range?: { fro
                       <XAxis dataKey={result.chart.x} tick={{ fontSize: 11, fill: brand.muted }} hide={result.rows.length > 12} />
                       <YAxis tick={{ fontSize: 11, fill: brand.muted }} width={44} />
                       <Tooltip />
-                      <Bar dataKey={result.chart.y} fill={brand.blue} radius={[3, 3, 0, 0]} />
+                      <Bar
+                      dataKey={result.chart.y}
+                      fill={brand.blue}
+                      radius={[3, 3, 0, 0]}
+                      cursor="pointer"
+                      onClick={(d: { payload?: Record<string, unknown> }) => d?.payload && openDrill(d.payload)}
+                    />
                     </BarChart>
                   )}
                 </ResponsiveContainer>
@@ -319,6 +333,7 @@ export function AskBar({ botId, range, onVoice }: { botId: number; range?: { fro
       </div>
 
       {drill && <ConversationExplorer botId={botId} range={range} filter={drill} onClose={() => setDrill(null)} />}
+      {drillPayload && <ConversationExplorer botId={botId} payload={drillPayload} onClose={() => setDrillPayload(null)} />}
     </div>
   )
 }

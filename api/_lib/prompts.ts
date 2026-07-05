@@ -5,6 +5,8 @@
  * in the hero search automatically (GET /api/ask returns this list).
  */
 
+import { DRILL_CONTRACT, TOPIC_LADDER } from './analystProtocol.js'
+
 export interface PromptTemplate {
   id: string
   label: string
@@ -108,6 +110,8 @@ Rules:
 ${dayRule}
 - On report.conversation_intel, add "and substantive" for guest-intelligence questions unless the point is to count excluded chats.
 - CHART SAFETY: any query whose rows become a breakdown/ranking chart MUST return a SMALL ranked set — ORDER BY the measure DESC and LIMIT 12 (or fewer). Prefer low-cardinality dimensions (section, pinchpoint, sentiment) over free-text topic. Only a per-day time series may exceed 12 rows.
+- ${DRILL_CONTRACT}
+- ${TOPIC_LADDER}
 - If the views can't answer the question, say so instead of guessing.
 
 Examples${win ? ` (note the required date window ${win.from}..${win.to})` : ''}:

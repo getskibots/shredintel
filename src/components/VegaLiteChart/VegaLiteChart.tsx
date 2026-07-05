@@ -37,6 +37,7 @@ export function VegaLiteChart({
   rows,
   height = 280,
   caption,
+  onDrill,
 }: {
   spec: Record<string, unknown>
   rows: Record<string, unknown>[]
@@ -44,8 +45,13 @@ export function VegaLiteChart({
   /** One-line lens + window, built from request context (NOT the model). Always
    *  render one for AI charts so every chart states what it's showing. */
   caption?: string
+  /** Click any mark → its datum. Wire to payloadFromDatum → ConversationExplorer. */
+  onDrill?: (datum: Record<string, unknown>) => void
 }) {
   const ref = useRef<HTMLDivElement>(null)
+  // Ref so the click handler always sees the latest onDrill without re-embedding.
+  const onDrillRef = useRef(onDrill)
+  onDrillRef.current = onDrill
 
   useEffect(() => {
     let cancelled = false
@@ -75,6 +81,12 @@ export function VegaLiteChart({
           renderer: 'svg',
         })
         view = res.view
+        // Click any mark → its datum → drill (payloadFromDatum in the caller).
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        view.addEventListener('click', (_e: unknown, item: any) => {
+          const datum = item?.datum
+          if (datum && onDrillRef.current) onDrillRef.current(datum as Record<string, unknown>)
+        })
       } catch {
         if (ref.current) ref.current.replaceChildren()
       }

@@ -2,21 +2,24 @@ import { useEffect, useState } from 'react'
 import { X, Loader2, ChevronRight } from 'lucide-react'
 import { getSupabase } from '../../lib/supabase'
 import { sentimentColors } from '../../lib/chartTheme'
+import { DRILL_DIMENSIONS, humanLabel, type DrillPayload } from '../../lib/drill'
 
 /**
- * Drill-down: click a sliver (section / pinchpoint / sentiment) → the matching
- * conversations → the actual transcript. Conversation list comes from
- * report.conversation_intel (anon-readable); the transcript comes from the
- * bot-scoped, PII-scrubbed /api/transcript. Every number becomes evidence.
+ * Drill-down: any chart mark / sliver → the matching conversations → the actual
+ * transcript. Accepts the universal DrillPayload (any combination of section /
+ * pinchpoint / sentiment / funnel_stage / topic / day, AND-combined). The legacy
+ * single-dimension `filter` prop is still accepted and normalized to a payload,
+ * so existing callers keep working.
+ *
+ * Conversation list comes from report.conversation_intel (or conversation_page
+ * when a funnel_stage is in play — it carries the stage column), anon-readable;
+ * the transcript comes from the bot-scoped, PII-scrubbed /api/transcript.
  */
 
 interface ConvRow { bot_id: number; conversation_id: number; topic: string | null; sentiment: string | null; day: string }
-
-// "Open full conversation" deep-link is DEFERRED — the admin /support/{N} route's
-// id mapping is unconfirmed (need one known-good URL to match against). We show a
-// "coming soon" hint for now. /api/transcript still returns supportId (the first
-// message id) so re-enabling is a one-liner once the route is confirmed.
 interface Msg { sender: string; text: string }
+
+type LegacyFilter = { dim: 'section' | 'pinchpoint' | 'sentiment' | 'stage'; value: string; label: string }
 
 const sentColor = (s: string | null): string => {
   const k = (s || '').toLowerCase() as keyof typeof sentimentColors
@@ -25,18 +28,39 @@ const sentColor = (s: string | null): string => {
 
 const LIST_CAP = 60
 
+/** Normalize the legacy {dim,value} filter to a DrillPayload (stage → funnel_stage). */
+function legacyToPayload(f: LegacyFilter, botId: number, range?: { from: string; to: string }): DrillPayload {
+  const p: DrillPayload = { botId, from: range?.from, to: range?.to }
+  if (f.dim === 'stage') p.funnel_stage = f.value
+  else p[f.dim] = f.value
+  return p
+}
+
 export function ConversationExplorer({
   botId,
   filter,
+  payload,
   range,
   onClose,
 }: {
   botId: number
-  filter: { dim: 'section' | 'pinchpoint' | 'sentiment' | 'stage'; value: string; label: string }
+  /** Legacy single-dimension entry point (still supported). */
+  filter?: LegacyFilter
+  /** Universal multi-dimension drill payload (preferred — from chart clicks). */
+  payload?: DrillPayload
   /** Scope to the same window as the dashboard/AI. Omit for all-time. */
   range?: { from: string; to: string }
   onClose: () => void
 }) {
+  const p: DrillPayload = payload ?? legacyToPayload(filter as LegacyFilter, botId, range)
+  const lockedSentiment = p.sentiment // set when the drill itself is a sentiment
+  const primaryDim = DRILL_DIMENSIONS.find((d) => p[d] != null)
+  const eyebrow = primaryDim ? humanLabel(primaryDim) : 'Conversations'
+  const title = filter?.label ?? (primaryDim ? String(p[primaryDim]) : 'Conversations')
+  // Active dims beyond the primary, shown as a sub-line so multi-filter drills read clearly.
+  const extraFilters = DRILL_DIMENSIONS.filter((d) => d !== primaryDim && p[d] != null)
+    .map((d) => `${humanLabel(d)}: ${p[d]}`)
+
   const [rows, setRows] = useState<ConvRow[] | null>(null)
   const [count, setCount] = useState<number | null>(null)
   const [sentFilter, setSentFilter] = useState<'all' | 'Positive' | 'Neutral' | 'Negative'>('all')
@@ -44,34 +68,42 @@ export function ConversationExplorer({
   const [transcript, setTranscript] = useState<Msg[] | null>(null)
   const [loadingT, setLoadingT] = useState(false)
 
+  const from = p.from ?? range?.from
+  const to = p.to ?? range?.to
+
   useEffect(() => {
     let cancelled = false
     ;(async () => {
       const sb = getSupabase()
       if (!sb) { setRows([]); setCount(0); return }
-      // count:'exact' → true total for the header; .limit caps only the LIST.
-      // 'stage' drills read conversation_page (has funnel_stage, exact-match);
-      // all other dims read conversation_intel (ilike on the dim column).
-      const table = filter.dim === 'stage' ? 'conversation_page' : 'conversation_intel'
-      const scopedBase = sb
+      // conversation_page carries funnel_stage; conversation_intel is broader coverage.
+      const table = p.funnel_stage != null ? 'conversation_page' : 'conversation_intel'
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let q: any = sb
         .schema('report')
         .from(table)
         .select('bot_id, conversation_id, topic, sentiment, day', { count: 'exact' })
-        .eq('bot_id', botId)
+        .eq('bot_id', p.botId)
         .eq('substantive', true)
-      const base = filter.dim === 'stage'
-        ? scopedBase.eq('funnel_stage', filter.value)
-        : scopedBase.ilike(filter.dim, filter.value)
-      const scoped = range ? base.gte('day', range.from).lte('day', range.to) : base
-      const withSent = sentFilter !== 'all' ? scoped.eq('sentiment', sentFilter) : scoped
-      const { data, count: total } = await withSent.order('day', { ascending: false }).limit(LIST_CAP)
+      if (p.section) q = q.ilike('section', p.section)
+      if (p.pinchpoint) q = q.ilike('pinchpoint', p.pinchpoint)
+      if (p.funnel_stage) q = q.eq('funnel_stage', p.funnel_stage)
+      if (p.topic) q = q.ilike('topic', `%${p.topic}%`)
+      if (p.day) q = q.eq('day', p.day)
+      if (from && to) q = q.gte('day', from).lte('day', to)
+      // Sentiment: a locked sentiment (drill target) wins; otherwise the toggle.
+      if (lockedSentiment) q = q.eq('sentiment', lockedSentiment)
+      else if (sentFilter !== 'all') q = q.eq('sentiment', sentFilter)
+
+      const { data, count: total } = await q.order('day', { ascending: false }).limit(LIST_CAP)
       if (!cancelled) {
         setRows((data as ConvRow[]) ?? [])
         setCount(total ?? (data?.length ?? 0))
       }
     })()
     return () => { cancelled = true }
-  }, [botId, filter.dim, filter.value, range?.from, range?.to, sentFilter])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [p.botId, p.section, p.pinchpoint, p.sentiment, p.funnel_stage, p.topic, p.day, from, to, sentFilter])
 
   async function openConv(cid: number) {
     if (openCid === cid) { setOpenCid(null); setTranscript(null); return }
@@ -87,12 +119,6 @@ export function ConversationExplorer({
     }
   }
 
-  const dimLabel =
-    filter.dim === 'pinchpoint' ? 'Conversion blocker'
-    : filter.dim === 'section' ? 'Knowledge section'
-    : filter.dim === 'stage' ? 'Questions from this page'
-    : 'Sentiment'
-
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-slate-900/40 p-4 sm:p-8" onClick={onClose}>
       <div
@@ -101,18 +127,21 @@ export function ConversationExplorer({
       >
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3.5">
           <div>
-            <div className="text-[11px] font-medium uppercase tracking-wider text-slate-400">{dimLabel}</div>
+            <div className="text-[11px] font-medium uppercase tracking-wider text-slate-400">{eyebrow}</div>
             <div className="text-base font-semibold text-slate-900">
-              {filter.label}
+              {title}
               {count != null ? <span className="ml-2 text-sm font-normal text-slate-400">{count} conversations</span> : null}
             </div>
+            {extraFilters.length > 0 && (
+              <div className="mt-0.5 text-[11px] text-slate-400">{extraFilters.join(' · ')}</div>
+            )}
           </div>
           <button onClick={onClose} aria-label="Close" className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700">
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        {filter.dim !== 'sentiment' && (
+        {!lockedSentiment && (
           <div className="flex items-center gap-1.5 border-b border-slate-100 px-5 py-2">
             <span className="mr-1 text-[11px] font-medium uppercase tracking-wider text-slate-400">Sentiment</span>
             {(['all', 'Positive', 'Neutral', 'Negative'] as const).map((s) => {

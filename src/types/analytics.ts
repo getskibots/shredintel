@@ -240,6 +240,19 @@ export interface GuestSentimentProps {
   negativeShare: number
 }
 
+/** Human handover — how often a person is NEEDED (segments = No / Possible /
+ *  Clear handover, for the donut) vs how often one ACTUALLY steps in
+ *  (escalated), and the gap between them. */
+export interface HumanHandoverProps {
+  segments: { label: string; conversations: number; share: number }[]
+  totalSubstantive: number
+  neededHuman: number
+  neededHumanShare: number
+  clearHandover: number
+  escalated: number
+  gap: number
+}
+
 // § 2 — KnowledgeSourceLeaderboard
 
 export interface KnowledgeSourceItem {

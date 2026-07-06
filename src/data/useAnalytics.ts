@@ -503,6 +503,33 @@ function overlayJHChatLive(base: PeriodFixtures, live: LiveBundle, pageStage?: s
     }
   }
 
+  // § "Are we helping?" — human handover need (No/Possible/Clear) vs actual
+  // escalation (support_touched from the lead-capture funnel), + the gap.
+  if (live.intelHandover.length > 0) {
+    const hm = new Map<string, number>()
+    for (const r of live.intelHandover) hm.set(r.key, (hm.get(r.key) ?? 0) + Number(r.conversations))
+    const no = hm.get('No Handover') ?? 0
+    const possible = hm.get('Possible Handover') ?? 0
+    const clear = (hm.get('Clear Handover') ?? 0) + (hm.get('Escalation Required') ?? 0)
+    const total = no + possible + clear
+    if (total > 0) {
+      const escalated = sum(live.leadCaptureFunnel.map((r) => Number(r.support_touched)))
+      out.humanHandover = {
+        segments: [
+          { label: 'Handled by bot', conversations: no, share: no / total },
+          { label: 'Possible handover', conversations: possible, share: possible / total },
+          { label: 'Clear handover', conversations: clear, share: clear / total },
+        ],
+        totalSubstantive: total,
+        neededHuman: possible + clear,
+        neededHumanShare: (possible + clear) / total,
+        clearHandover: clear,
+        escalated,
+        gap: Math.max(0, clear - escalated),
+      }
+    }
+  }
+
   // § 3 — Guest identity split
   if (live.guestIdentitySplit.length > 0) {
     const totalConversations = sum(live.guestIdentitySplit.map((r) => r.total_conversations))

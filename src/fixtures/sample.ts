@@ -24,6 +24,7 @@ import type {
   KnowledgeSectionDemandProps,
   ConversionBlockersProps,
   GuestSentimentProps,
+  HumanHandoverProps,
   KpiTileData,
   LeadCaptureFunnelProps,
   OutcomeTimelineProps,
@@ -533,6 +534,7 @@ export interface PeriodFixtures {
   knowledgeSectionDemand: KnowledgeSectionDemandProps
   conversionBlockers: ConversionBlockersProps
   guestSentiment: GuestSentimentProps
+  humanHandover: HumanHandoverProps
   guestIdentitySplit: GuestIdentitySplitProps
   leadCaptureFunnel: LeadCaptureFunnelProps
   frictionPages: FrictionPage[]
@@ -850,6 +852,26 @@ export function buildPeriodFixturesForDays(
     positiveShare: totalSub > 0 ? sPos / totalSub : 0, negativeShare: totalSub > 0 ? sNeg / totalSub : 0,
   }
 
+  // ── Human handover (demo mirrors real JH shape: ~31% need a human) ──
+  const hvNo = Math.round(14216 * scale)
+  const hvPossible = Math.round(4432 * scale)
+  const hvClear = Math.round(2088 * scale) // Clear + the rare "Escalation Required"
+  const hvTotal = hvNo + hvPossible + hvClear
+  const hvEscalated = Math.round(205 * scale)
+  const humanHandover: HumanHandoverProps = {
+    segments: [
+      { label: 'Handled by bot', conversations: hvNo, share: hvTotal > 0 ? hvNo / hvTotal : 0 },
+      { label: 'Possible handover', conversations: hvPossible, share: hvTotal > 0 ? hvPossible / hvTotal : 0 },
+      { label: 'Clear handover', conversations: hvClear, share: hvTotal > 0 ? hvClear / hvTotal : 0 },
+    ],
+    totalSubstantive: hvTotal,
+    neededHuman: hvPossible + hvClear,
+    neededHumanShare: hvTotal > 0 ? (hvPossible + hvClear) / hvTotal : 0,
+    clearHandover: hvClear,
+    escalated: hvEscalated,
+    gap: Math.max(0, hvClear - hvEscalated),
+  }
+
   // ── Guest identity (aggregate counts only) ─────────────────────────
   const known = Math.round(6800 * scale)
   const anon = totalConversations - known
@@ -1041,6 +1063,7 @@ export function buildPeriodFixturesForDays(
     knowledgeSectionDemand,
     conversionBlockers,
     guestSentiment,
+    humanHandover,
     guestIdentitySplit,
     leadCaptureFunnel,
     frictionPages,

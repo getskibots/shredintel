@@ -187,6 +187,8 @@ export interface LiveBundle {
   intelSection: IntelBreakdownRow[]
   intelPinchpoint: IntelBreakdownRow[]
   intelSentiment: IntelBreakdownRow[]
+  /** Handover-need split (No / Possible / Clear Handover). Non-fatal. */
+  intelHandover: IntelBreakdownRow[]
   /** Page → ecommerce funnel stage (where questions originate) + the same
    *  intelligence breakdowns sliced by stage. Empty until the page-funnel
    *  matview is available (non-fatal, like intel_*). */
@@ -247,7 +249,7 @@ export async function fetchLiveBundle(
 
   try {
     const [outcome, conversion, knowledge, sender, identity, funnel, device, heatmap, depth,
-           iSection, iPinch, iSent, pFunnel, pSection, pPinch, pSent, gCountry, gCity, users] =
+           iSection, iPinch, iSent, iHand, pFunnel, pSection, pPinch, pSent, gCountry, gCity, users] =
       await withTimeout(Promise.all([
         q<OutcomeRow>('outcome_timeline'),
         q<ConversionRow>('conversion_pulse'),
@@ -261,6 +263,7 @@ export async function fetchLiveBundle(
         q<IntelBreakdownRow>('intel_section'),
         q<IntelBreakdownRow>('intel_pinchpoint'),
         q<IntelBreakdownRow>('intel_sentiment'),
+        q<IntelBreakdownRow>('intel_handover'),
         q<PageFunnelRow>('page_funnel'),
         q<PageIntelRow>('page_section'),
         q<PageIntelRow>('page_pinchpoint'),
@@ -300,6 +303,7 @@ export async function fetchLiveBundle(
       intelSection: iSection.error ? [] : (iSection.data ?? []),
       intelPinchpoint: iPinch.error ? [] : (iPinch.data ?? []),
       intelSentiment: iSent.error ? [] : (iSent.data ?? []),
+      intelHandover: iHand.error ? [] : (iHand.data ?? []),
       // page-funnel views — newest; non-fatal (empty → no funnel card / filter)
       pageFunnel: pFunnel.error ? [] : (pFunnel.data ?? []),
       pageSection: pSection.error ? [] : (pSection.data ?? []),

@@ -7,6 +7,7 @@ import { ConversionBlockers } from '../ConversionBlockers'
 import { PageFunnel } from '../PageFunnel'
 import { ConversionPulse } from '../ConversionPulse'
 import { GuestSentiment } from '../GuestSentiment'
+import { HumanHandover } from '../HumanHandover'
 import { KnowledgeSectionDemand } from '../KnowledgeSectionDemand'
 import { DemandHeatmap } from '../DemandHeatmap'
 import { DeviceExperienceMix } from '../DeviceExperienceMix'
@@ -141,10 +142,11 @@ export function BotAnalyticsPage() {
               <KnowledgeSectionDemand {...f.knowledgeSectionDemand} botId={botId} range={askRange} />
             </section>
 
-            {/* 4 — Are we helping? guest satisfaction + answer quality / gaps */}
+            {/* 4 — Are we helping? can we answer → do humans catch the rest → are they happy */}
             <section id="service" className="scroll-mt-40 space-y-5">
-              <GuestSentiment {...f.guestSentiment} />
               <KnowledgeSourceLeaderboard {...f.knowledgeSourceLeaderboard} />
+              <HumanHandover {...f.humanHandover} />
+              <GuestSentiment {...f.guestSentiment} />
             </section>
 
             {/* 5 — Who & where your guests are: identity, location, device, time */}

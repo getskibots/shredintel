@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { X, Loader2, ChevronRight, Globe } from 'lucide-react'
+import { X, Loader2, ChevronRight, Globe, Bot, User } from 'lucide-react'
 import { getSupabase } from '../../lib/supabase'
 import { sentimentColors } from '../../lib/chartTheme'
 import { DRILL_DIMENSIONS, humanLabel, type DrillPayload } from '../../lib/drill'
@@ -237,31 +237,11 @@ export function ConversationExplorer({
                   </button>
                   {openCid === r.conversation_id && (
                     <div className="border-t border-slate-100 bg-slate-50/60 px-3 py-3">
-                      <div className="mb-2.5 flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
-                        <span className="text-[11px] font-medium text-slate-500">
-                          {r.started_local ? fmtStamp(r.started_local, true) : `Conversation ${r.conversation_id}`}
-                          {fmtDur(r.duration_sec) ? <span className="text-slate-400"> · {fmtDur(r.duration_sec)}</span> : null}
-                        </span>
-                        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400">
-                          Open full conversation
-                          <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">Soon</span>
-                        </span>
-                      </div>
-                      {r.page_path && (
-                        <div className="-mt-1 mb-2.5 flex min-w-0 items-center gap-1.5 text-[11px] text-slate-500">
-                          <Globe className="h-3 w-3 shrink-0 text-slate-400" />
-                          <span className="shrink-0 text-slate-400">Asked from</span>
-                          <a
-                            href={`https://${r.page_path}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="min-w-0 truncate font-medium text-botscrew-600 hover:underline"
-                            title={r.page_path}
-                          >
-                            {prettyPage(r.page_path)}
-                          </a>
+                      {fmtDur(r.duration_sec) ? (
+                        <div className="mb-2.5 border-b border-slate-100 pb-2 text-[11px] font-medium text-slate-400">
+                          {fmtDur(r.duration_sec)} conversation
                         </div>
-                      )}
+                      ) : null}
                       {loadingT ? (
                         <div className="flex items-center gap-2 text-xs text-slate-500">
                           <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading transcript…
@@ -270,23 +250,29 @@ export function ConversationExplorer({
                         <div className="space-y-2">
                           {transcript.map((m, i) => {
                             const isUser = m.sender === 'user'
+                            const Avatar = isUser ? User : Bot
                             return (
                               <div
                                 key={i}
-                                className={`border-l-2 pl-2.5 text-sm leading-relaxed ${
-                                  isUser
-                                    ? 'rounded-r-md border-botscrew-300 bg-botscrew-50/60 py-1 font-medium text-slate-900'
-                                    : 'border-transparent text-slate-500'
+                                className={`flex gap-2 border-l-2 py-1.5 pl-2 pr-1 ${
+                                  isUser ? 'rounded-r-md border-botscrew-400 bg-botscrew-50/60' : 'border-transparent'
                                 }`}
                               >
                                 <span
-                                  className={`mr-1.5 text-[10px] font-semibold uppercase tracking-wide ${
-                                    isUser ? 'text-botscrew-600' : 'text-slate-400'
+                                  aria-label={isUser ? 'Guest' : 'Bot'}
+                                  className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${
+                                    isUser ? 'bg-botscrew-100 text-botscrew-600' : 'bg-slate-100 text-slate-400'
                                   }`}
                                 >
-                                  {m.sender}
+                                  <Avatar className="h-3 w-3" strokeWidth={2} />
                                 </span>
-                                <RichText text={m.text} />
+                                <div
+                                  className={`min-w-0 flex-1 text-sm leading-relaxed ${
+                                    isUser ? 'font-medium text-slate-900' : 'text-slate-500'
+                                  }`}
+                                >
+                                  <RichText text={m.text} />
+                                </div>
                               </div>
                             )
                           })}

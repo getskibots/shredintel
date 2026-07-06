@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { X, Loader2, ChevronRight } from 'lucide-react'
+import { X, Loader2, ChevronRight, Globe } from 'lucide-react'
 import { getSupabase } from '../../lib/supabase'
 import { sentimentColors } from '../../lib/chartTheme'
 import { DRILL_DIMENSIONS, humanLabel, type DrillPayload } from '../../lib/drill'
@@ -17,8 +17,12 @@ import { DRILL_DIMENSIONS, humanLabel, type DrillPayload } from '../../lib/drill
  * comes from the bot-scoped, PII-scrubbed /api/transcript.
  */
 
-interface ConvRow { bot_id: number; conversation_id: number; topic: string | null; sentiment: string | null; day: string; started_local: string | null; duration_sec: number | null }
+interface ConvRow { bot_id: number; conversation_id: number; topic: string | null; sentiment: string | null; day: string; started_local: string | null; duration_sec: number | null; page_path: string | null }
 interface Msg { sender: string; text: string }
+
+// page_path is host+path (query string already stripped). Drop a leading "www."
+// for readability; the full value stays in the title / link href.
+const prettyPage = (p: string) => p.replace(/^www\./, '')
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 // started_local is a tz-less resort-local wall-clock ("2026-07-05T13:18:…") — format
@@ -102,7 +106,7 @@ export function ConversationExplorer({
       let q: any = sb
         .schema('report')
         .from('conversation_time')
-        .select('bot_id, conversation_id, topic, sentiment, day, started_local, duration_sec', { count: 'exact' })
+        .select('bot_id, conversation_id, topic, sentiment, day, started_local, duration_sec, page_path', { count: 'exact' })
         .eq('bot_id', p.botId)
         .eq('substantive', true)
       if (p.section) q = q.ilike('section', p.section)
@@ -202,8 +206,16 @@ export function ConversationExplorer({
                     className="flex w-full items-center gap-2 px-3 py-2.5 text-left transition hover:bg-slate-50"
                   >
                     <ChevronRight className={`h-4 w-4 shrink-0 text-slate-400 transition ${openCid === r.conversation_id ? 'rotate-90' : ''}`} />
-                    <span className="min-w-0 flex-1 truncate text-sm text-slate-700">
-                      {r.topic || `Conversation ${r.conversation_id}`}
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm text-slate-700">
+                        {r.topic || `Conversation ${r.conversation_id}`}
+                      </span>
+                      {r.page_path && (
+                        <span className="mt-0.5 flex items-center gap-1 text-[11px] text-slate-400" title={r.page_path}>
+                          <Globe className="h-3 w-3 shrink-0" />
+                          <span className="truncate">{prettyPage(r.page_path)}</span>
+                        </span>
+                      )}
                     </span>
                     {r.started_local && (
                       <span className="hidden shrink-0 text-[11px] tabular-nums text-slate-400 sm:inline" title={fmtStamp(r.started_local, true)}>
@@ -231,6 +243,21 @@ export function ConversationExplorer({
                           <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">Soon</span>
                         </span>
                       </div>
+                      {r.page_path && (
+                        <div className="-mt-1 mb-2.5 flex min-w-0 items-center gap-1.5 text-[11px] text-slate-500">
+                          <Globe className="h-3 w-3 shrink-0 text-slate-400" />
+                          <span className="shrink-0 text-slate-400">Asked from</span>
+                          <a
+                            href={`https://${r.page_path}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="min-w-0 truncate font-medium text-botscrew-600 hover:underline"
+                            title={r.page_path}
+                          >
+                            {prettyPage(r.page_path)}
+                          </a>
+                        </div>
+                      )}
                       {loadingT ? (
                         <div className="flex items-center gap-2 text-xs text-slate-500">
                           <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading transcript…

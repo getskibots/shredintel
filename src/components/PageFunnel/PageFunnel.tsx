@@ -38,7 +38,7 @@ export function PageFunnel({
   if (!funnel || funnel.stages.length === 0) {
     return (
       <Panel
-        eyebrow="Page funnel"
+        eyebrow="Sales & conversion"
         title="Where guest questions come from"
         description="Every substantive chat mapped to the site page it started on."
       >
@@ -54,7 +54,7 @@ export function PageFunnel({
 
   return (
     <Panel
-      eyebrow="Page funnel"
+      eyebrow="Sales & conversion"
       title="Where guest questions come from"
       description="Every substantive chat mapped to the site page it started on. The red slice is the frustrated share — where it grows is where the buy flow needs work."
       action={

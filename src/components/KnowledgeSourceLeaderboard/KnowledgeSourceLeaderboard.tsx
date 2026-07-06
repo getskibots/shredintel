@@ -27,7 +27,7 @@ export function KnowledgeSourceLeaderboard({
   unsourcedBotMessages,
   knowledgeGapRate,
   topSources,
-  eyebrow = '§ 2 Message Intelligence',
+  eyebrow = 'Are we helping?',
   title = 'Knowledge source leaderboard',
   description = 'Which content sources are powering the bot’s answers?',
   sourcedLabel = 'Sourced bot messages',

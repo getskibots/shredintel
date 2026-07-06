@@ -17,7 +17,7 @@ export function GuestSentiment({ positive, neutral, negative, total }: GuestSent
   ]
   return (
     <Panel
-      eyebrow="§ 2 Message Intelligence"
+      eyebrow="Are we helping?"
       title="Guest sentiment"
       description="How guests felt across substantive conversations."
     >

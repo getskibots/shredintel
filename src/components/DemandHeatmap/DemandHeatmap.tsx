@@ -52,7 +52,7 @@ export function DemandHeatmap({
   if (empty) {
     return (
       <Panel
-        eyebrow="§ 4 Behavioral Context"
+        eyebrow="Your guests"
         title="Demand heatmap"
         description="When guest demand actually happens."
       >
@@ -82,7 +82,7 @@ export function DemandHeatmap({
 
   return (
     <Panel
-      eyebrow="§ 4 Behavioral Context"
+      eyebrow="Your guests"
       title="Demand heatmap"
       description="When guest demand actually happens — and whether you’re covering it."
       action={action}

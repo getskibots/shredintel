@@ -31,7 +31,7 @@ export function SenderMixStack({ totals, data }: SenderMixStackProps) {
 
   return (
     <Panel
-      eyebrow="§ 2 Message Intelligence"
+      eyebrow="Under the hood"
       title="Sender mix"
       description="Message workload split between bot, guest, and human support."
       action={action}

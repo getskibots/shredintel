@@ -55,7 +55,7 @@ export function DeviceExperienceMix({
 
   return (
     <Panel
-      eyebrow="§ 4 Behavioral Context"
+      eyebrow="Your guests"
       title="Device experience mix"
       description="Mobile, desktop, and tablet behavior across guest conversations."
       action={

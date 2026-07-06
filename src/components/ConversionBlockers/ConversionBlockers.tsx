@@ -62,7 +62,7 @@ export function ConversionBlockers({
 
   return (
     <Panel
-      eyebrow="§ 2 Message Intelligence"
+      eyebrow="Sales & conversion"
       title="Ecommerce conversion blockers"
       description="Where guests get stuck in the buy + account flow — the friction that costs sales."
     >

@@ -41,7 +41,7 @@ export function ConversionPulse({
 
   return (
     <Panel
-      eyebrow="§ 1 Conversation Core"
+      eyebrow="Sales & conversion"
       title="Conversion pulse"
       description="Bot-attributed conversion activity from status=CONVERTED — a revenue-assist signal."
       action={action}

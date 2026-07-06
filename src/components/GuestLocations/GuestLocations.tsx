@@ -29,7 +29,7 @@ export function GuestLocations({
   const empty = totalLocated === 0 || (cities.length === 0 && markets.length === 0)
   return (
     <Panel
-      eyebrow="§ 4 Behavioral Context"
+      eyebrow="Your guests"
       title="Guest locations"
       description="Where your guests are, from their IP at session start. Click a city to read those conversations."
     >

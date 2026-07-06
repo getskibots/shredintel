@@ -91,9 +91,9 @@ export function ConversationCounts({
 
   return (
     <Panel
-      eyebrow="§ 1 Conversation Core"
-      title="Conversation funnel"
-      description="Visitors → conversations → engaged → real questions. Users matches the “Active users” count in your admin."
+      eyebrow="Overview"
+      title="Activity & engagement"
+      description="How many visitors turn into real conversations: visitors → conversations → engaged → real questions. “Users” matches the Active-users count in your admin."
     >
       {empty ? (
         <EmptyState

@@ -15,7 +15,7 @@ export function LeadCaptureFunnel({
 
   return (
     <Panel
-      eyebrow="§ 3 User Identity"
+      eyebrow="Your guests"
       title="Lead capture funnel"
       description="Lead visibility from chat traffic — aggregate counts only."
       action={

@@ -35,7 +35,7 @@ export function GuestIdentitySplit({
 
   return (
     <Panel
-      eyebrow="§ 3 User Identity"
+      eyebrow="Your guests"
       title="Known vs anonymous guests"
       description="How much chat traffic can be tied to an identifiable or contactable guest? Aggregates only — no personal data."
     >

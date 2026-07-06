@@ -15,7 +15,7 @@ export function KnowledgeSectionDemand({ sections, botId, range }: KnowledgeSect
   const empty = !sections || sections.length === 0
   return (
     <Panel
-      eyebrow="§ 2 Message Intelligence"
+      eyebrow="What guests ask about"
       title="Knowledge section demand"
       description="What guests ask about, mapped to your resort knowledge sections. Click a section to read the chats."
     >

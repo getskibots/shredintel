@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { X, Loader2, ChevronRight, Globe, Bot, User } from 'lucide-react'
+import { X, Loader2, ChevronRight, Globe, Bot, User, MapPin } from 'lucide-react'
 import { getSupabase } from '../../lib/supabase'
 import { sentimentColors } from '../../lib/chartTheme'
 import { DRILL_DIMENSIONS, humanLabel, type DrillPayload } from '../../lib/drill'
@@ -18,7 +18,7 @@ import { RichText } from '../shared'
  * comes from the bot-scoped, PII-scrubbed /api/transcript.
  */
 
-interface ConvRow { bot_id: number; conversation_id: number; topic: string | null; sentiment: string | null; day: string; started_local: string | null; duration_sec: number | null; page_path: string | null }
+interface ConvRow { bot_id: number; conversation_id: number; topic: string | null; sentiment: string | null; day: string; started_local: string | null; duration_sec: number | null; page_path: string | null; city: string | null; region: string | null; country_iso: string | null }
 interface Msg { sender: string; text: string }
 
 // page_path is host+path (query string already stripped). Drop a leading "www."
@@ -109,13 +109,14 @@ export function ConversationExplorer({
       let q: any = sb
         .schema('report')
         .from('conversation_time')
-        .select('bot_id, conversation_id, topic, sentiment, day, started_local, duration_sec, page_path', { count: 'exact' })
+        .select('bot_id, conversation_id, topic, sentiment, day, started_local, duration_sec, page_path, city, region, country_iso', { count: 'exact' })
         .eq('bot_id', p.botId)
         .eq('substantive', true)
       if (p.section) q = q.ilike('section', p.section)
       if (p.pinchpoint) q = q.ilike('pinchpoint', p.pinchpoint)
       if (p.funnel_stage) q = q.eq('funnel_stage', p.funnel_stage)
       if (p.topic) q = q.ilike('topic', `%${p.topic}%`)
+      if (p.city) q = q.eq('city', p.city)
       if (p.day) q = q.eq('day', p.day)
       if (from && to) q = q.gte('day', from).lte('day', to)
       // Sentiment: a locked sentiment (drill target) wins; otherwise the toggle.
@@ -130,7 +131,7 @@ export function ConversationExplorer({
     })()
     return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [p.botId, p.section, p.pinchpoint, p.sentiment, p.funnel_stage, p.topic, p.day, from, to, sentFilter])
+  }, [p.botId, p.section, p.pinchpoint, p.sentiment, p.funnel_stage, p.topic, p.city, p.day, from, to, sentFilter])
 
   async function openConv(cid: number) {
     if (openCid === cid) { setOpenCid(null); setTranscript(null); return }
@@ -254,9 +255,18 @@ export function ConversationExplorer({
                   </button>
                   {openCid === r.conversation_id && (
                     <div className="border-t border-slate-100 bg-slate-50/60 px-3 py-3">
-                      {fmtDur(r.duration_sec) ? (
-                        <div className="mb-2.5 border-b border-slate-100 pb-2 text-[11px] font-medium text-slate-400">
-                          {fmtDur(r.duration_sec)} conversation
+                      {(fmtDur(r.duration_sec) || r.city) ? (
+                        <div className="mb-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-slate-100 pb-2 text-[11px]">
+                          {fmtDur(r.duration_sec) ? (
+                            <span className="font-medium text-slate-400">{fmtDur(r.duration_sec)} conversation</span>
+                          ) : null}
+                          {r.city ? (
+                            <span className="inline-flex items-center gap-1 text-slate-500">
+                              <MapPin className="h-3 w-3 shrink-0 text-slate-400" />
+                              <span className="font-medium text-slate-700">{[r.city, r.region].filter(Boolean).join(', ')}</span>
+                              {r.country_iso ? <span className="text-slate-400">· {r.country_iso}</span> : null}
+                            </span>
+                          ) : null}
                         </div>
                       ) : null}
                       {loadingT ? (

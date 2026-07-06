@@ -149,6 +149,31 @@ export interface PageIntelRow {
   negative?: number
 }
 
+/**
+ * report.geo_country / report.geo_city — guest location breakdowns (from the
+ * offline IP→GeoLite2 enrichment), scoped to substantive conversations. NO raw
+ * IP: only country/region/city + a centroid lat/lon. Empty until the geo views
+ * are built (non-fatal, like the page views).
+ */
+export interface GeoCountryRow {
+  bot_id: number
+  day: string
+  country_iso: string
+  country_name: string | null
+  conversations: number
+}
+
+export interface GeoCityRow {
+  bot_id: number
+  day: string
+  country_iso: string | null
+  region: string | null
+  city: string
+  lat: number | null
+  lon: number | null
+  conversations: number
+}
+
 export interface LiveBundle {
   outcomeTimeline: OutcomeRow[]
   conversionPulse: ConversionRow[]
@@ -169,6 +194,9 @@ export interface LiveBundle {
   pageSection: PageIntelRow[]
   pagePinchpoint: PageIntelRow[]
   pageSentiment: PageIntelRow[]
+  /** Guest location breakdowns (offline IP→geo). Empty until geo views exist. */
+  geoCountry: GeoCountryRow[]
+  geoCity: GeoCityRow[]
   /** Distinct users in the window (report.active_users RPC) — matches the
    *  Botscrew admin "Active users" count. null if the RPC isn't available. */
   activeUsers: number | null
@@ -219,7 +247,7 @@ export async function fetchLiveBundle(
 
   try {
     const [outcome, conversion, knowledge, sender, identity, funnel, device, heatmap, depth,
-           iSection, iPinch, iSent, pFunnel, pSection, pPinch, pSent, users] =
+           iSection, iPinch, iSent, pFunnel, pSection, pPinch, pSent, gCountry, gCity, users] =
       await withTimeout(Promise.all([
         q<OutcomeRow>('outcome_timeline'),
         q<ConversionRow>('conversion_pulse'),
@@ -237,6 +265,8 @@ export async function fetchLiveBundle(
         q<PageIntelRow>('page_section'),
         q<PageIntelRow>('page_pinchpoint'),
         q<PageIntelRow>('page_sentiment'),
+        q<GeoCountryRow>('geo_country'),
+        q<GeoCityRow>('geo_city'),
         usersRpc,
       ]))
 
@@ -275,6 +305,9 @@ export async function fetchLiveBundle(
       pageSection: pSection.error ? [] : (pSection.data ?? []),
       pagePinchpoint: pPinch.error ? [] : (pPinch.data ?? []),
       pageSentiment: pSent.error ? [] : (pSent.data ?? []),
+      // geo views — newest; non-fatal (empty → no Guest locations card)
+      geoCountry: gCountry.error ? [] : (gCountry.data ?? []),
+      geoCity: gCity.error ? [] : (gCity.data ?? []),
       // active_users RPC — non-fatal; null falls back to no Users tile
       activeUsers: users.error || users.data == null ? null : Number(users.data),
     }

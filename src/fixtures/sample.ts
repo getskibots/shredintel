@@ -16,6 +16,7 @@ import type {
   FrictionPage,
   FunnelRow,
   GuestIdentitySplitProps,
+  GuestLocationsProps,
   HourBucket,
   IntentBreakdown,
   KnowledgeGap,
@@ -537,6 +538,7 @@ export interface PeriodFixtures {
   frictionPages: FrictionPage[]
   knowledgeGaps: KnowledgeGap[]
   deviceExperienceMix: DeviceExperienceMixProps
+  guestLocations: GuestLocationsProps
   demandHeatmap: DemandHeatmapProps
 }
 
@@ -950,6 +952,27 @@ export function buildPeriodFixturesForDays(
     mobileShareDelta: 0.018,
   }
 
+  // ── Guest locations (offline IP → geo; demo mirrors real JH shape) ──
+  const guestLocations: GuestLocationsProps = {
+    totalLocated: Math.round(20545 * scale),
+    countryCount: 42,
+    markets: [
+      { label: 'United States', conversations: Math.round(19432 * scale), share: 0.946 },
+      { label: 'Canada', conversations: Math.round(215 * scale), share: 0.010 },
+      { label: 'International', conversations: Math.round(898 * scale), share: 0.044 },
+    ],
+    cities: [
+      { label: 'Jackson, WY', conversations: Math.round(2145 * scale), share: 0.104 },
+      { label: 'Denver, CO', conversations: Math.round(934 * scale), share: 0.045 },
+      { label: 'New York, NY', conversations: Math.round(701 * scale), share: 0.034 },
+      { label: 'Idaho Falls, ID', conversations: Math.round(524 * scale), share: 0.026 },
+      { label: 'Missoula, MT', conversations: Math.round(417 * scale), share: 0.020 },
+      { label: 'Salt Lake City, UT', conversations: Math.round(360 * scale), share: 0.018 },
+      { label: 'Phoenix, AZ', conversations: Math.round(319 * scale), share: 0.016 },
+      { label: 'Chicago, IL', conversations: Math.round(260 * scale), share: 0.013 },
+    ],
+  }
+
   // ── Demand heatmap (scale every cell) ──────────────────────────────
   const HEATMAP_DAYS2: DayOfWeek[] = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
   const HEATMAP_BUCKETS2: TimeBucket[] = [
@@ -1013,6 +1036,7 @@ export function buildPeriodFixturesForDays(
     frictionPages,
     knowledgeGaps,
     deviceExperienceMix,
+    guestLocations,
     demandHeatmap,
   }
 }

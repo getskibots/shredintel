@@ -592,6 +592,38 @@ function overlayJHChatLive(base: PeriodFixtures, live: LiveBundle, pageStage?: s
     }
   }
 
+  // § 4 — Guest locations (offline IP → geo). Market split from geo_country,
+  // top cities from geo_city (aggregated across the window's days).
+  if (live.geoCountry.length > 0 || live.geoCity.length > 0) {
+    const perCountry = new Map<string, number>()
+    for (const r of live.geoCountry) perCountry.set(r.country_iso, (perCountry.get(r.country_iso) ?? 0) + Number(r.conversations))
+    const totalLocated = [...perCountry.values()].reduce((s, v) => s + v, 0)
+    const us = perCountry.get('US') ?? 0
+    const ca = perCountry.get('CA') ?? 0
+    const intl = totalLocated - us - ca
+    const share = (n: number) => (totalLocated > 0 ? n / totalLocated : 0)
+    const markets = [
+      { label: 'United States', conversations: us, share: share(us) },
+      { label: 'Canada', conversations: ca, share: share(ca) },
+      { label: 'International', conversations: intl, share: share(intl) },
+    ].filter((m) => m.conversations > 0)
+
+    // Cities keyed by "City, Region" for display; the drill parses the city out.
+    const perCity = new Map<string, number>()
+    for (const r of live.geoCity) {
+      const label = r.region ? `${r.city}, ${r.region}` : r.city
+      perCity.set(label, (perCity.get(label) ?? 0) + Number(r.conversations))
+    }
+    const cities = [...perCity.entries()]
+      .map(([label, n]) => ({ label, conversations: n, share: share(n) }))
+      .sort((a, b) => b.conversations - a.conversations)
+      .slice(0, 12)
+
+    if (totalLocated > 0) {
+      out.guestLocations = { cities, markets, totalLocated, countryCount: perCountry.size }
+    }
+  }
+
   // § 4 — Demand heatmap
   if (live.demandHeatmap.length > 0) {
     const cellMap = new Map<string, { conversations: number; userMessages: number }>()

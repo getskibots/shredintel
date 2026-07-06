@@ -334,6 +334,16 @@ export interface DeviceExperienceMixProps {
   mobileShareDelta?: number
 }
 
+// § 4 — Guest locations (offline IP → GeoLite2). Cities are BreakdownItems so
+// they drill to the conversations like the other breakdowns; markets is the
+// US / Canada / International split. Scoped to substantive = real guests.
+export interface GuestLocationsProps {
+  cities: BreakdownItem[]
+  markets: BreakdownItem[]
+  totalLocated: number
+  countryCount: number
+}
+
 // § 4 — DemandHeatmap
 
 export type DayOfWeek = 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat' | 'Sun'

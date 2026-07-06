@@ -9,7 +9,7 @@
  */
 
 /** Contract dimensions a datum can carry, in drill precedence order. */
-export const DRILL_DIMENSIONS = ['section', 'pinchpoint', 'sentiment', 'funnel_stage', 'topic', 'day'] as const
+export const DRILL_DIMENSIONS = ['section', 'pinchpoint', 'sentiment', 'funnel_stage', 'topic', 'city', 'day'] as const
 export type DrillDimension = (typeof DRILL_DIMENSIONS)[number]
 
 export interface DrillPayload {
@@ -21,6 +21,7 @@ export interface DrillPayload {
   sentiment?: string
   funnel_stage?: string
   topic?: string
+  city?: string
   day?: string
 }
 
@@ -31,6 +32,7 @@ export const FIELD_LABELS: Record<string, string> = {
   sentiment: 'Sentiment',
   funnel_stage: 'Funnel stage',
   topic: 'Topic',
+  city: 'City',
   day: 'Day',
   conversations: 'Conversations',
   negative: 'Frustrated',

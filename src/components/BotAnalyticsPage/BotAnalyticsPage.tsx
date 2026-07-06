@@ -10,6 +10,7 @@ import { GuestSentiment } from '../GuestSentiment'
 import { KnowledgeSectionDemand } from '../KnowledgeSectionDemand'
 import { DemandHeatmap } from '../DemandHeatmap'
 import { DeviceExperienceMix } from '../DeviceExperienceMix'
+import { GuestLocations } from '../GuestLocations'
 import { GuestIdentitySplit } from '../GuestIdentitySplit'
 import { KnowledgeSourceLeaderboard } from '../KnowledgeSourceLeaderboard'
 import { LeadCaptureFunnel } from '../LeadCaptureFunnel'
@@ -145,6 +146,7 @@ export function BotAnalyticsPage() {
             </section>
 
             <section id="context" className="scroll-mt-40 space-y-5">
+              <GuestLocations {...f.guestLocations} botId={botId} range={askRange} />
               <DeviceExperienceMix {...f.deviceExperienceMix} />
               <DemandHeatmap {...f.demandHeatmap} />
             </section>

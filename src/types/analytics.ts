@@ -271,6 +271,18 @@ export interface KnowledgeSourceLeaderboardProps {
   topSources: KnowledgeSourceItem[]
 }
 
+// Where the bot's answers come from, by Botscrew Knowledge Layer (the exact
+// layers the resort manages in their admin) + Failed. From report.knowledge_layer_mix.
+export interface KnowledgeLayerDatum {
+  /** 'Text Edits' | 'Website' | 'Instructions' | 'Files' | 'Failed' */
+  layer: string
+  answers: number
+}
+
+export interface KnowledgeLayersProps {
+  layers: KnowledgeLayerDatum[]
+}
+
 // § 2 — SenderMixStack
 
 export interface SenderMixPoint {

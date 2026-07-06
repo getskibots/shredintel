@@ -434,6 +434,18 @@ function overlayJHChatLive(base: PeriodFixtures, live: LiveBundle, pageStage?: s
     }
   }
 
+  // § 2 — Knowledge layers: where answers come from, by Botscrew Knowledge Layer
+  if (live.knowledgeLayerMix.length > 0) {
+    const byLayer = new Map<string, number>()
+    for (const r of live.knowledgeLayerMix) {
+      byLayer.set(r.layer, (byLayer.get(r.layer) ?? 0) + r.answers)
+    }
+    const layers = [...byLayer.entries()]
+      .map(([layer, answers]) => ({ layer, answers }))
+      .sort((a, b) => b.answers - a.answers)
+    if (layers.length > 0) out.knowledgeLayers = { layers }
+  }
+
   // § 2 — Sender mix
   if (live.senderMixStack.length > 0) {
     const data = live.senderMixStack.map((r) => ({

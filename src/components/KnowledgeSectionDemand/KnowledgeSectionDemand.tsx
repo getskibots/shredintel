@@ -1,75 +1,88 @@
 import { useState } from 'react'
-import { ChevronRight } from 'lucide-react'
 import { BreakdownBars } from '../BreakdownBars'
 import { ConversationExplorer } from '../ConversationExplorer'
 import { EmptyState, Panel } from '../shared'
 import { formatNumber, formatPercent } from '../../lib/formatters'
 import type {
   KnowledgeSectionDemandProps,
-  KnowledgeSourceLeaderboardProps,
+  KnowledgeLayersProps,
 } from '../../types/analytics'
 
 export type { KnowledgeSectionDemandProps } from '../../types/analytics'
 
+// The Botscrew "Knowledge Layers" the resort manages, + Failed. Grounded =
+// answered from an actual retrieved source (Text Edits / Website / Files);
+// Instructions = answered from the prompt with no retrieved entry.
+const LAYER_ORDER = ['Text Edits', 'Website', 'Files', 'Instructions', 'Failed']
+const LAYER_COLOR: Record<string, string> = {
+  'Text Edits': '#1D9E75', // teal — curated Q&A knowledge
+  Website: '#2182BF', // brand blue — crawled pages
+  Files: '#EF9F27', // amber — uploaded docs
+  Instructions: '#7F77DD', // purple — prompt-only (no retrieved source)
+  Failed: '#DC5B3B', // coral — couldn't answer
+}
+const GROUNDED = new Set(['Text Edits', 'Website', 'Files'])
+
 /**
  * Consolidated Knowledge card. Demand-by-topic (report.intel_section) is the
- * headline; answer coverage (report.knowledge_source_leaderboard — how many bot
- * answers came from a KB source vs. none) is folded in beneath it, with the
- * biggest knowledge gap called out top-right.
+ * headline; "Where answers come from" — the mix of Botscrew Knowledge Layers
+ * (report.knowledge_layer_mix) — sits beneath it, with the grounding rate
+ * called out top-right.
  *
- * The per-TOPIC coverage cut ("Tickets = 24% of demand but 40% unsourced")
- * lands in a follow-up (needs a topic×source joined view); for now coverage is
- * aggregate. The verbatim matched-entry leaderboard is demoted to an expander —
- * it reads as raw guest queries, so it largely duplicates the demand bars.
+ * Grounding rate = share answered from a real retrieved source (Text Edits +
+ * Website + Files) vs. the prompt alone (Instructions) or a failure. Per-TOPIC
+ * layer mix + per-source drill land in a follow-up pass.
  */
 export function KnowledgeSectionDemand({
   sections,
-  coverage,
+  layers,
   botId,
   range,
 }: KnowledgeSectionDemandProps & {
-  coverage?: KnowledgeSourceLeaderboardProps
+  layers?: KnowledgeLayersProps
   botId?: number
   range?: { from: string; to: string }
 }) {
   const [drill, setDrill] = useState<string | null>(null)
-  const [showEntries, setShowEntries] = useState(false)
   const empty = !sections || sections.length === 0
 
-  const total = coverage ? coverage.sourcedBotMessages + coverage.unsourcedBotMessages : 0
-  const cov = coverage && total > 0 ? coverage : null
-  const sourcedShare = cov && total > 0 ? cov.sourcedBotMessages / total : 0
-  const heavyGap = (cov?.knowledgeGapRate ?? 0) > 0.3
-  const maxEntry = cov ? Math.max(1, ...cov.topSources.map((s) => s.botMessageCount)) : 1
+  const ld = layers && layers.layers.length > 0 ? layers.layers : null
+  const total = ld ? ld.reduce((s, l) => s + l.answers, 0) : 0
+  const grounded = ld ? ld.filter((l) => GROUNDED.has(l.layer)).reduce((s, l) => s + l.answers, 0) : 0
+  const groundingRate = total > 0 ? grounded / total : 0
+  const solidGrounding = groundingRate >= 0.7
+  const ordered = ld
+    ? [...ld].sort((a, b) => LAYER_ORDER.indexOf(a.layer) - LAYER_ORDER.indexOf(b.layer))
+    : []
 
   return (
     <Panel
       eyebrow="Knowledge"
       title="What guests ask about"
-      description="Every substantive chat mapped to a resort knowledge topic — plus how many answers came from your knowledge base vs. none at all. Click a topic to read the chats."
+      description="Every substantive chat mapped to a resort knowledge topic — plus which knowledge layer answered it (Text Edits, Website, Files, or the prompt). Click a topic to read the chats."
       action={
-        cov ? (
+        ld ? (
           <div
             className={[
               'rounded-2xl px-4 py-2 text-right',
-              heavyGap ? 'border border-amber-200 bg-amber-50/70' : 'border border-emerald-200 bg-emerald-50/70',
+              solidGrounding ? 'border border-emerald-200 bg-emerald-50/70' : 'border border-amber-200 bg-amber-50/70',
             ].join(' ')}
           >
             <div
               className={[
                 'text-[10px] font-semibold uppercase tracking-wider',
-                heavyGap ? 'text-amber-700' : 'text-emerald-700',
+                solidGrounding ? 'text-emerald-700' : 'text-amber-700',
               ].join(' ')}
             >
-              Knowledge-gap rate
+              Grounding rate
             </div>
             <div
               className={[
                 'mt-0.5 font-display text-2xl font-semibold tabular-nums',
-                heavyGap ? 'text-amber-700' : 'text-emerald-700',
+                solidGrounding ? 'text-emerald-700' : 'text-amber-700',
               ].join(' ')}
             >
-              {formatPercent(cov.knowledgeGapRate)}
+              {formatPercent(groundingRate)}
             </div>
           </div>
         ) : undefined
@@ -84,73 +97,37 @@ export function KnowledgeSectionDemand({
         <>
           <BreakdownBars items={sections} max={12} onSelect={botId ? setDrill : undefined} />
 
-          {cov && (
+          {ld && total > 0 && (
             <div className="mt-6 border-t border-slate-100 pt-5">
               <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-800">
-                Answer coverage
-                <span className="text-xs font-normal text-slate-400">
-                  — how many answers came from your knowledge base
-                </span>
+                Where answers come from
+                <span className="text-xs font-normal text-slate-400">— by knowledge layer</span>
               </div>
-              <div
-                className="flex h-2.5 w-full overflow-hidden rounded-full bg-slate-100"
-                title={`${formatPercent(sourcedShare)} of answers came from a KB source`}
-              >
-                <div className="h-full rounded-full bg-emerald-500" style={{ width: `${sourcedShare * 100}%` }} />
+              <div className="flex h-6 w-full overflow-hidden rounded-lg">
+                {ordered.map((l) =>
+                  l.answers > 0 ? (
+                    <div
+                      key={l.layer}
+                      title={`${l.layer}: ${formatNumber(l.answers)} (${formatPercent(l.answers / total)})`}
+                      style={{ width: `${(l.answers / total) * 100}%`, backgroundColor: LAYER_COLOR[l.layer] ?? '#94A3B8' }}
+                    />
+                  ) : null,
+                )}
               </div>
-              <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 text-xs">
-                <span className="font-semibold text-emerald-700">
-                  {formatNumber(cov.sourcedBotMessages)} sourced{' '}
-                  <span className="font-normal text-slate-400">from a KB reference</span>
-                </span>
-                <span className="text-slate-500">
-                  <span className="font-semibold text-slate-700">{formatNumber(cov.unsourcedBotMessages)}</span>{' '}
-                  unsourced ({formatPercent(cov.knowledgeGapRate)})
-                </span>
+              <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 text-xs">
+                {ordered.map((l) => (
+                  <span key={l.layer} className="inline-flex items-center gap-1.5 text-slate-600">
+                    <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: LAYER_COLOR[l.layer] ?? '#94A3B8' }} />
+                    {l.layer}{' '}
+                    <span className="font-semibold tabular-nums text-slate-800">{formatPercent(l.answers / total)}</span>
+                    <span className="tabular-nums text-slate-400">({formatNumber(l.answers)})</span>
+                  </span>
+                ))}
               </div>
-
-              {cov.topSources.length > 0 && (
-                <div className="mt-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowEntries((s) => !s)}
-                    aria-expanded={showEntries}
-                    className="flex items-center gap-1.5 text-sm font-medium text-slate-600 transition hover:text-slate-900"
-                  >
-                    <ChevronRight className={`h-4 w-4 text-slate-400 transition ${showEntries ? 'rotate-90' : ''}`} />
-                    Top answered entries
-                    <span className="text-xs font-normal text-slate-400">({cov.topSources.length})</span>
-                  </button>
-                  {showEntries && (
-                    <ul className="mt-3 space-y-2">
-                      {cov.topSources.map((s) => (
-                        <li
-                          key={s.sourceName}
-                          className="grid grid-cols-[1fr_auto] items-center gap-3 sm:grid-cols-[16rem_1fr_auto]"
-                        >
-                          <div className="truncate text-sm text-slate-700" title={s.sourceName}>
-                            {s.sourceName}
-                          </div>
-                          <div className="relative hidden h-4 overflow-hidden rounded bg-slate-100 sm:block">
-                            <div
-                              className="absolute inset-y-0 left-0 rounded bg-emerald-400"
-                              style={{ width: `${(s.botMessageCount / maxEntry) * 100}%` }}
-                            />
-                          </div>
-                          <div className="flex items-baseline gap-2 text-right">
-                            <span className="text-sm font-semibold tabular-nums text-slate-700">
-                              {formatNumber(s.botMessageCount)}
-                            </span>
-                            <span className="text-xs tabular-nums text-slate-400">
-                              {formatPercent(s.shareOfAllBotMessages)}
-                            </span>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              )}
+              <p className="mt-3 text-xs text-slate-400">
+                Grounded ({formatPercent(groundingRate)}) = answered from a retrieved source. “Instructions” = answered
+                from the prompt with no source — the fill opportunity.
+              </p>
             </div>
           )}
         </>

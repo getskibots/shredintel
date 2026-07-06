@@ -152,7 +152,7 @@ export function BotAnalyticsPage() {
             <section id="questions" className="scroll-mt-40 space-y-5">
               <KnowledgeSectionDemand
                 {...f.knowledgeSectionDemand}
-                coverage={f.knowledgeSourceLeaderboard}
+                layers={f.knowledgeLayers}
                 botId={botId}
                 range={askRange}
               />

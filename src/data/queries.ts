@@ -174,10 +174,22 @@ export interface GeoCityRow {
   conversations: number
 }
 
+/** report.knowledge_layer_mix — where the bot's answers come from, by the
+ *  Botscrew Knowledge Layer the resort manages (Text Edits / Website / Files /
+ *  Instructions), plus Failed. One row per (bot, day, layer). */
+export interface KnowledgeLayerRow {
+  bot_id: number
+  day: string
+  layer: string
+  answers: number
+}
+
 export interface LiveBundle {
   outcomeTimeline: OutcomeRow[]
   conversionPulse: ConversionRow[]
   knowledgeSourceLeaderboard: KnowledgeSourceRow[]
+  /** Answer-source mix by Knowledge Layer. Non-fatal (empty → no layer card). */
+  knowledgeLayerMix: KnowledgeLayerRow[]
   senderMixStack: SenderMixRow[]
   guestIdentitySplit: GuestIdentityRow[]
   leadCaptureFunnel: LeadCaptureRow[]
@@ -249,7 +261,7 @@ export async function fetchLiveBundle(
 
   try {
     const [outcome, conversion, knowledge, sender, identity, funnel, device, heatmap, depth,
-           iSection, iPinch, iSent, iHand, pFunnel, pSection, pPinch, pSent, gCountry, gCity, users] =
+           iSection, iPinch, iSent, iHand, pFunnel, pSection, pPinch, pSent, gCountry, gCity, kLayer, users] =
       await withTimeout(Promise.all([
         q<OutcomeRow>('outcome_timeline'),
         q<ConversionRow>('conversion_pulse'),
@@ -270,6 +282,7 @@ export async function fetchLiveBundle(
         q<PageIntelRow>('page_sentiment'),
         q<GeoCountryRow>('geo_country'),
         q<GeoCityRow>('geo_city'),
+        q<KnowledgeLayerRow>('knowledge_layer_mix'),
         usersRpc,
       ]))
 
@@ -293,6 +306,7 @@ export async function fetchLiveBundle(
       outcomeTimeline: outcome.data ?? [],
       conversionPulse: conversion.data ?? [],
       knowledgeSourceLeaderboard: knowledge.data ?? [],
+      knowledgeLayerMix: kLayer.error ? [] : (kLayer.data ?? []),
       senderMixStack: sender.data ?? [],
       guestIdentitySplit: identity.data ?? [],
       leadCaptureFunnel: funnel.data ?? [],

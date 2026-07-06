@@ -21,6 +21,7 @@ import type {
   IntentBreakdown,
   KnowledgeGap,
   KnowledgeSourceLeaderboardProps,
+  KnowledgeLayersProps,
   KnowledgeSectionDemandProps,
   ConversionBlockersProps,
   GuestSentimentProps,
@@ -530,6 +531,7 @@ export interface PeriodFixtures {
   outcomeTimeline: OutcomeTimelineProps
   conversionPulse: ConversionPulseProps
   knowledgeSourceLeaderboard: KnowledgeSourceLeaderboardProps
+  knowledgeLayers: KnowledgeLayersProps
   senderMixStack: SenderMixStackProps
   knowledgeSectionDemand: KnowledgeSectionDemandProps
   conversionBlockers: ConversionBlockersProps
@@ -767,6 +769,20 @@ export function buildPeriodFixturesForDays(
         delta: [0.04, 0.02, 0.018, -0.005, -0.012, 0.001, 0.022][i],
       }
     }),
+  }
+
+  // ── Knowledge layers (where answers come from) ─────────────────────
+  // Demo shape mirrors JH: Text Edits dominant, Website next, ~18% Instructions
+  // (prompt-only), tiny Files, ~1% Failed. Grounding ≈ 81%.
+  const kbTotal = sourcedBotMsgs + unsourcedBotMsgs
+  const knowledgeLayers: KnowledgeLayersProps = {
+    layers: [
+      { layer: 'Text Edits', answers: Math.round(kbTotal * 0.548) },
+      { layer: 'Website', answers: Math.round(kbTotal * 0.256) },
+      { layer: 'Instructions', answers: Math.round(kbTotal * 0.18) },
+      { layer: 'Failed', answers: Math.round(kbTotal * 0.011) },
+      { layer: 'Files', answers: Math.round(kbTotal * 0.005) },
+    ],
   }
 
   // ── Sender mix ──────────────────────────────────────────────────────
@@ -1060,6 +1076,7 @@ export function buildPeriodFixturesForDays(
     outcomeTimeline,
     conversionPulse,
     knowledgeSourceLeaderboard,
+    knowledgeLayers,
     senderMixStack,
     knowledgeSectionDemand,
     conversionBlockers,

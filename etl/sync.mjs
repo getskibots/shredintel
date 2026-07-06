@@ -47,6 +47,7 @@ const MATVIEWS = [
   'demand_heatmap',
   'conversation_depth', // §1 Extended Conversation Counts (built by build-conversation-depth.mjs)
   'conversation_page',  // page/URL → ecommerce funnel stage (built by build-page-funnel.mjs)
+  'conversation_time',  // resort-local time-spine per conversation (built by build-conversation-time.mjs)
 ]
 
 // ── tiny logger ───────────────────────────────────────────────────

@@ -11,13 +11,33 @@ import { DRILL_DIMENSIONS, humanLabel, type DrillPayload } from '../../lib/drill
  * single-dimension `filter` prop is still accepted and normalized to a payload,
  * so existing callers keep working.
  *
- * Conversation list comes from report.conversation_intel (or conversation_page
- * when a funnel_stage is in play — it carries the stage column), anon-readable;
- * the transcript comes from the bot-scoped, PII-scrubbed /api/transcript.
+ * Conversation list comes from report.conversation_time (the resort-local time-
+ * spine — a superset carrying every drill dimension PLUS started_local/duration,
+ * so each conversation shows WHEN it happened), anon-readable; the transcript
+ * comes from the bot-scoped, PII-scrubbed /api/transcript.
  */
 
-interface ConvRow { bot_id: number; conversation_id: number; topic: string | null; sentiment: string | null; day: string }
+interface ConvRow { bot_id: number; conversation_id: number; topic: string | null; sentiment: string | null; day: string; started_local: string | null; duration_sec: number | null }
 interface Msg { sender: string; text: string }
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+// started_local is a tz-less resort-local wall-clock ("2026-07-05T13:18:…") — format
+// from the string parts so no browser-timezone shift creeps in.
+function fmtStamp(s: string | null, withYear = false): string {
+  const m = s && /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/.exec(s)
+  if (!m) return ''
+  const [, y, mo, d, hh, mm] = m
+  let h = parseInt(hh, 10)
+  const ap = h >= 12 ? 'PM' : 'AM'
+  h = h % 12 || 12
+  return `${MONTHS[+mo - 1]} ${+d}${withYear ? ', ' + y : ''} · ${h}:${mm} ${ap}`
+}
+function fmtDur(sec: number | null): string {
+  if (!sec || sec < 1) return ''
+  if (sec < 60) return `${sec}s`
+  if (sec < 3600) return `${Math.round(sec / 60)} min`
+  return `${(sec / 3600).toFixed(1)} h`
+}
 
 type LegacyFilter = { dim: 'section' | 'pinchpoint' | 'sentiment' | 'stage'; value: string; label: string }
 
@@ -76,13 +96,13 @@ export function ConversationExplorer({
     ;(async () => {
       const sb = getSupabase()
       if (!sb) { setRows([]); setCount(0); return }
-      // conversation_page carries funnel_stage; conversation_intel is broader coverage.
-      const table = p.funnel_stage != null ? 'conversation_page' : 'conversation_intel'
+      // conversation_time is the local time-spine superset — every drill dimension
+      // PLUS started_local/duration, so each conversation shows when it happened.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let q: any = sb
         .schema('report')
-        .from(table)
-        .select('bot_id, conversation_id, topic, sentiment, day', { count: 'exact' })
+        .from('conversation_time')
+        .select('bot_id, conversation_id, topic, sentiment, day, started_local, duration_sec', { count: 'exact' })
         .eq('bot_id', p.botId)
         .eq('substantive', true)
       if (p.section) q = q.ilike('section', p.section)
@@ -95,7 +115,7 @@ export function ConversationExplorer({
       if (lockedSentiment) q = q.eq('sentiment', lockedSentiment)
       else if (sentFilter !== 'all') q = q.eq('sentiment', sentFilter)
 
-      const { data, count: total } = await q.order('day', { ascending: false }).limit(LIST_CAP)
+      const { data, count: total } = await q.order('started_at', { ascending: false }).limit(LIST_CAP)
       if (!cancelled) {
         setRows((data as ConvRow[]) ?? [])
         setCount(total ?? (data?.length ?? 0))
@@ -185,6 +205,11 @@ export function ConversationExplorer({
                     <span className="min-w-0 flex-1 truncate text-sm text-slate-700">
                       {r.topic || `Conversation ${r.conversation_id}`}
                     </span>
+                    {r.started_local && (
+                      <span className="hidden shrink-0 text-[11px] tabular-nums text-slate-400 sm:inline" title={fmtStamp(r.started_local, true)}>
+                        {fmtStamp(r.started_local)}
+                      </span>
+                    )}
                     {r.sentiment && (
                       <span
                         className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold"
@@ -197,7 +222,10 @@ export function ConversationExplorer({
                   {openCid === r.conversation_id && (
                     <div className="border-t border-slate-100 bg-slate-50/60 px-3 py-3">
                       <div className="mb-2.5 flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
-                        <span className="text-[11px] font-medium text-slate-400">Conversation {r.conversation_id}</span>
+                        <span className="text-[11px] font-medium text-slate-500">
+                          {r.started_local ? fmtStamp(r.started_local, true) : `Conversation ${r.conversation_id}`}
+                          {fmtDur(r.duration_sec) ? <span className="text-slate-400"> · {fmtDur(r.duration_sec)}</span> : null}
+                        </span>
                         <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400">
                           Open full conversation
                           <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">Soon</span>

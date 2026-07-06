@@ -49,6 +49,8 @@ const MATVIEWS = [
   'conversation_page',  // page/URL → ecommerce funnel stage (built by build-page-funnel.mjs)
   'conversation_time',  // resort-local time-spine per conversation (built by build-conversation-time.mjs)
   'conversation_geo',   // IP → location per conversation (built by build-geo-views.mjs; needs build-ip-geo.mjs first)
+  'knowledge_layer_mix',        // answer-source mix by Knowledge Layer (built by build-knowledge-layer.mjs)
+  'knowledge_layer_by_section', // per-topic answer-source mix (built by build-knowledge-layer.mjs)
 ]
 
 // ── tiny logger ───────────────────────────────────────────────────

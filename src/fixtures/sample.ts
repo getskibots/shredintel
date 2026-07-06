@@ -775,6 +775,17 @@ export function buildPeriodFixturesForDays(
   // Demo shape mirrors JH: Text Edits dominant, Website next, ~18% Instructions
   // (prompt-only), tiny Files, ~1% Failed. Grounding ≈ 81%.
   const kbTotal = sourcedBotMsgs + unsourcedBotMsgs
+  // Per-topic mix (fill-list): [section, base volume, Instructions share].
+  const demoTopics: Array<[string, number, number]> = [
+    ['Tickets', 3200, 0.14],
+    ['General Info', 1400, 0.19],
+    ['Season Passes', 1050, 0.11],
+    ['Ski & Snowboard Lessons', 990, 0.15],
+    ['Winter Activities', 800, 0.15],
+    ['Ecommerce / Account Management', 620, 0.15],
+    ['Dining & Après', 510, 0.18],
+    ['Refund Policies', 310, 0.11],
+  ]
   const knowledgeLayers: KnowledgeLayersProps = {
     layers: [
       { layer: 'Text Edits', answers: Math.round(kbTotal * 0.548) },
@@ -783,6 +794,26 @@ export function buildPeriodFixturesForDays(
       { layer: 'Failed', answers: Math.round(kbTotal * 0.011) },
       { layer: 'Files', answers: Math.round(kbTotal * 0.005) },
     ],
+    byTopic: demoTopics.map(([section, base, instr]) => {
+      const total = Math.max(1, Math.round(base * scale))
+      const failed = Math.round(total * 0.01)
+      const instructions = Math.round(total * instr)
+      const grounded = Math.max(0, total - instructions - failed)
+      const textEdits = Math.round(grounded * 0.68)
+      const website = Math.round(grounded * 0.3)
+      const files = Math.max(0, grounded - textEdits - website)
+      return {
+        section,
+        total,
+        layers: [
+          { layer: 'Text Edits', answers: textEdits },
+          { layer: 'Website', answers: website },
+          { layer: 'Files', answers: files },
+          { layer: 'Instructions', answers: instructions },
+          { layer: 'Failed', answers: failed },
+        ],
+      }
+    }),
   }
 
   // ── Sender mix ──────────────────────────────────────────────────────

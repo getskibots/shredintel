@@ -184,12 +184,24 @@ export interface KnowledgeLayerRow {
   answers: number
 }
 
+/** report.knowledge_layer_by_section — the same layer mix, split by knowledge
+ *  topic (the fill-list). One row per (bot, day, section, layer). */
+export interface KnowledgeLayerSectionRow {
+  bot_id: number
+  day: string
+  section: string
+  layer: string
+  answers: number
+}
+
 export interface LiveBundle {
   outcomeTimeline: OutcomeRow[]
   conversionPulse: ConversionRow[]
   knowledgeSourceLeaderboard: KnowledgeSourceRow[]
   /** Answer-source mix by Knowledge Layer. Non-fatal (empty → no layer card). */
   knowledgeLayerMix: KnowledgeLayerRow[]
+  /** The same mix split by topic — the fill-list. Non-fatal. */
+  knowledgeLayerBySection: KnowledgeLayerSectionRow[]
   senderMixStack: SenderMixRow[]
   guestIdentitySplit: GuestIdentityRow[]
   leadCaptureFunnel: LeadCaptureRow[]
@@ -221,7 +233,7 @@ export interface LiveBundle {
  * instead of hanging on "Loading…" forever when Supabase is slow or unreachable
  * (no per-request timeout otherwise — a stalled fetch would never resolve).
  */
-function withTimeout<T>(p: Promise<T>, ms = 9000): Promise<T> {
+function withTimeout<T>(p: Promise<T>, ms = 15000): Promise<T> {
   return Promise.race([
     p,
     new Promise<T>((_, reject) =>
@@ -261,7 +273,7 @@ export async function fetchLiveBundle(
 
   try {
     const [outcome, conversion, knowledge, sender, identity, funnel, device, heatmap, depth,
-           iSection, iPinch, iSent, iHand, pFunnel, pSection, pPinch, pSent, gCountry, gCity, kLayer, users] =
+           iSection, iPinch, iSent, iHand, pFunnel, pSection, pPinch, pSent, gCountry, gCity, kLayer, kLayerSec, users] =
       await withTimeout(Promise.all([
         q<OutcomeRow>('outcome_timeline'),
         q<ConversionRow>('conversion_pulse'),
@@ -283,14 +295,18 @@ export async function fetchLiveBundle(
         q<GeoCountryRow>('geo_country'),
         q<GeoCityRow>('geo_city'),
         q<KnowledgeLayerRow>('knowledge_layer_mix'),
+        q<KnowledgeLayerSectionRow>('knowledge_layer_by_section'),
         usersRpc,
       ]))
 
     // Any of the 8 ORIGINAL views erroring = "schema unreachable" → bail to fixtures.
     // conversation_depth is deliberately EXCLUDED: it's a newer view, and if it
     // ever errors (not refreshed/granted) the other 8 should still render live.
+    // knowledge_source_leaderboard is intentionally NOT fatal: it's a slow plain
+    // view now used only by the legacy MC/Voice grids (topIntents), not the main
+    // dashboard — its failure shouldn't drop everything to fixtures.
     const anyError =
-      outcome.error || conversion.error || knowledge.error || sender.error ||
+      outcome.error || conversion.error || sender.error ||
       identity.error || funnel.error || device.error || heatmap.error
     if (anyError) {
       // eslint-disable-next-line no-console
@@ -307,6 +323,7 @@ export async function fetchLiveBundle(
       conversionPulse: conversion.data ?? [],
       knowledgeSourceLeaderboard: knowledge.data ?? [],
       knowledgeLayerMix: kLayer.error ? [] : (kLayer.data ?? []),
+      knowledgeLayerBySection: kLayerSec.error ? [] : (kLayerSec.data ?? []),
       senderMixStack: sender.data ?? [],
       guestIdentitySplit: identity.data ?? [],
       leadCaptureFunnel: funnel.data ?? [],

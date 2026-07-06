@@ -22,6 +22,10 @@ const LAYER_COLOR: Record<string, string> = {
   Failed: '#DC5B3B', // coral — couldn't answer
 }
 const GROUNDED = new Set(['Text Edits', 'Website', 'Files'])
+const NON_GROUNDED_ORDER = ['Text Edits', 'Website', 'Files', 'Instructions', 'Failed']
+
+const layerVal = (t: { layers: { layer: string; answers: number }[] }, name: string): number =>
+  t.layers.find((l) => l.layer === name)?.answers ?? 0
 
 /**
  * Consolidated Knowledge card. Demand-by-topic (report.intel_section) is the
@@ -54,6 +58,17 @@ export function KnowledgeSectionDemand({
   const ordered = ld
     ? [...ld].sort((a, b) => LAYER_ORDER.indexOf(a.layer) - LAYER_ORDER.indexOf(b.layer))
     : []
+
+  // Fill-list: topics ranked by "unbacked" answers (Instructions + Failed) — the
+  // absolute volume of answers that would improve most from a grounded source.
+  const fillList = (layers?.byTopic ?? [])
+    .filter((t) => t.total > 0)
+    .map((t) => {
+      const unbacked = layerVal(t, 'Instructions') + layerVal(t, 'Failed')
+      return { ...t, unbacked, backed: (t.total - unbacked) / t.total }
+    })
+    .sort((a, b) => b.unbacked - a.unbacked)
+    .slice(0, 6)
 
   return (
     <Panel
@@ -129,6 +144,49 @@ export function KnowledgeSectionDemand({
                 The rest fell back to the prompt (“Instructions”), with no source behind them — that’s where adding a
                 Text Edit helps most.
               </p>
+            </div>
+          )}
+
+          {fillList.length > 0 && (
+            <div className="mt-6 border-t border-slate-100 pt-5">
+              <div className="mb-1 flex items-center gap-2 text-sm font-semibold text-slate-800">
+                Topics to add content for
+                <span className="text-xs font-normal text-slate-400">— most answers leaning on the prompt</span>
+              </div>
+              <p className="mb-3 text-xs text-slate-400">
+                Ranked by answers with no source behind them. Add a Text Edit (or page / file) to ground these — click a
+                topic to read the chats.
+              </p>
+              <div className="space-y-1.5">
+                {fillList.map((t) => (
+                  <button
+                    key={t.section}
+                    type="button"
+                    onClick={() => botId && setDrill(t.section)}
+                    title={`Read ${t.section} chats`}
+                    className="group flex w-full items-center gap-3 rounded-lg px-1.5 py-1.5 text-left transition hover:bg-slate-50"
+                  >
+                    <span className="w-40 shrink-0 truncate text-sm text-slate-700" title={t.section}>
+                      {t.section}
+                    </span>
+                    <span className="flex h-4 flex-1 overflow-hidden rounded bg-slate-100">
+                      {NON_GROUNDED_ORDER.map((name) => {
+                        const v = layerVal(t, name)
+                        return v > 0 ? (
+                          <span
+                            key={name}
+                            style={{ width: `${(v / t.total) * 100}%`, backgroundColor: LAYER_COLOR[name] ?? '#94A3B8' }}
+                          />
+                        ) : null
+                      })}
+                    </span>
+                    <span className="w-32 shrink-0 text-right text-xs">
+                      <span className="font-semibold tabular-nums text-slate-700">{formatNumber(t.unbacked)}</span>
+                      <span className="text-slate-400"> to ground · {formatPercent(t.backed)} backed</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </>

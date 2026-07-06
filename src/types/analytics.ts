@@ -279,8 +279,17 @@ export interface KnowledgeLayerDatum {
   answers: number
 }
 
+// One topic's answer-source mix (the fill-list unit).
+export interface KnowledgeTopicCoverage {
+  section: string
+  total: number
+  layers: KnowledgeLayerDatum[]
+}
+
 export interface KnowledgeLayersProps {
   layers: KnowledgeLayerDatum[]
+  /** Per-topic layer mix — the fill-list. Optional (Phase 2). */
+  byTopic?: KnowledgeTopicCoverage[]
 }
 
 // § 2 — SenderMixStack

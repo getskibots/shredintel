@@ -443,7 +443,24 @@ function overlayJHChatLive(base: PeriodFixtures, live: LiveBundle, pageStage?: s
     const layers = [...byLayer.entries()]
       .map(([layer, answers]) => ({ layer, answers }))
       .sort((a, b) => b.answers - a.answers)
-    if (layers.length > 0) out.knowledgeLayers = { layers }
+
+    // Per-topic mix (the fill-list) — sum answers by (section, layer)
+    const byTopicMap = new Map<string, Map<string, number>>()
+    for (const r of live.knowledgeLayerBySection) {
+      const m = byTopicMap.get(r.section) ?? new Map<string, number>()
+      m.set(r.layer, (m.get(r.layer) ?? 0) + r.answers)
+      byTopicMap.set(r.section, m)
+    }
+    const byTopic = [...byTopicMap.entries()]
+      .map(([section, m]) => {
+        const tl = [...m.entries()].map(([layer, answers]) => ({ layer, answers }))
+        return { section, total: tl.reduce((s, l) => s + l.answers, 0), layers: tl }
+      })
+      .sort((a, b) => b.total - a.total)
+
+    if (layers.length > 0) {
+      out.knowledgeLayers = { layers, byTopic: byTopic.length > 0 ? byTopic : undefined }
+    }
   }
 
   // § 2 — Sender mix

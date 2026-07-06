@@ -7,6 +7,7 @@ import { brand } from '../../lib/chartTheme'
 import { VegaLiteChart } from '../VegaLiteChart'
 import { ConversationExplorer } from '../ConversationExplorer'
 import { PromptEditor } from '../PromptEditor'
+import { RichText } from '../shared'
 import type { DrillFilter } from '../../lib/savedReports'
 import { payloadFromDatum, type DrillPayload } from '../../lib/drill'
 
@@ -248,7 +249,7 @@ export function AskBar({ botId, range, onVoice }: { botId: number; range?: { fro
               ShredIntel
               {range?.label && <span className="text-slate-300">· {range.label}</span>}
             </div>
-            <p className="text-[15px] leading-relaxed text-slate-800">{result.answer}</p>
+            <p className="text-[15px] leading-relaxed text-slate-800"><RichText text={result.answer} /></p>
 
             {result.vegaLite && result.rows.length > 0 ? (
               <div className="mt-4">

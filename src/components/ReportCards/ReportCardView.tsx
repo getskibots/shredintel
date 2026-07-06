@@ -1,5 +1,6 @@
 import { MessagesSquare } from 'lucide-react'
 import { VegaLiteChart } from '../VegaLiteChart'
+import { RichText } from '../shared'
 import type { DrillFilter, ReportCard } from '../../lib/savedReports'
 
 /**
@@ -17,7 +18,7 @@ export function ReportCardView({ card, onDrill, onChartDrill }: {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       {card.question && <div className="mb-2 text-xs font-medium text-slate-400">“{card.question}”</div>}
-      <p className="text-[15px] leading-relaxed text-slate-800">{card.answer}</p>
+      <p className="text-[15px] leading-relaxed text-slate-800"><RichText text={card.answer} /></p>
       {card.vegaLite && card.rows.length > 0 && (
         <div className="mt-4">
           <VegaLiteChart spec={card.vegaLite} rows={card.rows} onDrill={onChartDrill} />

@@ -3,6 +3,7 @@ import { X, Loader2, ChevronRight, Globe } from 'lucide-react'
 import { getSupabase } from '../../lib/supabase'
 import { sentimentColors } from '../../lib/chartTheme'
 import { DRILL_DIMENSIONS, humanLabel, type DrillPayload } from '../../lib/drill'
+import { RichText } from '../shared'
 
 /**
  * Drill-down: any chart mark / sliver → the matching conversations → the actual
@@ -267,7 +268,7 @@ export function ConversationExplorer({
                           {transcript.map((m, i) => (
                             <div key={i} className={`text-sm leading-relaxed ${m.sender === 'user' ? 'text-slate-800' : 'text-slate-500'}`}>
                               <span className="mr-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">{m.sender}</span>
-                              {m.text}
+                              <RichText text={m.text} />
                             </div>
                           ))}
                         </div>

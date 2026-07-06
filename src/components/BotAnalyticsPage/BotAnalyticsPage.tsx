@@ -130,15 +130,20 @@ export function BotAnalyticsPage() {
                 cramp. Each stage/blocker drills to its conversations (a modal, so
                 card width doesn't constrain it). Funnel is live-only. */}
             <section id="sales" className="scroll-mt-40">
-              <div className={bentoGrid}>
+              {/* Direct grid children (no wrapper div) so the two cards stretch to
+                  the SAME height automatically — grid's default align-items:stretch.
+                  Right card is trimmed (top 7 blockers + collapsed tips) so the
+                  match lands without a hollow left card. */}
+              <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
                 {funnel && (
-                  <div className="lg:col-span-6">
-                    <PageFunnel funnel={funnel} botId={botId} range={askRange} />
-                  </div>
+                  <PageFunnel funnel={funnel} botId={botId} range={askRange} className="lg:col-span-6" />
                 )}
-                <div className="lg:col-span-6">
-                  <ConversionBlockers {...f.conversionBlockers} botId={botId} range={askRange} />
-                </div>
+                <ConversionBlockers
+                  {...f.conversionBlockers}
+                  botId={botId}
+                  range={askRange}
+                  className={funnel ? 'lg:col-span-6' : 'lg:col-span-12'}
+                />
               </div>
             </section>
 

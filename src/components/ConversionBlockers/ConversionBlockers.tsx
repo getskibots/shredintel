@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { ChevronRight } from 'lucide-react'
 import { EmptyState, Panel } from '../shared'
 import { ConversationExplorer } from '../ConversationExplorer'
 import { brand } from '../../lib/chartTheme'
@@ -35,7 +36,8 @@ export function ConversionBlockers({
   affectedShare,
   botId,
   range,
-}: ConversionBlockersProps & { botId?: number; range?: { from: string; to: string } }) {
+  className,
+}: ConversionBlockersProps & { botId?: number; range?: { from: string; to: string }; className?: string }) {
   const storeKey = `shredintel_aov_${botId ?? 'default'}`
   const [aov, setAov] = useState<number>(() => {
     try {
@@ -53,6 +55,7 @@ export function ConversionBlockers({
     }
   }, [storeKey, aov])
   const [drill, setDrill] = useState<string | null>(null)
+  const [showTips, setShowTips] = useState(false)
 
   const empty = !blockers || blockers.length === 0
   const frustrated = blockers.reduce((s, b) => s + (b.negative ?? 0), 0)
@@ -62,6 +65,7 @@ export function ConversionBlockers({
 
   return (
     <Panel
+      className={className}
       eyebrow="Sales & conversion"
       title="What's blocking sales — by issue"
       description="The specific account + checkout problems guests hit — the friction that costs sales, with the dollars at risk."
@@ -113,7 +117,7 @@ export function ConversionBlockers({
 
           {/* Per-blocker bars with dollar impact */}
           <div className="space-y-2">
-            {blockers.slice(0, 12).map((b) => (
+            {blockers.slice(0, 7).map((b) => (
               <button
                 key={b.label}
                 type="button"
@@ -140,23 +144,35 @@ export function ConversionBlockers({
             ))}
           </div>
 
-          {/* Ways to capture more revenue */}
+          {/* Ways to capture more revenue — collapsed by default so the card
+              stays compact and pairs cleanly with the page-funnel card. */}
           {tips.length > 0 && (
             <div className="mt-6">
-              <div className="mb-2 text-sm font-semibold text-slate-800">
+              <button
+                type="button"
+                onClick={() => setShowTips((s) => !s)}
+                aria-expanded={showTips}
+                className="flex items-center gap-1.5 text-sm font-semibold text-slate-800 transition hover:text-slate-900"
+              >
+                <ChevronRight
+                  className={`h-4 w-4 text-slate-400 transition ${showTips ? 'rotate-90' : ''}`}
+                />
                 Ways to capture more revenue
-              </div>
-              <ul className="space-y-2">
-                {tips.map((b) => (
-                  <li
-                    key={b.label}
-                    className="flex flex-col gap-0.5 rounded-lg border border-slate-200 bg-slate-50/70 p-3 text-sm sm:flex-row sm:gap-2.5"
-                  >
-                    <span className="shrink-0 font-semibold text-amber-700">{b.label}</span>
-                    <span className="text-slate-600">{TIPS[b.label]}</span>
-                  </li>
-                ))}
-              </ul>
+                <span className="text-xs font-normal text-slate-400">({tips.length})</span>
+              </button>
+              {showTips && (
+                <ul className="mt-3 space-y-2">
+                  {tips.map((b) => (
+                    <li
+                      key={b.label}
+                      className="flex flex-col gap-0.5 rounded-lg border border-slate-200 bg-slate-50/70 p-3 text-sm sm:flex-row sm:gap-2.5"
+                    >
+                      <span className="shrink-0 font-semibold text-amber-700">{b.label}</span>
+                      <span className="text-slate-600">{TIPS[b.label]}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           )}
         </>

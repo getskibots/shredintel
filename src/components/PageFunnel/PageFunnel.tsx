@@ -24,16 +24,19 @@ export function PageFunnel({
   funnel,
   botId,
   range,
+  className,
 }: {
   funnel: PageFunnelSummary | null
   botId: number
   range?: { from: string; to: string }
+  className?: string
 }) {
   const [drill, setDrill] = useState<string | null>(null)
 
   if (!funnel || funnel.stages.length === 0) {
     return (
       <Panel
+        className={className}
         eyebrow="Sales & conversion"
         title="Where guests get stuck — by page"
         description="Every substantive chat mapped to the site page it started on."
@@ -50,6 +53,7 @@ export function PageFunnel({
 
   return (
     <Panel
+      className={className}
       eyebrow="Sales & conversion"
       title="Where guests get stuck — by page"
       description="Every substantive chat mapped to the site page it started on. The red slice is the frustrated share — where it grows is where the buy flow needs work."

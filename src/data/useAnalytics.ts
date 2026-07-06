@@ -392,6 +392,7 @@ function overlayJHChatLive(base: PeriodFixtures, live: LiveBundle, pageStage?: s
       trend: rows.map((r) => ({
         date: r.day,
         sessions: Number(r.conversations),
+        engaged: Number(r.engaged_conversations),
         messages: Number(r.total_messages),
         userMessages: Number(r.user_messages),
       })),

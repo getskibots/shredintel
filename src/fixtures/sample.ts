@@ -815,6 +815,7 @@ export function buildPeriodFixturesForDays(
     trend: dates.map((date, i) => ({
       date,
       sessions: sessionsByDay[i],
+      engaged: Math.round(sessionsByDay[i] * (totalConversations > 0 ? engaged / totalConversations : 0.35)),
       messages: msgsByDay[i],
       userMessages: userByDay[i],
     })),

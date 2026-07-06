@@ -1,8 +1,7 @@
 import {
-  Bar,
+  Area,
+  AreaChart,
   CartesianGrid,
-  ComposedChart,
-  Line,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -10,7 +9,7 @@ import {
 } from 'recharts'
 import { EmptyState, Metric, Panel } from '../shared'
 import type { MetricProps } from '../shared/Metric'
-import { chart } from '../../lib/chartTheme'
+import { brand, chart } from '../../lib/chartTheme'
 import { formatNumber, formatPercent } from '../../lib/formatters'
 import type { ConversationCountsProps } from '../../types/analytics'
 
@@ -113,27 +112,38 @@ export function ConversationCounts({
             ))}
           </div>
 
-          <div className="mt-5 h-[220px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={trend} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                <CartesianGrid {...chart.grid} />
-                <XAxis dataKey="date" {...chart.xAxis} />
-                <YAxis {...chart.yAxis} />
-                <Tooltip
-                  {...chart.tooltip}
-                  formatter={(value, name) => [formatNumber(Number(value)), name]}
-                />
-                <Bar dataKey="sessions" name="Conversations" {...chart.bar} maxBarSize={26} />
-                <Line dataKey="messages" name="Messages" {...chart.line} />
-              </ComposedChart>
-            </ResponsiveContainer>
+          <div className="mt-5">
+            <div className="mb-1.5 flex items-center gap-4 text-[11px] text-slate-500">
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-2 w-3 rounded-sm" style={{ backgroundColor: '#DCE7F1', outline: '1px solid #AFC3D8' }} /> Chats opened
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-2 w-3 rounded-sm" style={{ backgroundColor: brand.blue }} /> Engaged
+              </span>
+            </div>
+            <div className="h-[200px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={trend} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                  <CartesianGrid {...chart.grid} />
+                  <XAxis dataKey="date" {...chart.xAxis} />
+                  <YAxis {...chart.yAxis} />
+                  <Tooltip
+                    {...chart.tooltip}
+                    formatter={(value, name) => [formatNumber(Number(value)), name]}
+                  />
+                  {/* Chats opened = light backdrop; Engaged nested inside; the gap = bounce. */}
+                  <Area type="monotone" dataKey="sessions" name="Chats opened" stroke="#AFC3D8" strokeWidth={1} fill="#DCE7F1" fillOpacity={1} />
+                  <Area type="monotone" dataKey="engaged" name="Engaged" stroke={brand.blue} strokeWidth={1.5} fill={brand.blue} fillOpacity={0.5} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
           </div>
 
           <p className="mt-3 text-xs text-slate-500">
             {users != null && (
               <>
-                <span className="font-semibold text-slate-700">{formatNumber(users)}</span> visitors started{' '}
-                <span className="font-semibold text-slate-700">{formatNumber(sessions)}</span> conversations —{' '}
+                <span className="font-semibold text-slate-700">{formatNumber(users)}</span> visitors opened{' '}
+                <span className="font-semibold text-slate-700">{formatNumber(sessions)}</span> chats —{' '}
               </>
             )}
             <span className="font-semibold text-slate-700">{formatPercent(engagedShare)}</span> engaged
@@ -143,7 +153,7 @@ export function ConversationCounts({
                 question (ShredIntel’s analysis base)
               </>
             )}
-            . {messagesPerSession.toFixed(1)} messages per conversation; {formatPercent(singleMsgShareOfEngaged)} were
+            . {messagesPerSession.toFixed(1)} messages per chat; {formatPercent(singleMsgShareOfEngaged)} were
             one-and-done.
           </p>
         </>

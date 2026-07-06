@@ -170,6 +170,7 @@ export interface ConversionPulseProps {
 export interface ConversationCountsPoint {
   date: string
   sessions: number
+  engaged: number
   messages: number
   userMessages: number
 }

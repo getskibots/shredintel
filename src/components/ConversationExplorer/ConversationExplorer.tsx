@@ -201,7 +201,10 @@ export function ConversationExplorer({
             )}
             <ul className="space-y-1.5">
               {rows.map((r) => (
-                <li key={r.conversation_id} className="rounded-lg border border-slate-200">
+                <li
+                  key={r.conversation_id}
+                  className="rounded-lg border border-slate-200 [content-visibility:auto] [contain-intrinsic-size:auto_3rem]"
+                >
                   <button
                     onClick={() => openConv(r.conversation_id)}
                     className="flex w-full items-center gap-2 px-3 py-2.5 text-left transition hover:bg-slate-50"

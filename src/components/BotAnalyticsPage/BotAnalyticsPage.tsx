@@ -12,7 +12,6 @@ import { DemandHeatmap } from '../DemandHeatmap'
 import { DeviceExperienceMix } from '../DeviceExperienceMix'
 import { GuestLocations } from '../GuestLocations'
 import { GuestIdentitySplit } from '../GuestIdentitySplit'
-import { KnowledgeSourceLeaderboard } from '../KnowledgeSourceLeaderboard'
 import { PeriodPicker } from '../PeriodPicker'
 import { SenderMixStack } from '../SenderMixStack'
 import { RealtimeAgent } from '../RealtimeAgent'
@@ -147,19 +146,23 @@ export function BotAnalyticsPage() {
               </div>
             </section>
 
-            {/* 3 — What guests ask about: demand by category */}
+            {/* 3 — Knowledge: what guests ask about (demand by topic) merged with
+                answer coverage (sourced vs unsourced + the knowledge-gap rate).
+                Per-topic coverage lands in a follow-up. */}
             <section id="questions" className="scroll-mt-40 space-y-5">
-              <KnowledgeSectionDemand {...f.knowledgeSectionDemand} botId={botId} range={askRange} />
+              <KnowledgeSectionDemand
+                {...f.knowledgeSectionDemand}
+                coverage={f.knowledgeSourceLeaderboard}
+                botId={botId}
+                range={askRange}
+              />
             </section>
 
-            {/* 4 — Service quality: can we answer → do humans catch the rest → are
-                they happy. The knowledge leaderboard spans the row; handover +
-                sentiment pair beneath it (two compact ratio views). */}
+            {/* 4 — Service quality: do humans catch what the bot can't → are guests
+                happy. Handover + sentiment pair as two compact ratio views.
+                (Knowledge coverage moved up into the Knowledge card in band 3.) */}
             <section id="service" className="scroll-mt-40">
               <div className={bentoGrid}>
-                <div className="lg:col-span-12">
-                  <KnowledgeSourceLeaderboard {...f.knowledgeSourceLeaderboard} />
-                </div>
                 <div className="lg:col-span-6">
                   <HumanHandover {...f.humanHandover} />
                 </div>

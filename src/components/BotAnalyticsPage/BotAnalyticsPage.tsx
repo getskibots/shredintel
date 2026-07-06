@@ -150,12 +150,6 @@ export function BotAnalyticsPage() {
               <DeviceExperienceMix {...f.deviceExperienceMix} />
               <DemandHeatmap {...f.demandHeatmap} />
             </section>
-
-            {/* MaxMind's free GeoLite2 license requires attribution somewhere in
-                the product — kept discreet here, off the location panel. */}
-            <p className="pt-1 text-center text-[10px] text-slate-300">
-              Location data: GeoLite2 by MaxMind
-            </p>
           </div>
         </div>
       </div>

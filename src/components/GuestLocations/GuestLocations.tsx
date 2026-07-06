@@ -64,7 +64,7 @@ export function GuestLocations({
           <BreakdownBars items={cities} max={10} onSelect={botId ? setDrill : undefined} />
           <p className="mt-3 text-[11px] text-slate-400">
             {formatNumber(totalLocated)} located conversations across {countryCount}{' '}
-            {countryCount === 1 ? 'country' : 'countries'}.
+            {countryCount === 1 ? 'country' : 'countries'}. GeoLite2 data by MaxMind.
           </p>
         </>
       )}

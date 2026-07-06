@@ -19,6 +19,15 @@ import { voiceAnswerInstruction } from './_lib/voices.js'
 // Two model calls + DB round-trips can take a bit; give the function headroom.
 export const maxDuration = 30
 
+/** Up to 3 short, non-empty next-question suggestions (grounded by the model). */
+function sanitizeFollowups(v: unknown): string[] {
+  if (!Array.isArray(v)) return []
+  return v
+    .map((x) => String(x ?? '').trim())
+    .filter((s) => s.length > 0 && s.length <= 120)
+    .slice(0, 3)
+}
+
 /** Keep only a well-formed drill hint (dimension in the allowed set + a value). */
 function sanitizeDrill(d: unknown): { dimension: string; value: string; label: string } | null {
   if (!d || typeof d !== 'object') return null
@@ -96,6 +105,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let vegaLite: unknown = null
     let focus: unknown = null
     let drill: unknown = null
+    let followups: string[] = []
     try {
       const parsed = JSON.parse(ansJson)
       answer = String(parsed.answer || '')
@@ -103,6 +113,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       vegaLite = parsed.vegaLite ?? null
       focus = parsed.focus ?? null
       drill = sanitizeDrill(parsed.drill)
+      followups = sanitizeFollowups(parsed.followups)
     } catch {
       answer = ansJson
     }
@@ -112,7 +123,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // the dashboard's picker. Falls back to the picker window.
     const wm = sql.match(/day\s+between\s+'(\d{4}-\d{2}-\d{2})'\s+and\s+'(\d{4}-\d{2}-\d{2})'/i)
     const usedWindow = wm ? { from: wm[1], to: wm[2] } : (window ?? null)
-    return res.status(200).json({ answer, chart, vegaLite, focus, drill, window: usedWindow, sql, rows: rows.slice(0, 100) })
+    return res.status(200).json({ answer, chart, vegaLite, focus, drill, followups, window: usedWindow, sql, rows: rows.slice(0, 100) })
   } catch (e) {
     console.error('[api/ask] failed:', e)
     return res.status(500).json({ error: e instanceof Error ? e.message : 'unknown error' })

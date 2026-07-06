@@ -25,14 +25,14 @@ export function HumanHandover({
 }: HumanHandoverProps) {
   if (totalSubstantive === 0) {
     return (
-      <Panel eyebrow="Are we helping?" title="Human handover" description="How often guests need a person — and how often one actually steps in.">
+      <Panel eyebrow="Service quality" title="Human handover" description="How often guests need a person — and how often one actually steps in.">
         <EmptyState title="No handover data in range." message="Handover need is tagged by the AI on each substantive conversation." />
       </Panel>
     )
   }
   return (
     <Panel
-      eyebrow="Are we helping?"
+      eyebrow="Service quality"
       title="Human handover"
       description="How often guests need a person — and how often one actually steps in."
     >

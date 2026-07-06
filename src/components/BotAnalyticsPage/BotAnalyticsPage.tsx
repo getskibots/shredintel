@@ -128,11 +128,11 @@ export function BotAnalyticsPage() {
               <KnowledgeSectionDemand {...f.knowledgeSectionDemand} botId={botId} range={askRange} />
             </section>
 
-            {/* 4 — Are we helping? can we answer → do humans catch the rest → are they happy */}
+            {/* 4 — Service quality: can we answer → do humans catch the rest → are they happy */}
             <section id="service" className="scroll-mt-40 space-y-5">
               <KnowledgeSourceLeaderboard {...f.knowledgeSourceLeaderboard} />
               <HumanHandover {...f.humanHandover} />
-              <GuestSentiment {...f.guestSentiment} />
+              <GuestSentiment {...f.guestSentiment} botId={botId} range={askRange} />
             </section>
 
             {/* 5 — Who & where your guests are: identity, location, device, time */}

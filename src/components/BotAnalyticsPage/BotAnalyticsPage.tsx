@@ -13,7 +13,6 @@ import { DeviceExperienceMix } from '../DeviceExperienceMix'
 import { GuestLocations } from '../GuestLocations'
 import { GuestIdentitySplit } from '../GuestIdentitySplit'
 import { KnowledgeSourceLeaderboard } from '../KnowledgeSourceLeaderboard'
-import { LeadCaptureFunnel } from '../LeadCaptureFunnel'
 import { PeriodPicker } from '../PeriodPicker'
 import { SenderMixStack } from '../SenderMixStack'
 import { RealtimeAgent } from '../RealtimeAgent'
@@ -175,9 +174,6 @@ export function BotAnalyticsPage() {
                 </div>
                 <div className="xl:col-span-6">
                   <DeviceExperienceMix {...f.deviceExperienceMix} />
-                </div>
-                <div className="xl:col-span-12">
-                  <LeadCaptureFunnel {...f.leadCaptureFunnel} />
                 </div>
                 <div className="xl:col-span-12">
                   <GuestLocations {...f.guestLocations} botId={botId} range={askRange} />

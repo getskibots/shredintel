@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { X, Loader2, ChevronRight, Globe, Bot, User } from 'lucide-react'
 import { getSupabase } from '../../lib/supabase'
 import { sentimentColors } from '../../lib/chartTheme'
@@ -90,6 +90,8 @@ export function ConversationExplorer({
   const [count, setCount] = useState<number | null>(null)
   const [sentFilter, setSentFilter] = useState<'all' | 'Positive' | 'Neutral' | 'Negative'>('all')
   const [openCid, setOpenCid] = useState<number | null>(null)
+  // Each conversation row keyed by id so expanding one can scroll its top into view.
+  const rowRefs = useRef<Map<number, HTMLLIElement>>(new Map())
   const [transcript, setTranscript] = useState<Msg[] | null>(null)
   const [loadingT, setLoadingT] = useState(false)
 
@@ -143,6 +145,13 @@ export function ConversationExplorer({
       setLoadingT(false)
     }
   }
+
+  // On expand, bring the opened conversation's top into view — so you land at the
+  // start of the new conversation instead of wherever you were scrolled.
+  useEffect(() => {
+    if (openCid == null) return
+    rowRefs.current.get(openCid)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [openCid])
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-slate-900/40 p-4 sm:p-8" onClick={onClose}>
@@ -203,6 +212,10 @@ export function ConversationExplorer({
               {rows.map((r) => (
                 <li
                   key={r.conversation_id}
+                  ref={(el) => {
+                    if (el) rowRefs.current.set(r.conversation_id, el)
+                    else rowRefs.current.delete(r.conversation_id)
+                  }}
                   className="rounded-lg border border-slate-200 [content-visibility:auto] [contain-intrinsic-size:auto_3rem]"
                 >
                   <button

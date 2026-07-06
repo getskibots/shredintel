@@ -49,6 +49,16 @@ export function BotAnalyticsPage() {
   const shredding = useShredPulse(`${askRange.from}|${askRange.to}`)
   const [voiceActive, setVoiceActive] = useState(false)
 
+  // Bento: single column below lg, 12-col grid at lg+. Cards declare a span
+  // (col-span-6 = paired, col-span-12 = full row). items-start keeps each card
+  // its natural height instead of stretching to its row-mate.
+  const bentoGrid = 'grid grid-cols-1 gap-5 lg:grid-cols-12 lg:items-start'
+  // Same idea, but pairs only at xl (1280). Used where the paired cards have
+  // their OWN two-column internals (donut + detail) that need real width — at
+  // the lg boundary a half-width card is too tight for the inner split, so we
+  // keep those full-width until xl.
+  const bentoGridWide = 'grid grid-cols-1 gap-5 xl:grid-cols-12 xl:items-start'
+
   if (Number.isNaN(botId)) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
@@ -116,11 +126,21 @@ export function BotAnalyticsPage() {
             </section>
 
             {/* 2 — Sales & conversion: where guests get stuck (by page) + what blocks
-                sales (by issue). Each stage/blocker drills to its conversations —
-                no global filter. Funnel is live-only. */}
-            <section id="sales" className="scroll-mt-40 space-y-5">
-              {funnel && <PageFunnel funnel={funnel} botId={botId} range={askRange} />}
-              <ConversionBlockers {...f.conversionBlockers} botId={botId} range={askRange} />
+                sales (by issue). Paired side-by-side at lg+ so the two friction
+                views read together; stacks full-width below lg so the bars never
+                cramp. Each stage/blocker drills to its conversations (a modal, so
+                card width doesn't constrain it). Funnel is live-only. */}
+            <section id="sales" className="scroll-mt-40">
+              <div className={bentoGrid}>
+                {funnel && (
+                  <div className="lg:col-span-6">
+                    <PageFunnel funnel={funnel} botId={botId} range={askRange} />
+                  </div>
+                )}
+                <div className="lg:col-span-6">
+                  <ConversionBlockers {...f.conversionBlockers} botId={botId} range={askRange} />
+                </div>
+              </div>
             </section>
 
             {/* 3 — What guests ask about: demand by category */}
@@ -128,20 +148,44 @@ export function BotAnalyticsPage() {
               <KnowledgeSectionDemand {...f.knowledgeSectionDemand} botId={botId} range={askRange} />
             </section>
 
-            {/* 4 — Service quality: can we answer → do humans catch the rest → are they happy */}
-            <section id="service" className="scroll-mt-40 space-y-5">
-              <KnowledgeSourceLeaderboard {...f.knowledgeSourceLeaderboard} />
-              <HumanHandover {...f.humanHandover} />
-              <GuestSentiment {...f.guestSentiment} botId={botId} range={askRange} />
+            {/* 4 — Service quality: can we answer → do humans catch the rest → are
+                they happy. The knowledge leaderboard spans the row; handover +
+                sentiment pair beneath it (two compact ratio views). */}
+            <section id="service" className="scroll-mt-40">
+              <div className={bentoGrid}>
+                <div className="lg:col-span-12">
+                  <KnowledgeSourceLeaderboard {...f.knowledgeSourceLeaderboard} />
+                </div>
+                <div className="lg:col-span-6">
+                  <HumanHandover {...f.humanHandover} />
+                </div>
+                <div className="lg:col-span-6">
+                  <GuestSentiment {...f.guestSentiment} botId={botId} range={askRange} />
+                </div>
+              </div>
             </section>
 
-            {/* 5 — Who & where your guests are: identity, location, device, time */}
-            <section id="audience" className="scroll-mt-40 space-y-5">
-              <GuestIdentitySplit {...f.guestIdentitySplit} />
-              <LeadCaptureFunnel {...f.leadCaptureFunnel} />
-              <GuestLocations {...f.guestLocations} botId={botId} range={askRange} />
-              <DeviceExperienceMix {...f.deviceExperienceMix} />
-              <DemandHeatmap {...f.demandHeatmap} />
+            {/* 5 — Who & where your guests are: identity + device pair up (compact
+                donut panels); lead capture, the location map, and the day/hour
+                heatmap each take a full row (they need the width). */}
+            <section id="audience" className="scroll-mt-40">
+              <div className={bentoGridWide}>
+                <div className="xl:col-span-6">
+                  <GuestIdentitySplit {...f.guestIdentitySplit} />
+                </div>
+                <div className="xl:col-span-6">
+                  <DeviceExperienceMix {...f.deviceExperienceMix} />
+                </div>
+                <div className="xl:col-span-12">
+                  <LeadCaptureFunnel {...f.leadCaptureFunnel} />
+                </div>
+                <div className="xl:col-span-12">
+                  <GuestLocations {...f.guestLocations} botId={botId} range={askRange} />
+                </div>
+                <div className="xl:col-span-12">
+                  <DemandHeatmap {...f.demandHeatmap} />
+                </div>
+              </div>
             </section>
 
             {/* 6 — Under the hood: message mechanics */}

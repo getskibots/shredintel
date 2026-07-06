@@ -281,7 +281,7 @@ export function RealtimeAgent({ botId, range, selection, onSelectionChange, shre
         <div className="flex items-center gap-2.5">
           <Sparkles className="h-5 w-5 text-botscrew-500" strokeWidth={2} />
           <span className="text-sm font-semibold text-slate-800">ShredIntel</span>
-          <span className="rounded-full bg-botscrew-50 px-2 py-0.5 text-[11px] font-medium text-botscrew-700">{persona}</span>
+          <span className="rounded-full bg-botscrew-50 px-2 py-0.5 text-[11px] font-medium text-botscrew-700">Analyst</span>
         </div>
         <div className="flex items-center gap-2">
           <button type="button" onClick={handleSave} disabled={!cards.length}

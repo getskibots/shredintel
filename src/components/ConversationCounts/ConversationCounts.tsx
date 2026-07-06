@@ -82,12 +82,17 @@ export function ConversationCounts({
     sub: `${formatNumber(userMessages)} from guests`,
     tone: 'neutral',
   })
-  tiles.push({
-    label: 'First response',
-    value: formatDuration(responseSec),
-    sub: responseLabel,
-    tone: 'neutral',
-  })
+  // Only show First response once we actually have the number — no "coming
+  // soon" placeholder. Reappears automatically when the response-time
+  // enrichment lands.
+  if (responseSec != null) {
+    tiles.push({
+      label: 'First response',
+      value: formatDuration(responseSec),
+      sub: responseLabel,
+      tone: 'neutral',
+    })
+  }
 
   return (
     <Panel

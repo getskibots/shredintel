@@ -232,14 +232,33 @@ export async function fetchLiveBundle(
   const supabase = getSupabase()
   if (!supabase) return null
 
-  const q = <T,>(view: string) =>
-    supabase
-      .schema('report')
-      .from(view)
-      .select('*')
-      .eq('bot_id', botId)
-      .gte('day', from)
-      .lte('day', to) as unknown as Promise<{ data: T[] | null; error: unknown }>
+  // Supabase caps each response at ~1000 rows. The daily-breakdown views
+  // (intel_section, page_section, geo_city, demand_heatmap…) blow far past that
+  // on long windows — e.g. intel_section is one row per day × section, ~6k rows
+  // all-time — so a single request silently truncated the sum (all-time "real
+  // questions" read 4,011 instead of 20,736). Page through with .range() until a
+  // short page and concatenate, so the client sums the COMPLETE set. Ordered by
+  // day so page boundaries are stable.
+  const PAGE = 1000
+  const q = async <T,>(view: string): Promise<{ data: T[] | null; error: unknown }> => {
+    const all: T[] = []
+    for (let offset = 0; ; offset += PAGE) {
+      const { data, error } = (await supabase
+        .schema('report')
+        .from(view)
+        .select('*')
+        .eq('bot_id', botId)
+        .gte('day', from)
+        .lte('day', to)
+        .order('day', { ascending: true })
+        .range(offset, offset + PAGE - 1)) as unknown as { data: T[] | null; error: unknown }
+      if (error) return { data: all.length ? all : null, error }
+      const batch = (data ?? []) as T[]
+      all.push(...batch)
+      if (batch.length < PAGE) break
+    }
+    return { data: all, error: null }
+  }
 
   // Distinct users in the window — window-level distinct can't be summed from
   // daily rows, so it's a small read-only RPC (report.active_users).
@@ -271,7 +290,7 @@ export async function fetchLiveBundle(
         q<GeoCountryRow>('geo_country'),
         q<GeoCityRow>('geo_city'),
         usersRpc,
-      ]))
+      ]), 20000) // all-time paginates several views over many pages — give it headroom
 
     // Any of the 8 ORIGINAL views erroring = "schema unreachable" → bail to fixtures.
     // conversation_depth is deliberately EXCLUDED: it's a newer view, and if it

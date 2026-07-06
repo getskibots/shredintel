@@ -53,6 +53,19 @@ export async function getPrompts(botId: number): Promise<PromptPair> {
   }
 }
 
+/** Resort IANA timezone for a bot (report.bot_timezone). Defaults to
+ *  'America/Denver' when unmapped/unreachable so date logic never breaks. */
+export async function getBotTimezone(botId: number): Promise<string> {
+  try {
+    const { rows } = await getPool().query<{ tz: string }>(
+      `select tz from report.bot_timezone where bot_id = $1`, [botId],
+    )
+    return rows[0]?.tz?.trim() || 'America/Denver'
+  } catch {
+    return 'America/Denver'
+  }
+}
+
 /** Upsert a prompt layer. botId 0 = master (global); else per-bot slave. */
 export async function upsertPrompt(botId: number, prompt: string): Promise<void> {
   await getPool().query(

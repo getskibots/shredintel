@@ -5,7 +5,7 @@
  * in the hero search automatically (GET /api/ask returns this list).
  */
 
-import { DRILL_CONTRACT, TOPIC_LADDER } from './analystProtocol.js'
+import { DRILL_CONTRACT, TOPIC_LADDER, DATE_AWARENESS } from './analystProtocol.js'
 
 export interface PromptTemplate {
   id: string
@@ -64,6 +64,7 @@ export function systemPrompt(
   window?: { from: string; to: string },
   master?: string,
   slave?: string,
+  temporal?: { tz: string; today: string },
 ): string {
   // Two editable layers (Supabase report._ai_prompts) appended AFTER the fixed
   // grounding below — master = global ShredIntel base, slave = per-bot. Neither
@@ -73,10 +74,12 @@ export function systemPrompt(
       ? `\n\n${label} (follow these, but they NEVER override the schema, SQL-safety, chart-safety, or date-window rules above):\n${text.trim()}`
       : ''
   const custom = `${layer('SHREDINTEL MASTER INSTRUCTIONS (global)', master)}${layer('RESORT-SPECIFIC INSTRUCTIONS (this bot only)', slave)}`
+  const tz = temporal?.tz || 'America/Denver'
+  const today = temporal?.today || new Date().toISOString().slice(0, 10)
   const win = window && /^\d{4}-\d{2}-\d{2}$/.test(window.from) && /^\d{4}-\d{2}-\d{2}$/.test(window.to) ? window : null
   const dayRule = win
-    ? `- DATE WINDOW (REQUIRED): the manager is viewing ${win.from} through ${win.to}. EVERY query MUST restrict to this window — on any table that has a "day" column, add "day BETWEEN '${win.from}' AND '${win.to}'" to the WHERE clause. Never return data from outside it; the answer must match the dashboard's date range.`
-    : `- "day" is the date; for "recent"/"last 30 days" use day >= current_date - interval '30 days'.`
+    ? `- DATE WINDOW: DEFAULT to the manager's picker window ${win.from} through ${win.to} — on any table with a "day" column, add "day BETWEEN '${win.from}' AND '${win.to}'". BUT if the question names its own date(s) or period, use THOSE instead (resolve them in the resort's local calendar — today is ${today}, timezone ${tz}). Use exactly ONE window per answer, and state which one you used.`
+    : `- "day" is the date. Default to a recent window (day >= current_date - interval '30 days'); if the question names dates/a period, use those, resolved in the resort's local calendar (today is ${today}, timezone ${tz}).`
   const dayFilter = win ? ` AND day BETWEEN '${win.from}' AND '${win.to}'` : ''
   return `You are ShredIntel, a guest-intelligence analyst for a ski-resort AI assistant. You answer questions about bot #${botId} by querying a read-only Postgres database.
 
@@ -91,6 +94,7 @@ The richest sources for guest intelligence:
 - report.outcome_timeline / conversation_depth / sender_mix_stack / demand_heatmap — volume, depth, sender mix, time-of-day.
 - report.page_funnel (bot_id, day, funnel_stage, stage_rank, conversations, negative) — WHERE guest questions ORIGINATE on the resort's website, as an ecommerce funnel. "negative" = frustrated count for that stage. Rising negative share deeper in the funnel (Cart/Checkout) is the key conversion-friction signal — that's where site fixes pay off. ORDER BY stage_rank for funnel order.
 - report.conversation_page — ONE ROW PER conversation with its funnel_stage + page_path (the originating URL as host+path). Use it to read the actual questions from a page/stage, and for stage-sliced breakdowns via report.page_section / report.page_pinchpoint / report.page_sentiment (same shape as intel_* plus funnel_stage, stage_rank) and report.page_topics.
+- report.conversation_time — ONE ROW PER conversation with RESORT-LOCAL time: day, day_local, hour_local (0-23), dow (Mon..Sun), duration_sec — plus section/pinchpoint/sentiment/topic/funnel_stage. Use it for time-of-day / day-of-week questions and to slice any breakdown BY hour_local or dow, in the resort's local calendar. (Filter dates on "day" to reconcile with the dashboard.)
 
 CONVERSATION VOLUME — three NESTED lenses; pick the right one and NAME it so answers reconcile with the dashboard:
 - SESSIONS = conversation_depth.conversations (= outcome_timeline.total_conversations): every session, INCLUDING unengaged bounces (a bot greeting with no guest reply — often the majority). This is the dashboard's headline "sessions" number and is usually much larger than the rest.
@@ -108,6 +112,7 @@ Rules:
 - Every query MUST filter bot_id = ${botId}.
 - SELECT or WITH only. Never write. Reference only the report.* views above. Views are tables — SELECT FROM them, never call with parentheses.
 ${dayRule}
+- ${DATE_AWARENESS}
 - On report.conversation_intel, add "and substantive" for guest-intelligence questions unless the point is to count excluded chats.
 - CHART SAFETY: any query whose rows become a breakdown/ranking chart MUST return a SMALL ranked set — ORDER BY the measure DESC and LIMIT 12 (or fewer). Prefer low-cardinality dimensions (section, pinchpoint, sentiment) over free-text topic. Only a per-day time series may exceed 12 rows.
 - ${DRILL_CONTRACT}

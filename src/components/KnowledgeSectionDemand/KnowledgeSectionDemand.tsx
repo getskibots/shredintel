@@ -74,7 +74,7 @@ export function KnowledgeSectionDemand({
                 solidGrounding ? 'text-emerald-700' : 'text-amber-700',
               ].join(' ')}
             >
-              Grounding rate
+              Answered from your content
             </div>
             <div
               className={[
@@ -125,8 +125,9 @@ export function KnowledgeSectionDemand({
                 ))}
               </div>
               <p className="mt-3 text-xs text-slate-400">
-                Grounded ({formatPercent(groundingRate)}) = answered from a retrieved source. “Instructions” = answered
-                from the prompt with no source — the fill opportunity.
+                {formatPercent(groundingRate)} of answers came from your own knowledge — Text Edits, Website, or Files.
+                The rest fell back to the prompt (“Instructions”), with no source behind them — that’s where adding a
+                Text Edit helps most.
               </p>
             </div>
           )}

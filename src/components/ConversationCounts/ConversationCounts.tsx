@@ -57,7 +57,7 @@ export function ConversationCounts({
     tiles.push({ label: 'Users', value: formatNumber(users), sub: 'unique visitors', tone: 'accent' })
   }
   tiles.push({
-    label: 'Conversations',
+    label: 'Chats opened',
     value: formatNumber(sessions),
     sub: convosPerUser ? `${convosPerUser.toFixed(1)} per user` : 'chats started',
     tone: users != null ? 'neutral' : 'accent',
@@ -65,7 +65,7 @@ export function ConversationCounts({
   tiles.push({
     label: 'Engaged',
     value: formatNumber(engagedSessions),
-    sub: `${formatPercent(engagedShare)} of conversations`,
+    sub: `guest replied · ${formatPercent(engagedShare)}`,
     tone: 'good',
   })
   if (substantive != null) {
@@ -98,7 +98,7 @@ export function ConversationCounts({
     <Panel
       eyebrow="Overview"
       title="Activity & engagement"
-      description="How many visitors turn into real conversations: visitors → conversations → engaged → real questions. “Users” matches the Active-users count in your admin."
+      description="How many visitors turn into real conversations: visitors → chats opened → engaged (guest replied) → real questions. “Users” matches the Active-users count in your admin."
     >
       {empty ? (
         <EmptyState

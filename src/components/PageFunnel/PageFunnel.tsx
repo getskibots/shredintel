@@ -14,6 +14,11 @@ import type { PageFunnelSummary } from '../../data/useAnalytics'
  * fix. Clicking a stage drills to the real conversations from that stage — like
  * every other panel (no global dashboard filter).
  */
+// Stages below this have too few chats for the frustrated % to be reliable
+// (e.g. 27% of 11 chats = 3 people) — they're excluded from the headline peak
+// and their % is muted so a tiny sample doesn't outshout a real hot spot.
+const MIN_SAMPLE = 20
+
 function frictionColor(share: number): string {
   if (share >= 0.15) return sentimentColors.negative // red — hot spot
   if (share >= 0.08) return '#D97706' // amber
@@ -48,7 +53,7 @@ export function PageFunnel({
 
   // The most frustrating stage with a meaningful sample — the headline takeaway.
   const peak = [...funnel.stages]
-    .filter((s) => s.conversations >= 20)
+    .filter((s) => s.conversations >= MIN_SAMPLE)
     .sort((a, b) => b.negativeShare - a.negativeShare)[0]
 
   return (
@@ -72,13 +77,14 @@ export function PageFunnel({
         {funnel.stages.map((s) => {
           const volPct = funnel.maxConversations > 0 ? (s.conversations / funnel.maxConversations) * 100 : 0
           const negPct = funnel.maxConversations > 0 ? (s.negative / funnel.maxConversations) * 100 : 0
+          const lowSample = s.conversations < MIN_SAMPLE
           return (
             <button
               key={s.stage}
               type="button"
               onClick={() => setDrill(s.stage)}
               title={`Read the questions from ${s.stage} pages`}
-              className="flex w-full items-center gap-3 rounded-lg px-1.5 py-1 text-left transition hover:bg-slate-50"
+              className="group flex w-full items-center gap-3 rounded-lg px-1.5 py-1 text-left transition hover:bg-slate-50"
             >
               <span className="flex w-36 shrink-0 items-center gap-2">
                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-[10px] font-semibold text-slate-500">
@@ -95,12 +101,16 @@ export function PageFunnel({
               <span className="w-14 shrink-0 text-right text-xs tabular-nums text-slate-600">{formatNumber(s.conversations)}</span>
               <span
                 className="w-16 shrink-0 text-right text-xs font-semibold tabular-nums"
-                style={{ color: frictionColor(s.negativeShare) }}
-                title="Frustrated (negative-sentiment) share"
+                style={{ color: lowSample ? '#94A3B8' : frictionColor(s.negativeShare) }}
+                title={
+                  lowSample
+                    ? `Frustrated share — only ${formatNumber(s.conversations)} chats, too few to be reliable`
+                    : 'Frustrated (negative-sentiment) share'
+                }
               >
                 {formatPercent(s.negativeShare)}
               </span>
-              <MessagesSquare className="h-4 w-4 shrink-0 text-slate-300" />
+              <MessagesSquare className="h-4 w-4 shrink-0 text-slate-300 opacity-0 transition group-hover:opacity-100" />
             </button>
           )
         })}

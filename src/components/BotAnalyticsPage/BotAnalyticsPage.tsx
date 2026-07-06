@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { AskBar } from '../AskBar'
 import { BotSelector } from '../BotSelector'
@@ -41,11 +41,7 @@ export function BotAnalyticsPage() {
     const params = writeSelectionToSearchParams(new URLSearchParams(searchParams), next)
     setSearchParams(params, { replace: true })
   }
-  // Global page filter — a funnel_stage label (or null = all pages). Re-scopes
-  // the intelligence panels to questions that started on that stage's pages.
-  const [pageStage, setPageStage] = useState<string | null>(null)
-  useEffect(() => setPageStage(null), [botId]) // reset when switching bots
-  const { data: f, funnel, isLive, isLoading } = useBotAnalytics(botId, selection, pageStage)
+  const { data: f, funnel, isLive, isLoading } = useBotAnalytics(botId, selection)
   // Scope the AI (ask + voice) to the same window the dashboard is showing.
   const resolved = resolveSelection(selection)
   const askRange = { from: resolved.from, to: resolved.to, label: resolved.label }
@@ -119,19 +115,11 @@ export function BotAnalyticsPage() {
               <ConversationCounts {...f.conversationCounts} />
             </section>
 
-            {/* 2 — Sales & conversion: the guest journey + where money is won/lost.
-                The PageFunnel stage click sets the global page filter that re-scopes
-                the demand/satisfaction panels below to a single stage. Live-only. */}
+            {/* 2 — Sales & conversion: where guests get stuck (by page) + what blocks
+                sales (by issue). Each stage/blocker drills to its conversations —
+                no global filter. Funnel is live-only. */}
             <section id="sales" className="scroll-mt-40 space-y-5">
-              {funnel && (
-                <PageFunnel
-                  funnel={funnel}
-                  activeStage={pageStage}
-                  onSelect={setPageStage}
-                  botId={botId}
-                  range={askRange}
-                />
-              )}
+              {funnel && <PageFunnel funnel={funnel} botId={botId} range={askRange} />}
               <ConversionBlockers {...f.conversionBlockers} botId={botId} range={askRange} />
             </section>
 

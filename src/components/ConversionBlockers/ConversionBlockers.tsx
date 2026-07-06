@@ -63,8 +63,8 @@ export function ConversionBlockers({
   return (
     <Panel
       eyebrow="Sales & conversion"
-      title="Ecommerce conversion blockers"
-      description="Where guests get stuck in the buy + account flow — the friction that costs sales."
+      title="What's blocking sales — by issue"
+      description="The specific account + checkout problems guests hit — the friction that costs sales, with the dollars at risk."
     >
       {empty ? (
         <EmptyState

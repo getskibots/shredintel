@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { X, Loader2, ChevronRight, Globe, Bot, User } from 'lucide-react'
+import { X, Loader2, ChevronRight, ChevronLeft, Globe, Bot, User } from 'lucide-react'
 import { getSupabase } from '../../lib/supabase'
 import { sentimentColors } from '../../lib/chartTheme'
 import { DRILL_DIMENSIONS, humanLabel, type DrillPayload } from '../../lib/drill'
@@ -153,6 +153,15 @@ export function ConversationExplorer({
     rowRefs.current.get(openCid)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [openCid])
 
+  // Collapse the open thread and return to the list at that row — the "Back to
+  // conversations" bar's action, so a long transcript never traps you.
+  function backToList() {
+    const cid = openCid
+    setOpenCid(null)
+    setTranscript(null)
+    if (cid != null) requestAnimationFrame(() => rowRefs.current.get(cid)?.scrollIntoView({ block: 'nearest' }))
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-slate-900/40 p-4 sm:p-8" onClick={onClose}>
       <div
@@ -197,6 +206,15 @@ export function ConversationExplorer({
         )}
 
         <div className="overflow-y-auto p-4">
+          {openCid != null && (
+            <button
+              type="button"
+              onClick={backToList}
+              className="sticky top-0 z-20 -mx-4 -mt-4 mb-2 flex items-center gap-1.5 border-b border-slate-200 bg-white px-4 py-2.5 text-left text-xs font-semibold text-botscrew-600 transition hover:bg-slate-50"
+            >
+              <ChevronLeft className="h-4 w-4 shrink-0" /> Back to conversations
+            </button>
+          )}
           {rows === null ? (
             <div className="flex items-center gap-2 p-6 text-sm text-slate-500">
               <Loader2 className="h-4 w-4 animate-spin" /> Loading conversations…

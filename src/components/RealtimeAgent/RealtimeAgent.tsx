@@ -102,7 +102,7 @@ export function RealtimeAgent({ botId, range, selection, onSelectionChange, shre
   const [error, setError] = useState<string | null>(null)
   const [caption, setCaption] = useState('')
   const [cards, setCards] = useState<ReportCard[]>([])
-  const [drill, setDrill] = useState<DrillFilter | null>(null)
+  const [drill, setDrill] = useState<(DrillFilter & { from?: string; to?: string }) | null>(null)
   const [persona, setPersona] = useState(profileFor(DEFAULT_VOICE_ID).name)
   const [saved, setSaved] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
@@ -242,7 +242,12 @@ export function RealtimeAgent({ botId, range, selection, onSelectionChange, shre
       } else if (msg.name === 'show_conversations') {
         const dim = (['section', 'pinchpoint', 'sentiment'] as const).includes(args.dimension) ? args.dimension : 'section'
         const value = String(args.value || '').trim()
-        if (value) setDrill({ dim, value, label: String(args.label || value) })
+        // Optional date scope the AI resolved (resort-local) — the drill filters
+        // to it instead of the dashboard's picker range.
+        const iso = (v: unknown) => (/^\d{4}-\d{2}-\d{2}$/.test(String(v)) ? String(v) : undefined)
+        const from = iso(args.from)
+        const to = iso(args.to)
+        if (value) setDrill({ dim, value, label: String(args.label || value), from, to })
         dc.send(JSON.stringify({ type: 'conversation.item.create', item: { type: 'function_call_output', call_id: msg.call_id, output: JSON.stringify({ ok: !!value, note: value ? 'Opened the matching conversations on the manager’s screen.' : 'No value provided.' }) } }))
         dc.send(JSON.stringify({ type: 'response.create' }))
       }
@@ -357,7 +362,7 @@ export function RealtimeAgent({ botId, range, selection, onSelectionChange, shre
         </div>
       </div>
 
-      {drill && <ConversationExplorer botId={botId} range={range} filter={drill} onClose={() => setDrill(null)} />}
+      {drill && <ConversationExplorer botId={botId} range={drill.from && drill.to ? { from: drill.from, to: drill.to } : range} filter={drill} onClose={() => setDrill(null)} />}
     </div>
   )
 }

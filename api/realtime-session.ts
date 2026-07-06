@@ -8,7 +8,7 @@
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { realtimeInstruction, openaiVoiceFor } from './_lib/voices.js'
-import { getPrompts } from './_lib/db.js'
+import { getPrompts, getBotTimezone } from './_lib/db.js'
 
 export const maxDuration = 15
 
@@ -19,6 +19,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Same two editable layers the text AI uses (report._ai_prompts).
     const botId = Number(body.botId ?? req.query.botId ?? 0)
     const { master, slave } = await getPrompts(botId)
+    // Resort-local today + tz so the voice AI can resolve dates ("October 2025")
+    // and pass a concrete window to the drill.
+    const tz = await getBotTimezone(botId)
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(new Date())
     const KEY = (process.env.OPENAI_API_KEY || '').trim()
     if (!KEY) return res.status(500).json({ error: 'OPENAI_API_KEY missing' })
 
@@ -29,7 +33,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         session: {
           type: 'realtime',
           model: 'gpt-realtime',
-          instructions: realtimeInstruction(voiceId, master, slave),
+          instructions: realtimeInstruction(voiceId, master, slave, { tz, today }),
           audio: { output: { voice: openaiVoiceFor(voiceId) } },
           tools: [
             {
@@ -59,6 +63,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                   },
                   value: { type: 'string', description: 'The exact label to filter to, e.g. "Checkout", "Lessons", "Negative".' },
                   label: { type: 'string', description: 'Short header for the screen, e.g. "Checkout blockers".' },
+                  from: { type: 'string', description: 'Optional start date YYYY-MM-DD (resort-local). ONLY when the manager scopes to a date/period — resolve it from today, e.g. "October 2025" → 2025-10-01, "last weekend" → that Sat. Omit to use the dashboard\'s current range.' },
+                  to: { type: 'string', description: 'Optional inclusive end date YYYY-MM-DD (resort-local), e.g. "October 2025" → 2025-10-31. Omit with `from` to use the dashboard\'s range.' },
                 },
                 required: ['dimension', 'value'],
               },

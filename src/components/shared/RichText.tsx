@@ -38,9 +38,9 @@ function renderInline(text: string, kp: string): ReactNode[] {
     const key = `${kp}-${i++}`
     if (t.startsWith('**') || t.startsWith('__')) {
       // Bold intentionally dropped — the bots bold aggressively, which reads
-      // busy. Still strip the ** / __ markers so no raw markdown shows; just
-      // render the words plainly.
-      out.push(t.slice(2, -2))
+      // busy. Strip the ** / __ markers (no raw markdown shows) but re-parse the
+      // inner text so anything wrapped in bold (a link, code) still renders.
+      out.push(...renderInline(t.slice(2, -2), key))
     } else if (t.startsWith('`')) {
       out.push(
         <code key={key} className="rounded bg-slate-100 px-1 py-0.5 text-[0.9em] text-slate-700">
@@ -66,7 +66,9 @@ function renderInline(text: string, kp: string): ReactNode[] {
         ),
       )
     } else {
-      out.push(<em key={key}>{t.slice(1, -1)}</em>)
+      // Italic (kept) — re-parse inner text too, so a link inside emphasis
+      // renders rather than leaking as raw markdown.
+      out.push(<em key={key}>{renderInline(t.slice(1, -1), key)}</em>)
     }
     last = m.index + t.length
   }

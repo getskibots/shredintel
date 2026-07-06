@@ -6,6 +6,7 @@ import {
 import { brand } from '../../lib/chartTheme'
 import { DEFAULT_VOICE_ID, profileFor, pickBrowserVoice } from '../../lib/voices'
 import { VegaLiteChart } from '../VegaLiteChart'
+import { RichText } from '../shared'
 import { focusSection } from '../../lib/focus'
 
 /**
@@ -181,7 +182,7 @@ export function VoiceAgent({ botId, active, onEnd }: { botId: number; active: bo
             <div className="mb-1.5 flex items-center gap-2 text-xs text-slate-400">
               <Sparkles className="h-3.5 w-3.5 text-botscrew-500" strokeWidth={2} /> ShredIntel
             </div>
-            <p className="text-[15px] leading-relaxed text-slate-800">{t.answer}</p>
+            <p className="text-[15px] leading-relaxed text-slate-800"><RichText text={t.answer} /></p>
             {t.vegaLite && t.rows.length > 0 ? (
               <div className="mt-4">
                 <VegaLiteChart spec={t.vegaLite} rows={t.rows} />

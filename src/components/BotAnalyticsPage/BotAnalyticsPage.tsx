@@ -5,7 +5,6 @@ import { BotSelector } from '../BotSelector'
 import { ConversationCounts } from '../ConversationCounts'
 import { ConversionBlockers } from '../ConversionBlockers'
 import { PageFunnel } from '../PageFunnel'
-import { ConversionPulse } from '../ConversionPulse'
 import { GuestSentiment } from '../GuestSentiment'
 import { HumanHandover } from '../HumanHandover'
 import { KnowledgeSectionDemand } from '../KnowledgeSectionDemand'
@@ -124,7 +123,6 @@ export function BotAnalyticsPage() {
                 The PageFunnel stage click sets the global page filter that re-scopes
                 the demand/satisfaction panels below to a single stage. Live-only. */}
             <section id="sales" className="scroll-mt-40 space-y-5">
-              <ConversionPulse {...f.conversionPulse} />
               {funnel && (
                 <PageFunnel
                   funnel={funnel}

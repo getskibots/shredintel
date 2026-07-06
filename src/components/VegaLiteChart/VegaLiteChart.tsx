@@ -133,7 +133,7 @@ export function VegaLiteChart({
 
   return (
     <div className="w-full">
-      <div ref={ref} className="w-full overflow-hidden" style={{ minHeight: height }} />
+      <div ref={ref} className="w-full overflow-hidden" style={{ minHeight: height, cursor: onDrill ? 'pointer' : undefined }} />
       {caption && <p className="mt-1.5 text-center text-[11px] text-slate-400">{caption}</p>}
     </div>
   )

@@ -12,6 +12,16 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Clickability affordance — enabled buttons / role=button show the pointer hand.
+   In @layer base so Tailwind's cursor-* utilities (e.g. cursor-not-allowed on a
+   disabled control) always win. */
+@layer base {
+  button:not(:disabled),
+  [role='button'] {
+    cursor: pointer;
+  }
+}
+
 /* Embed mode — host page iframes shredintel and supplies its own chrome.
  * Our top bar (h-16) is hidden, so the sticky page header (top-14) needs
  * to sit at the top of the iframe. Neutralize the sticky offset. */

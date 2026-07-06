@@ -37,7 +37,10 @@ function renderInline(text: string, kp: string): ReactNode[] {
     const t = m[0]
     const key = `${kp}-${i++}`
     if (t.startsWith('**') || t.startsWith('__')) {
-      out.push(<strong key={key}>{t.slice(2, -2)}</strong>)
+      // Bold intentionally dropped — the bots bold aggressively, which reads
+      // busy. Still strip the ** / __ markers so no raw markdown shows; just
+      // render the words plainly.
+      out.push(t.slice(2, -2))
     } else if (t.startsWith('`')) {
       out.push(
         <code key={key} className="rounded bg-slate-100 px-1 py-0.5 text-[0.9em] text-slate-700">

@@ -268,12 +268,28 @@ export function ConversationExplorer({
                         </div>
                       ) : transcript && transcript.length ? (
                         <div className="space-y-2">
-                          {transcript.map((m, i) => (
-                            <div key={i} className={`text-sm leading-relaxed ${m.sender === 'user' ? 'text-slate-800' : 'text-slate-500'}`}>
-                              <span className="mr-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">{m.sender}</span>
-                              <RichText text={m.text} />
-                            </div>
-                          ))}
+                          {transcript.map((m, i) => {
+                            const isUser = m.sender === 'user'
+                            return (
+                              <div
+                                key={i}
+                                className={`border-l-2 pl-2.5 text-sm leading-relaxed ${
+                                  isUser
+                                    ? 'rounded-r-md border-botscrew-300 bg-botscrew-50/60 py-1 font-medium text-slate-900'
+                                    : 'border-transparent text-slate-500'
+                                }`}
+                              >
+                                <span
+                                  className={`mr-1.5 text-[10px] font-semibold uppercase tracking-wide ${
+                                    isUser ? 'text-botscrew-600' : 'text-slate-400'
+                                  }`}
+                                >
+                                  {m.sender}
+                                </span>
+                                <RichText text={m.text} />
+                              </div>
+                            )
+                          })}
                         </div>
                       ) : (
                         <div className="text-xs text-slate-400">No transcript available.</div>

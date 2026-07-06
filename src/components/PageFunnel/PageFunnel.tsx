@@ -25,6 +25,12 @@ function frictionColor(share: number): string {
   return brand.slate
 }
 
+// The page taxonomy stores the homepage as "Home" — spell it out in the UI so
+// it's unmistakably the homepage, not a section. The underlying value stays
+// "Home" everywhere (drill filter, AI grounding, DB), so only the label changes.
+const STAGE_LABELS: Record<string, string> = { Home: 'Homepage' }
+const stageLabel = (stage: string): string => STAGE_LABELS[stage] ?? stage
+
 export function PageFunnel({
   funnel,
   botId,
@@ -67,7 +73,7 @@ export function PageFunnel({
           <div className="text-right">
             <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Friction peaks at</div>
             <div className="text-sm font-semibold" style={{ color: frictionColor(peak.negativeShare) }}>
-              {peak.stage} · {formatPercent(peak.negativeShare)} frustrated
+              {stageLabel(peak.stage)} · {formatPercent(peak.negativeShare)} frustrated
             </div>
           </div>
         ) : undefined
@@ -83,15 +89,15 @@ export function PageFunnel({
               key={s.stage}
               type="button"
               onClick={() => setDrill(s.stage)}
-              title={`Read the questions from ${s.stage} pages`}
+              title={`Read the questions from ${stageLabel(s.stage)} pages`}
               className="group flex w-full items-center gap-3 rounded-lg px-1.5 py-1 text-left transition hover:bg-slate-50"
             >
               <span className="flex w-36 shrink-0 items-center gap-2">
                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-[10px] font-semibold text-slate-500">
                   {s.rank}
                 </span>
-                <span className="truncate text-sm text-slate-700" title={s.stage}>
-                  {s.stage}
+                <span className="truncate text-sm text-slate-700" title={stageLabel(s.stage)}>
+                  {stageLabel(s.stage)}
                 </span>
               </span>
               <span className="relative h-5 flex-1 overflow-hidden rounded bg-slate-100">
@@ -125,7 +131,7 @@ export function PageFunnel({
         <ConversationExplorer
           botId={botId}
           range={range}
-          filter={{ dim: 'stage', value: drill, label: drill }}
+          filter={{ dim: 'stage', value: drill, label: stageLabel(drill) }}
           onClose={() => setDrill(null)}
         />
       )}

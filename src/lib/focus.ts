@@ -1,7 +1,7 @@
 /**
  * Scroll a dashboard section into view and pulse it — the "show you where the
  * data lives" move. The AI answer tags each response with a `focus` section
- * (core / intelligence / identity / context); the hero + voice agent call this.
+ * (overview / sales / questions / service / audience); the hero + voice agent call this.
  */
 export function focusSection(id?: string | null) {
   if (!id || id === 'none' || typeof document === 'undefined') return

@@ -112,17 +112,18 @@ export function BotAnalyticsPage() {
         <div className="relative">
           <ShreddingOverlay active={shredding} />
           <div className={`space-y-12 transition-opacity duration-300 ${shredding ? 'opacity-60' : 'opacity-100'}`}>
-            <section id="core" className="scroll-mt-40 space-y-5">
-              {/* Extended Conversation Counts — the spec's §1 (sessions vs. messages, depth, bounce). */}
+            {/* 1 — Overview: how busy the assistant is + whether guests engage.
+                (ResolutionHero / KpiStrip / OutcomeTimeline stay benched until the
+                SOLVED outcome derivation is settled — see reference_shredintel_data_model.) */}
+            <section id="overview" className="scroll-mt-40 space-y-5">
               <ConversationCounts {...f.conversationCounts} />
-              <ConversionPulse {...f.conversionPulse} />
-              {/* Benched until the SOLVED outcome derivation is settled (see reference_shredintel_data_model):
-                  ResolutionHero, KpiStrip, OutcomeTimeline all read outcome=SOLVED, which is 0 for every live bot. */}
             </section>
 
-            <section id="intelligence" className="scroll-mt-40 space-y-5">
-              {/* Page funnel — WHERE questions originate + the global page filter
-                  that re-scopes the panels below to a single funnel stage. Live-only. */}
+            {/* 2 — Sales & conversion: the guest journey + where money is won/lost.
+                The PageFunnel stage click sets the global page filter that re-scopes
+                the demand/satisfaction panels below to a single stage. Live-only. */}
+            <section id="sales" className="scroll-mt-40 space-y-5">
+              <ConversionPulse {...f.conversionPulse} />
               {funnel && (
                 <PageFunnel
                   funnel={funnel}
@@ -132,23 +133,32 @@ export function BotAnalyticsPage() {
                   range={askRange}
                 />
               )}
-              {/* ShredIntel enrichment — what guests ask about, where they get stuck, how they feel */}
-              <KnowledgeSectionDemand {...f.knowledgeSectionDemand} botId={botId} range={askRange} />
               <ConversionBlockers {...f.conversionBlockers} botId={botId} range={askRange} />
+            </section>
+
+            {/* 3 — What guests ask about: demand by category */}
+            <section id="questions" className="scroll-mt-40 space-y-5">
+              <KnowledgeSectionDemand {...f.knowledgeSectionDemand} botId={botId} range={askRange} />
+            </section>
+
+            {/* 4 — Are we helping? guest satisfaction + answer quality / gaps */}
+            <section id="service" className="scroll-mt-40 space-y-5">
               <GuestSentiment {...f.guestSentiment} />
               <KnowledgeSourceLeaderboard {...f.knowledgeSourceLeaderboard} />
-              <SenderMixStack {...f.senderMixStack} />
             </section>
 
-            <section id="identity" className="scroll-mt-40 space-y-5">
+            {/* 5 — Who & where your guests are: identity, location, device, time */}
+            <section id="audience" className="scroll-mt-40 space-y-5">
               <GuestIdentitySplit {...f.guestIdentitySplit} />
               <LeadCaptureFunnel {...f.leadCaptureFunnel} />
-            </section>
-
-            <section id="context" className="scroll-mt-40 space-y-5">
               <GuestLocations {...f.guestLocations} botId={botId} range={askRange} />
               <DeviceExperienceMix {...f.deviceExperienceMix} />
               <DemandHeatmap {...f.demandHeatmap} />
+            </section>
+
+            {/* 6 — Under the hood: message mechanics */}
+            <section id="detail" className="scroll-mt-40 space-y-5">
+              <SenderMixStack {...f.senderMixStack} />
             </section>
           </div>
         </div>

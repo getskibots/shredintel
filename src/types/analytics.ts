@@ -339,6 +339,8 @@ export interface DeviceExperienceMixProps {
 // US / Canada / International split. Scoped to substantive = real guests.
 export interface GuestLocationsProps {
   cities: BreakdownItem[]
+  /** City points with coordinates for the US dot-map (offline albersUsa). */
+  cityPoints: { city: string; lat: number; lon: number; conversations: number }[]
   markets: BreakdownItem[]
   totalLocated: number
   countryCount: number

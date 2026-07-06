@@ -971,6 +971,16 @@ export function buildPeriodFixturesForDays(
       { label: 'Phoenix, AZ', conversations: Math.round(319 * scale), share: 0.016 },
       { label: 'Chicago, IL', conversations: Math.round(260 * scale), share: 0.013 },
     ],
+    cityPoints: [
+      { city: 'Jackson', lat: 43.48, lon: -110.76, conversations: Math.round(2145 * scale) },
+      { city: 'Denver', lat: 39.74, lon: -104.99, conversations: Math.round(934 * scale) },
+      { city: 'New York', lat: 40.71, lon: -74.01, conversations: Math.round(701 * scale) },
+      { city: 'Idaho Falls', lat: 43.49, lon: -112.03, conversations: Math.round(524 * scale) },
+      { city: 'Missoula', lat: 46.87, lon: -113.99, conversations: Math.round(417 * scale) },
+      { city: 'Salt Lake City', lat: 40.76, lon: -111.89, conversations: Math.round(360 * scale) },
+      { city: 'Phoenix', lat: 33.45, lon: -112.07, conversations: Math.round(319 * scale) },
+      { city: 'Chicago', lat: 41.88, lon: -87.63, conversations: Math.round(260 * scale) },
+    ],
   }
 
   // ── Demand heatmap (scale every cell) ──────────────────────────────

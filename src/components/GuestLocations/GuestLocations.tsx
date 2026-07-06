@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { MapPin } from 'lucide-react'
 import { BreakdownBars } from '../BreakdownBars'
 import { ConversationExplorer } from '../ConversationExplorer'
+import { UsDotMap } from '../UsDotMap'
 import { EmptyState, Panel } from '../shared'
 import { formatNumber, formatPercent } from '../../lib/formatters'
 import type { GuestLocationsProps } from '../../types/analytics'
@@ -17,6 +18,7 @@ export type { GuestLocationsProps } from '../../types/analytics'
  */
 export function GuestLocations({
   cities,
+  cityPoints,
   markets,
   totalLocated,
   countryCount,
@@ -49,6 +51,11 @@ export function GuestLocations({
                   <div className="text-[11px] tabular-nums text-slate-400">{formatNumber(m.conversations)}</div>
                 </div>
               ))}
+            </div>
+          )}
+          {cityPoints.length > 0 && (
+            <div className="mb-5 rounded-xl border border-slate-100 bg-slate-50/40 p-1">
+              <UsDotMap points={cityPoints} height={300} onSelect={botId ? setDrill : undefined} />
             </div>
           )}
           <div className="mb-2 flex items-center gap-1.5 text-xs font-medium text-slate-500">

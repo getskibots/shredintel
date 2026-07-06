@@ -619,8 +619,20 @@ function overlayJHChatLive(base: PeriodFixtures, live: LiveBundle, pageStage?: s
       .sort((a, b) => b.conversations - a.conversations)
       .slice(0, 12)
 
+    // Map points keyed by raw city (with coords) for the US dot-map.
+    const perPoint = new Map<string, { lat: number; lon: number; n: number }>()
+    for (const r of live.geoCity) {
+      if (r.lat == null || r.lon == null) continue
+      const prev = perPoint.get(r.city) ?? { lat: r.lat, lon: r.lon, n: 0 }
+      perPoint.set(r.city, { lat: r.lat, lon: r.lon, n: prev.n + Number(r.conversations) })
+    }
+    const cityPoints = [...perPoint.entries()]
+      .map(([city, v]) => ({ city, lat: v.lat, lon: v.lon, conversations: v.n }))
+      .sort((a, b) => b.conversations - a.conversations)
+      .slice(0, 60)
+
     if (totalLocated > 0) {
-      out.guestLocations = { cities, markets, totalLocated, countryCount: perCountry.size }
+      out.guestLocations = { cities, cityPoints, markets, totalLocated, countryCount: perCountry.size }
     }
   }
 

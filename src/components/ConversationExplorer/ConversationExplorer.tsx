@@ -4,6 +4,7 @@ import { getSupabase } from '../../lib/supabase'
 import { sentimentColors } from '../../lib/chartTheme'
 import { DRILL_DIMENSIONS, humanLabel, type DrillPayload } from '../../lib/drill'
 import { RichText } from '../shared'
+import { UsDotMap } from '../UsDotMap'
 
 /**
  * Drill-down: any chart mark / sliver → the matching conversations → the actual
@@ -18,7 +19,7 @@ import { RichText } from '../shared'
  * comes from the bot-scoped, PII-scrubbed /api/transcript.
  */
 
-interface ConvRow { bot_id: number; conversation_id: number; topic: string | null; sentiment: string | null; day: string; started_local: string | null; duration_sec: number | null; page_path: string | null; city: string | null; region: string | null; country_iso: string | null }
+interface ConvRow { bot_id: number; conversation_id: number; topic: string | null; sentiment: string | null; day: string; started_local: string | null; duration_sec: number | null; page_path: string | null; city: string | null; region: string | null; country_iso: string | null; lat: number | null; lon: number | null }
 interface Msg { sender: string; text: string }
 
 // page_path is host+path (query string already stripped). Drop a leading "www."
@@ -109,7 +110,7 @@ export function ConversationExplorer({
       let q: any = sb
         .schema('report')
         .from('conversation_time')
-        .select('bot_id, conversation_id, topic, sentiment, day, started_local, duration_sec, page_path, city, region, country_iso', { count: 'exact' })
+        .select('bot_id, conversation_id, topic, sentiment, day, started_local, duration_sec, page_path, city, region, country_iso, lat, lon', { count: 'exact' })
         .eq('bot_id', p.botId)
         .eq('substantive', true)
       if (p.section) q = q.ilike('section', p.section)
@@ -267,6 +268,15 @@ export function ConversationExplorer({
                               {r.country_iso ? <span className="text-slate-400">· {r.country_iso}</span> : null}
                             </span>
                           ) : null}
+                        </div>
+                      ) : null}
+                      {r.lat != null && r.lon != null ? (
+                        <div className="mb-2.5 overflow-hidden rounded-lg border border-slate-100 bg-white">
+                          <UsDotMap
+                            points={[{ city: r.city ?? 'Location', lat: r.lat, lon: r.lon, conversations: 1 }]}
+                            single
+                            height={150}
+                          />
                         </div>
                       ) : null}
                       {loadingT ? (

@@ -20,7 +20,17 @@ import { UsDotMap } from '../UsDotMap'
  */
 
 interface ConvRow { bot_id: number; conversation_id: number; topic: string | null; sentiment: string | null; day: string; started_local: string | null; duration_sec: number | null; page_path: string | null; city: string | null; region: string | null; country_iso: string | null; lat: number | null; lon: number | null }
-interface Msg { sender: string; text: string }
+interface MsgSource { layer: string; url?: string; label?: string }
+interface Msg { sender: string; text: string; source?: MsgSource }
+
+// Per-message knowledge-layer badge styling (matches the Knowledge card).
+const LAYER_STYLE: Record<string, { bg: string; text: string; dot: string }> = {
+  'Text Edits': { bg: 'bg-emerald-50', text: 'text-emerald-700', dot: '#1D9E75' },
+  Website: { bg: 'bg-sky-50', text: 'text-sky-700', dot: '#2182BF' },
+  Files: { bg: 'bg-amber-50', text: 'text-amber-700', dot: '#EF9F27' },
+  Instructions: { bg: 'bg-violet-50', text: 'text-violet-700', dot: '#7F77DD' },
+  Failed: { bg: 'bg-rose-50', text: 'text-rose-700', dot: '#DC5B3B' },
+}
 
 // page_path is host+path (query string already stripped). Drop a leading "www."
 // for readability; the full value stays in the title / link href.
@@ -309,6 +319,33 @@ export function ConversationExplorer({
                                   }`}
                                 >
                                   <RichText text={m.text} />
+                                  {!isUser && m.source && (() => {
+                                    const st = LAYER_STYLE[m.source.layer] ?? LAYER_STYLE.Instructions
+                                    return (
+                                      <span
+                                        className={`mt-1 inline-flex max-w-full items-center gap-1.5 rounded-full ${st.bg} px-2 py-0.5 text-[11px] ${st.text}`}
+                                        title={m.source.url || m.source.label || m.source.layer}
+                                      >
+                                        <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: st.dot }} />
+                                        <span className="font-medium">{m.source.layer}</span>
+                                        {m.source.url ? (
+                                          <a
+                                            href={m.source.url}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            onClick={(e) => e.stopPropagation()}
+                                            className="min-w-0 truncate underline decoration-dotted underline-offset-2 hover:opacity-80"
+                                          >
+                                            {m.source.label}
+                                          </a>
+                                        ) : m.source.label ? (
+                                          <span className="min-w-0 truncate opacity-80">· {m.source.label}</span>
+                                        ) : m.source.layer === 'Instructions' ? (
+                                          <span className="opacity-70">· no source</span>
+                                        ) : null}
+                                      </span>
+                                    )
+                                  })()}
                                 </div>
                               </div>
                             )

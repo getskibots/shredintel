@@ -69,6 +69,24 @@ function pickText(raw: unknown): string {
   return s
 }
 
+const prettyUrl = (u: string) => u.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')
+const fileName = (u: string) => decodeURIComponent(u.split('?')[0].split('/').pop() || u)
+
+/** Map a matched admin_knowledge_reply row → the resort's Knowledge Layer + a
+ *  clickable/labelled source. Undefined for non-knowledge bot turns (greetings,
+ *  buttons) and guest turns (no matched row). */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function buildSource(r: any): { layer: string; url?: string; label?: string } | undefined {
+  if (!r.matched) return undefined
+  if (r.is_failed) return { layer: 'Failed' }
+  const st = r.source_type as string | null
+  const val = (r.source_value as string | null) || ''
+  if (st === 'WEBSITE') return { layer: 'Website', url: val || undefined, label: val ? prettyUrl(val) : undefined }
+  if (st === 'FILE') return { layer: 'Files', url: val || undefined, label: val ? fileName(val) : undefined }
+  if (st === 'TEXT') return { layer: 'Text Edits', label: (r.source_name as string | null)?.trim() || undefined }
+  return { layer: 'Instructions' } // matched reply, no retrieved source = prompt-only
+}
+
 export const maxDuration = 15
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -94,12 +112,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(404).json({ error: 'conversation not found for this bot' })
       }
 
+      // Attach the knowledge SOURCE to each bot answer. admin_knowledge_reply is
+      // keyed by (admin_conversation.user_id, sent_at) — NOT admin_chat_history's
+      // user_id (that's a platform id). The bot answer's `timestamp` equals the
+      // reply's `sent_at`. `matched` distinguishes a real knowledge answer (even a
+      // null-source "Instructions" one) from a greeting/button with no reply row.
       const msgs = await client.query(
         `select case when coalesce(h.is_from_support,0)=1 then 'support'
                      when coalesce(h.is_echo,false) then 'bot' else 'user' end as sender,
                 h.formatted_chat_history #>> '{}' as fch,
-                h.message #>> '{}' as msg
+                h.message #>> '{}' as msg,
+                kr.source_type, kr.source_value, kr.source_name, kr.is_failed, kr.matched
            from raw.admin_chat_history h
+           left join lateral (
+             select source_type, source_value, source_name, is_failed, true as matched
+               from raw.admin_knowledge_reply kr
+              where kr.user_id = (select cv.user_id from raw.admin_conversation cv where cv.id = $1)
+                and kr.sent_at = h."timestamp"
+              limit 1
+           ) kr on true
           where h.conversation_id = $1 and h.is_message = 1 and coalesce(h.visible,1) = 1
           order by h."timestamp"`,
         [cid],
@@ -114,10 +145,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       await client.query('rollback')
 
       const messages = msgs.rows
-        .map((r) => ({
-          sender: r.sender as string,
-          text: scrub((pickText(r.fch) || pickText(r.msg)).replace(/\s+/g, ' ').trim()),
-        }))
+        .map((r) => {
+          const source = buildSource(r)
+          return {
+            sender: r.sender as string,
+            text: scrub((pickText(r.fch) || pickText(r.msg)).replace(/\s+/g, ' ').trim()),
+            ...(source ? { source } : {}),
+          }
+        })
         .filter((m) => m.text)
 
       const supportId = firstMsg.rows[0]?.sid ?? null

@@ -8,7 +8,7 @@
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { realtimeInstruction, openaiVoiceFor } from './_lib/voices.js'
-import { getPrompts, getBotTimezone } from './_lib/db.js'
+import { getPrompts, getBotTimezone, getBotDataRange } from './_lib/db.js'
 
 export const maxDuration = 15
 
@@ -23,6 +23,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // and pass a concrete window to the drill.
     const tz = await getBotTimezone(botId)
     const today = new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(new Date())
+    const data = await getBotDataRange(botId)
     const KEY = (process.env.OPENAI_API_KEY || '').trim()
     if (!KEY) return res.status(500).json({ error: 'OPENAI_API_KEY missing' })
 
@@ -33,7 +34,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         session: {
           type: 'realtime',
           model: 'gpt-realtime',
-          instructions: realtimeInstruction(voiceId, master, slave, { tz, today }),
+          instructions: realtimeInstruction(voiceId, master, slave, { tz, today, dataFrom: data.from, dataTo: data.to }),
           audio: { output: { voice: openaiVoiceFor(voiceId) } },
           tools: [
             {

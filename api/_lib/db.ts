@@ -66,6 +66,22 @@ export async function getBotTimezone(botId: number): Promise<string> {
   }
 }
 
+/** The date range this bot actually has enriched data for (min/max day on
+ *  conversation_intel) — so the AI can honestly say "I only have data from X"
+ *  instead of reporting a misleading zero for out-of-range dates. Nulls when the
+ *  bot has no enriched data yet. */
+export async function getBotDataRange(botId: number): Promise<{ from: string | null; to: string | null }> {
+  try {
+    const { rows } = await getPool().query<{ mn: string | null; mx: string | null }>(
+      `select min(day)::text as mn, max(day)::text as mx from report.conversation_intel where bot_id = $1`,
+      [botId],
+    )
+    return { from: rows[0]?.mn ?? null, to: rows[0]?.mx ?? null }
+  } catch {
+    return { from: null, to: null }
+  }
+}
+
 /** Upsert a prompt layer. botId 0 = master (global); else per-bot slave. */
 export async function upsertPrompt(botId: number, prompt: string): Promise<void> {
   await getPool().query(

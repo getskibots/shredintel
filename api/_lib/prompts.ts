@@ -64,7 +64,7 @@ export function systemPrompt(
   window?: { from: string; to: string },
   master?: string,
   slave?: string,
-  temporal?: { tz: string; today: string },
+  temporal?: { tz: string; today: string; dataFrom?: string | null; dataTo?: string | null },
 ): string {
   // Two editable layers (Supabase report._ai_prompts) appended AFTER the fixed
   // grounding below — master = global ShredIntel base, slave = per-bot. Neither
@@ -76,6 +76,9 @@ export function systemPrompt(
   const custom = `${layer('SHREDINTEL MASTER INSTRUCTIONS (global)', master)}${layer('RESORT-SPECIFIC INSTRUCTIONS (this bot only)', slave)}`
   const tz = temporal?.tz || 'America/Denver'
   const today = temporal?.today || new Date().toISOString().slice(0, 10)
+  const boundsRule = temporal?.dataFrom && temporal?.dataTo
+    ? `\n- DATA BOUNDS: this bot's data covers ${temporal.dataFrom} through ${temporal.dataTo}. If the question asks about dates OUTSIDE that range (earlier than ${temporal.dataFrom}, or later than ${temporal.dataTo}/the future), do NOT report zero as if it were a finding — say plainly you only have data from ${temporal.dataFrom} to ${temporal.dataTo}. A window WITHIN the bounds that has no matches IS a real "none".`
+    : ''
   const win = window && /^\d{4}-\d{2}-\d{2}$/.test(window.from) && /^\d{4}-\d{2}-\d{2}$/.test(window.to) ? window : null
   const dayRule = win
     ? `- DATE WINDOW: DEFAULT to the manager's picker window ${win.from} through ${win.to} — on any table with a "day" column, add "day BETWEEN '${win.from}' AND '${win.to}'". BUT if the question names its own date(s) or period, use THOSE instead (resolve them in the resort's local calendar — today is ${today}, timezone ${tz}). Use exactly ONE window per answer, and state which one you used.`
@@ -112,7 +115,7 @@ Rules:
 - Every query MUST filter bot_id = ${botId}.
 - SELECT or WITH only. Never write. Reference only the report.* views above. Views are tables — SELECT FROM them, never call with parentheses.
 ${dayRule}
-- ${DATE_AWARENESS}
+- ${DATE_AWARENESS}${boundsRule}
 - On report.conversation_intel, add "and substantive" for guest-intelligence questions unless the point is to count excluded chats.
 - CHART SAFETY: any query whose rows become a breakdown/ranking chart MUST return a SMALL ranked set — ORDER BY the measure DESC and LIMIT 12 (or fewer). Prefer low-cardinality dimensions (section, pinchpoint, sentiment) over free-text topic. Only a per-day time series may exceed 12 rows.
 - ${DRILL_CONTRACT}

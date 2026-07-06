@@ -12,7 +12,7 @@
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { chat } from './_lib/llm.js'
-import { runReadOnly, schemaCatalog, validateSql, getPrompts, getBotTimezone } from './_lib/db.js'
+import { runReadOnly, schemaCatalog, validateSql, getPrompts, getBotTimezone, getBotDataRange } from './_lib/db.js'
 import { PROMPT_LIBRARY, systemPrompt, SQL_INSTRUCTION, ANSWER_INSTRUCTION } from './_lib/prompts.js'
 import { voiceAnswerInstruction } from './_lib/voices.js'
 
@@ -64,7 +64,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // "yesterday") in the resort's own calendar + scope to in-question dates.
     const tz = await getBotTimezone(botId)
     const today = new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(new Date()) // YYYY-MM-DD (local)
-    const system = systemPrompt(botId, catalog, window, master, slave, { tz, today })
+    const data = await getBotDataRange(botId) // so the AI can bound-check out-of-range dates
+    const system = systemPrompt(botId, catalog, window, master, slave, { tz, today, dataFrom: data.from, dataTo: data.to })
 
     // 1) question → SQL
     const sqlJson = await chat({ system, user: `${question}\n\n${SQL_INSTRUCTION}`, json: true, maxTokens: 500 })

@@ -20,6 +20,8 @@ export interface ReportCard {
   vegaLite?: Record<string, unknown> | null
   rows: Record<string, unknown>[]
   drill?: DrillFilter | null
+  /** The date window this answer covered — so a drill from the card scopes to it. */
+  window?: { from: string; to: string } | null
 }
 
 export interface SavedReport {

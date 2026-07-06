@@ -29,6 +29,7 @@ interface AskResult {
   vegaLite?: Record<string, unknown> | null
   focus?: string | null
   drill?: { dimension: string; value: string; label: string } | null
+  window?: { from: string; to: string } | null
   sql: string
   rows: Record<string, unknown>[]
 }
@@ -59,9 +60,10 @@ export function AskBar({ botId, range, onVoice }: { botId: number; range?: { fro
   const [result, setResult] = useState<AskResult | null>(null)
   const [drill, setDrill] = useState<DrillFilter | null>(null)
   const [drillPayload, setDrillPayload] = useState<DrillPayload | null>(null)
-  const drillCtx = { botId, from: range?.from, to: range?.to }
   const openDrill = (datum: Record<string, unknown>) => {
-    const dp = payloadFromDatum(datum, drillCtx)
+    // Scope the drill to the answer's window (the dates the query actually used),
+    // falling back to the dashboard picker.
+    const dp = payloadFromDatum(datum, { botId, from: result?.window?.from ?? range?.from, to: result?.window?.to ?? range?.to })
     if (dp) setDrillPayload(dp)
   }
   const [error, setError] = useState<string | null>(null)

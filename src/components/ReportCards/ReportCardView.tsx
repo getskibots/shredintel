@@ -8,14 +8,19 @@ import type { DrillFilter, ReportCard } from '../../lib/savedReports'
  * button that drills to the real transcripts. Shared by the voice takeover and
  * the Saved-reports viewer so both render identically.
  */
-export function ReportCardView({ card, onDrill }: { card: ReportCard; onDrill?: (d: DrillFilter) => void }) {
+export function ReportCardView({ card, onDrill, onChartDrill }: {
+  card: ReportCard
+  onDrill?: (d: DrillFilter) => void
+  /** Click any chart mark → its datum (drills to the card's window). */
+  onChartDrill?: (datum: Record<string, unknown>) => void
+}) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       {card.question && <div className="mb-2 text-xs font-medium text-slate-400">“{card.question}”</div>}
       <p className="text-[15px] leading-relaxed text-slate-800">{card.answer}</p>
       {card.vegaLite && card.rows.length > 0 && (
         <div className="mt-4">
-          <VegaLiteChart spec={card.vegaLite} rows={card.rows} />
+          <VegaLiteChart spec={card.vegaLite} rows={card.rows} onDrill={onChartDrill} />
         </div>
       )}
       {card.drill && onDrill && (

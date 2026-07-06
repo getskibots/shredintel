@@ -5,6 +5,7 @@ import { PeriodPicker } from '../PeriodPicker'
 import { ShreddingOverlay } from '../ShreddingOverlay'
 import { ReportCardView } from '../ReportCards'
 import { ConversationExplorer } from '../ConversationExplorer'
+import { payloadFromDatum, type DrillPayload } from '../../lib/drill'
 import type { PeriodSelection } from '../../lib/period'
 import {
   saveReport,
@@ -103,6 +104,13 @@ export function RealtimeAgent({ botId, range, selection, onSelectionChange, shre
   const [caption, setCaption] = useState('')
   const [cards, setCards] = useState<ReportCard[]>([])
   const [drill, setDrill] = useState<(DrillFilter & { from?: string; to?: string }) | null>(null)
+  const [drillPayload, setDrillPayload] = useState<DrillPayload | null>(null)
+  // Click a bar in a card's chart → drill to the exact conversations, scoped to
+  // THAT card's date window (not the picker).
+  const openChartDrill = (datum: Record<string, unknown>, card: { window?: { from: string; to: string } | null }) => {
+    const p = payloadFromDatum(datum, { botId, from: card.window?.from ?? range?.from, to: card.window?.to ?? range?.to })
+    if (p) setDrillPayload(p)
+  }
   const [persona, setPersona] = useState(profileFor(DEFAULT_VOICE_ID).name)
   const [saved, setSaved] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
@@ -175,6 +183,7 @@ export function RealtimeAgent({ botId, range, selection, onSelectionChange, shre
         vegaLite: data.vegaLite ?? null,
         rows: Array.isArray(data.rows) ? data.rows : [],
         drill: d,
+        window: data.window ?? null,
       }])
       setSaved(false)
       return JSON.stringify({ answer: data.answer, error: data.error })
@@ -186,7 +195,7 @@ export function RealtimeAgent({ botId, range, selection, onSelectionChange, shre
   }
 
   async function connect() {
-    setStatus('connecting'); setError(null); setCards([]); setCaption(''); setSaved(false); setDrill(null); setEnded(false)
+    setStatus('connecting'); setError(null); setCards([]); setCaption(''); setSaved(false); setDrill(null); setDrillPayload(null); setEnded(false)
     idRef.current = newReportId()
     try {
       const voiceId = DEFAULT_VOICE_ID
@@ -353,7 +362,7 @@ export function RealtimeAgent({ botId, range, selection, onSelectionChange, shre
           {cards.length > 0 && (
             <div className="mt-8 space-y-4">
               {cards.map((c, i) => (
-                <ReportCardView key={i} card={c} onDrill={setDrill} />
+                <ReportCardView key={i} card={c} onDrill={setDrill} onChartDrill={(datum) => openChartDrill(datum, c)} />
               ))}
               <div ref={endRef} />
             </div>
@@ -363,6 +372,7 @@ export function RealtimeAgent({ botId, range, selection, onSelectionChange, shre
       </div>
 
       {drill && <ConversationExplorer botId={botId} range={drill.from && drill.to ? { from: drill.from, to: drill.to } : range} filter={drill} onClose={() => setDrill(null)} />}
+      {drillPayload && <ConversationExplorer botId={botId} payload={drillPayload} onClose={() => setDrillPayload(null)} />}
     </div>
   )
 }

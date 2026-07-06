@@ -216,11 +216,15 @@ export function ConversationExplorer({
                     if (el) rowRefs.current.set(r.conversation_id, el)
                     else rowRefs.current.delete(r.conversation_id)
                   }}
-                  className="rounded-lg border border-slate-200 [content-visibility:auto] [contain-intrinsic-size:auto_3rem]"
+                  className={`overflow-hidden rounded-lg border [content-visibility:auto] [contain-intrinsic-size:auto_3rem] ${
+                    openCid === r.conversation_id ? 'border-botscrew-400 shadow-sm' : 'border-slate-200'
+                  }`}
                 >
                   <button
                     onClick={() => openConv(r.conversation_id)}
-                    className="flex w-full items-center gap-2 px-3 py-2.5 text-left transition hover:bg-slate-50"
+                    className={`flex w-full items-center gap-2 px-3 py-2.5 text-left transition ${
+                      openCid === r.conversation_id ? 'bg-botscrew-50 hover:bg-botscrew-100' : 'hover:bg-slate-50'
+                    }`}
                   >
                     <ChevronRight className={`h-4 w-4 shrink-0 text-slate-400 transition ${openCid === r.conversation_id ? 'rotate-90' : ''}`} />
                     <span className="min-w-0 flex-1">

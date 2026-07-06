@@ -48,6 +48,7 @@ const MATVIEWS = [
   'conversation_depth', // §1 Extended Conversation Counts (built by build-conversation-depth.mjs)
   'conversation_page',  // page/URL → ecommerce funnel stage (built by build-page-funnel.mjs)
   'conversation_time',  // resort-local time-spine per conversation (built by build-conversation-time.mjs)
+  'conversation_geo',   // IP → location per conversation (built by build-geo-views.mjs; needs build-ip-geo.mjs first)
 ]
 
 // ── tiny logger ───────────────────────────────────────────────────

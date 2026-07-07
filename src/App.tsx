@@ -45,7 +45,21 @@ function ChannelShell() {
   )
 }
 
+// faq.getskibots.com is the Ahhh FAQ It tool's own front door: the app detects
+// the `faq.` hostname and serves the tool as the homepage (no dashboard chrome,
+// no router). analytics.getskibots.com (and everything else) stays ShredIntel;
+// the tool is still reachable there at /#/tools/ahhh-faq-it.
+const isFaqHost = () =>
+  typeof window !== 'undefined' && /^faq\./i.test(window.location.hostname)
+
 function App() {
+  if (isFaqHost()) {
+    return (
+      <PasswordGate>
+        <AhhhFaqItTool />
+      </PasswordGate>
+    )
+  }
   return (
     <PasswordGate>
       <HashRouter>

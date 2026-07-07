@@ -28,7 +28,9 @@ app.post('/probe', async (req, res) => {
   const questions = Array.isArray(b.questions)
     ? b.questions.map((q) => String(q).trim()).filter(Boolean).slice(0, MAX_QUESTIONS)
     : []
-  const concurrency = Math.max(1, Math.min(6, Number(b.concurrency) || 4))
+  // Each unit of concurrency is a separate simultaneous conversation ("person").
+  // RAM on the droplet is the real ceiling (~150 MB per headless page).
+  const concurrency = Math.max(1, Math.min(16, Number(b.concurrency) || 4))
 
   let host = ''
   try { host = new URL(widgetUrl).host } catch { /* invalid */ }

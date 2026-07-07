@@ -37,7 +37,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const questions: string[] = Array.isArray(body.questions)
     ? body.questions.map((q: unknown) => String(q)).filter(Boolean).slice(0, MAX_QUESTIONS)
     : []
-  const concurrency = Math.max(1, Math.min(6, Number(body.concurrency) || 4))
+  const concurrency = Math.max(1, Math.min(16, Number(body.concurrency) || 4))
 
   // Guard here too (defense in depth) so the droplet only ever probes our own
   // widgets, even if its own check were ever relaxed.

@@ -27,8 +27,13 @@ await c.query("set statement_timeout='600000ms'")
 // MATERIALIZED: aggregating over 500k+ raw.admin_knowledge_reply rows takes
 // ~3s as a plain view, which risks the dashboard's live-fetch timeout on a cold
 // start. Precompute + index; refreshed nightly via sync.mjs MATVIEWS.
-await c.query('drop view if exists report.knowledge_layer_mix cascade') // was a plain view in Phase 1
-await c.query('drop materialized view if exists report.knowledge_layer_mix cascade')
+// Drop whatever exists under this name — a plain view (Phase 1 legacy) OR a
+// materialized view (since). `drop view if exists` THROWS (not skips) on a matview
+// and vice-versa, so try both and swallow the type-mismatch — keeps re-runs idempotent.
+for (const drop of [
+  'drop materialized view if exists report.knowledge_layer_mix cascade',
+  'drop view if exists report.knowledge_layer_mix cascade',
+]) { try { await c.query(drop) } catch { /* wrong object type — the other drop applies */ } }
 await c.query(`create materialized view report.knowledge_layer_mix as
   select u.bot_id,
          x.sent_at::date as day,

@@ -26,7 +26,25 @@ const SPINE = [
   'Technical Problems', 'Product / Service Info', 'Complaints / Service Issues',
   'Human / Escalation', 'Emergency / Safety', 'Other',
 ]
-const SYSTEM = `You are ShredIntel's conversation classifier for a ski-resort chat assistant.
+// Partners span verticals (Brandon 2026-07-07). The 12-bucket SPINE is universal
+// business-support, so it works across all of them AND keeps partners comparable.
+// But the prompt FRAMING should match the partner so the model doesn't force a
+// ski reading of a water-park / transport / pass conversation (and so mascot-named
+// bots like "Fred the Moose" = Grand Targhee are understood). Map the non-ski
+// partners; everything else defaults to a ski resort.
+const VERTICAL_MAP = {
+  2: 'season / multi-resort pass product',        // Mountain Collective
+  258: 'season / multi-resort pass product',      // Snow Triple Play
+  275: 'indoor water park',                        // Splash Lagoon
+  103: 'indoor ski & snow park',                   // Big Snow (American Dream)
+  364: 'ground-transportation / shuttle service',  // Summit Express
+  65: 'resort lodging / hotel',                    // Mountain Lodge Telluride
+  140: 'cycling / gravel event',                   // SBT GRVL
+  311: 'travel agency',                            // Outside Travel
+  1: 'multi-resort lift-ticket marketplace',       // Get Ski Tickets
+}
+const VERTICAL = VERTICAL_MAP[BOT] || 'ski resort'
+const SYSTEM = `You are ShredIntel's conversation classifier for the guest-services chat assistant of a ${VERTICAL}.
 Read the whole conversation (guest + bot turns) and classify the GUEST's intent.
 Return ONLY minified JSON with these keys:
 {"substantive":true|false,"category":<one of the list>,"sentiment":"Positive"|"Neutral"|"Negative","urgency":"Low"|"Medium"|"High"|"Escalation Required","handover":"No Handover"|"Possible Handover"|"Clear Handover","topic":"<max 8 words, the specific ask, no names/emails/phones>"}
@@ -87,12 +105,26 @@ await c.query(`
 await c.query(`create index if not exists conversation_intel_bot_day on report.conversation_intel (bot_id, day)`)
 await c.query(`grant select on report.conversation_intel to anon, authenticated`)
 
+// Bot-scoped work query. report._conversations_v derives engagement in a CTE
+// that re-aggregates the ENTIRE chat history on every call (40s+ per bot, times
+// out at scale). Instead: filter to THIS bot's conversations first (admin_user.bot_id
+// idx), then check engagement via the indexed EXISTS on admin_chat_history
+// (conversation_id idx) → ~10s/bot. The engagement predicate + resort-local `day`
+// (report.bot_timezone) match _conversations_v exactly, so the enriched set is identical.
 const { rows: todo } = await c.query(`
-  select cv.conversation_id, cv.day
-    from report._conversations_v cv
-   where cv.bot_id = $1 and cv.is_engaged
-     and not exists (select 1 from report.conversation_intel ci where ci.conversation_id = cv.conversation_id)
-   order by cv.day desc`, [BOT])
+  select cv.id as conversation_id,
+         ((cv.started_at at time zone 'UTC') at time zone coalesce(tz.tz, 'America/Denver'))::date as day
+    from raw.admin_conversation cv
+    join raw.admin_user u on u.id = cv.user_id and u.bot_id = $1
+    left join report.bot_timezone tz on tz.bot_id = u.bot_id
+   where cv.started_at >= '2024-10-01'
+     and exists (
+       select 1 from raw.admin_chat_history h
+        where h.conversation_id = cv.id and coalesce(h.is_message,1)=1
+          and coalesce(h.is_echo,false)=false and coalesce(h.is_from_support,0)=0
+          and coalesce(h.visible,1)=1)
+     and not exists (select 1 from report.conversation_intel ci where ci.conversation_id = cv.id)
+   order by cv.started_at desc`, [BOT])
 const work = todo.slice(0, MAX)
 console.log(`bot ${BOT}: ${todo.length} engaged conversations to enrich${work.length < todo.length ? ` (capped ${work.length})` : ''}`)
 

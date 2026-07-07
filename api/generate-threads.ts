@@ -42,6 +42,34 @@ export const CATEGORIES = [
   { key: 'other', label: '🎉 Other', hint: 'gift cards, groups, jobs, weddings, anything that does not fit the categories above' },
 ] as const
 
+// Strip a fetched page to readable text for grounding.
+function htmlToText(html: string): string {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<!--[\s\S]*?-->/g, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&').replace(/&lt;/gi, '<').replace(/&gt;/gi, '>').replace(/&#\d+;/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+// Best-effort: fetch a resort's website and distill it to grounding text so the
+// generated questions match THAT resort (real lift/pass/event names). Onboarding
+// a new resort? This is the only source of truth (no guest data yet).
+async function fetchGrounding(url: string): Promise<string> {
+  try {
+    const u = new URL(url)
+    if (!/^https?:$/.test(u.protocol) || /^(localhost$|127\.|10\.|192\.168\.|0\.)/i.test(u.hostname)) return ''
+    const r = await fetch(u.toString(), {
+      headers: { 'user-agent': 'Mozilla/5.0 (compatible; AhhhFaqItBot/1.0)' },
+      signal: AbortSignal.timeout(12000),
+    })
+    if (!r.ok) return ''
+    return htmlToText(await r.text()).slice(0, 6000)
+  } catch { return '' }
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'GET') {
     return res.status(200).json({ categories: CATEGORIES.map((c) => ({ key: c.key, label: c.label, hint: c.hint })) })
@@ -50,6 +78,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const b = typeof req.body === 'object' && req.body ? req.body : {}
   const scope = String(b.scope || 'all')
+  const mode = b.mode === 'custom' ? 'custom' : 'focus'
+  const customPrompt = String(b.customPrompt || '').trim().slice(0, 1200)
+  const resortUrl = String(b.resortUrl || '').trim()
   const guests = Math.max(1, Math.min(20, Number(b.guests) || 10))
   const minTurns = Math.max(1, Math.min(6, Number(b.minTurns) || 3))
   const maxTurns = Math.max(minTurns, Math.min(8, Number(b.maxTurns) || 4))
@@ -58,16 +89,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const focused = CATEGORIES.find((c) => c.key === scope)
   const taxonomy = CATEGORIES.map((c) => `- ${c.label} (${c.key}): ${c.hint}`).join('\n')
 
+  // Optional: read the resort's real website so questions match THIS resort.
+  const grounding = resortUrl ? await fetchGrounding(resortUrl) : ''
+  const groundBlock = grounding
+    ? `\n\nREAL CONTENT FROM ${resort}'S WEBSITE — use it so the questions are specific to THIS resort (real lift/trail names, actual pass & ticket products, real events, amenities). Prefer specifics over generic phrasing:\n"""\n${grounding}\n"""`
+    : ''
+
   const system = `You are "Ahhh FAQ It", a generator of REALISTIC ski-resort guest questions used to stress-test a resort's AI chatbot. Write questions the way real guests actually type them — short, natural, sometimes vague or with minor typos — in the voice of different personas (first-timer, family with young kids, budget-conscious, season-pass holder, expert, out-of-towner).
 
-Each "guest" is ONE person having ONE short conversation: a coherent thread of ${minTurns}-${maxTurns} questions where each follow-up logically builds on the previous (e.g. ask a price → then a discount → then how to pay). Different guests must sound like different people with different intents; never reuse the same phrasing.
+Each "guest" is ONE person having ONE short conversation: a coherent thread of ${minTurns}-${maxTurns} questions where each follow-up logically builds on the previous. Different guests must sound like different people with different intents; never reuse the same phrasing.
 
 Resort knowledge categories:
-${taxonomy}`
+${taxonomy}${groundBlock}`
 
-  const user = focused
-    ? `Generate ${guests} guest threads for ${resort}, ALL focused on "${focused.label}" (${focused.hint}). Vary persona and angle across guests so together they probe the full breadth of this one category. Return JSON: {"threads":[{"category":"${focused.key}","persona":"short label","questions":["...", "..."]}]}`
-    : `Generate ${guests} guest threads for ${resort} that TOGETHER cover as many categories above as possible (a macro sweep). Give each guest a primary category and keep its thread coherent within it; spread guests across categories for maximum coverage. Return JSON: {"threads":[{"category":"<category key>","persona":"short label","questions":["...", "..."]}]}`
+  const user = mode === 'custom' && customPrompt
+    ? `Generate ${guests} guest threads for ${resort} following this instruction: "${customPrompt}". Give each guest the closest-matching category key from the list above. Return JSON: {"threads":[{"category":"<category key>","persona":"short label","questions":["...", "..."]}]}`
+    : focused
+      ? `Generate ${guests} guest threads for ${resort}, ALL focused on "${focused.label}" (${focused.hint}). Vary persona and angle across guests so together they probe the full breadth of this one category. Return JSON: {"threads":[{"category":"${focused.key}","persona":"short label","questions":["...", "..."]}]}`
+      : `Generate ${guests} guest threads for ${resort} that TOGETHER cover as many categories above as possible (a macro sweep). Give each guest a primary category and keep its thread coherent within it; spread guests across categories for maximum coverage. Return JSON: {"threads":[{"category":"<category key>","persona":"short label","questions":["...", "..."]}]}`
 
   try {
     const raw = await chat({ system, user, json: true, maxTokens: 2400, temperature: 0.8 })
@@ -85,7 +124,7 @@ ${taxonomy}`
     const coverage: Record<string, number> = {}
     for (const t of threads) coverage[t.category] = (coverage[t.category] || 0) + 1
 
-    return res.status(200).json({ threads, coverage, scope })
+    return res.status(200).json({ threads, coverage, scope, grounded: !!grounding })
   } catch (e) {
     console.error('[api/generate-threads] failed:', e)
     return res.status(500).json({ error: e instanceof Error ? e.message : 'generation failed' })

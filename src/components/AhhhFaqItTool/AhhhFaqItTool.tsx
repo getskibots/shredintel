@@ -43,6 +43,9 @@ export function AhhhFaqItTool() {
   const [pickerOpen, setPickerOpen] = useState(false)
   const [urlOverride, setUrlOverride] = useState('')
   const [scope, setScope] = useState('all')
+  const [mode, setMode] = useState<'focus' | 'custom'>('focus')
+  const [customPrompt, setCustomPrompt] = useState('')
+  const [resortUrl, setResortUrl] = useState('')
   const [guests, setGuests] = useState(10)
   const [status, setStatus] = useState<'idle' | 'generating' | 'running' | 'done' | 'error'>('idle')
   const [guestResults, setGuestResults] = useState<GuestResult[]>([])
@@ -60,7 +63,8 @@ export function AhhhFaqItTool() {
   const selectedBot = useMemo(() => bots.find((b) => b.botId === botId), [bots, botId])
   const botName = selectedBot?.label || `Bot ${botId}`
   const widgetUrl = urlOverride.trim() || widgetUrlFor(selectedBot?.publicIdentifier) || probeUrlFor(botId) || ''
-  const canRun = isValidWidgetUrl(widgetUrl) && status !== 'generating' && status !== 'running'
+  const willProbe = isValidWidgetUrl(widgetUrl)  // otherwise generate-only (onboarding a new resort)
+  const canRun = status !== 'generating' && status !== 'running' && (mode !== 'custom' || customPrompt.trim().length > 0)
 
   const matches = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -72,7 +76,8 @@ export function AhhhFaqItTool() {
     const turns = guestResults.flatMap((g) => g.result?.turns || [])
     const gaps = turns.filter(isGap).length
     const covered = new Set(guestResults.map((g) => g.category))
-    return { total: turns.length, answered: turns.length - gaps, gaps, covered: covered.size }
+    const probed = guestResults.some((g) => g.result)
+    return { total: turns.length, answered: turns.length - gaps, gaps, covered: covered.size, probed }
   }, [guestResults])
 
   async function go() {
@@ -83,7 +88,7 @@ export function AhhhFaqItTool() {
       // 1. Generate the guest threads.
       const gen = await fetch('/api/generate-threads', {
         method: 'POST', headers: { 'content-type': 'application/json' }, signal,
-        body: JSON.stringify({ scope, guests, resort: botName }),
+        body: JSON.stringify({ scope, mode, customPrompt, resortUrl: resortUrl.trim(), guests, resort: botName }),
       })
       const genJson = await gen.json()
       if (!gen.ok) throw new Error(genJson?.error || 'Question generation failed')
@@ -91,7 +96,9 @@ export function AhhhFaqItTool() {
       if (!threads.length) throw new Error('No threads generated')
       setGuestResults(threads.map((t) => ({ ...t }))) // show threads immediately
 
-      // 2. Run them against the live bot.
+      // 2. Run them against the live bot — unless there's no bot yet (onboarding),
+      // in which case we stop at the generated questions.
+      if (!willProbe) { setStatus('done'); return }
       setStatus('running')
       const probe = await fetch('/api/probe', {
         method: 'POST', headers: { 'content-type': 'application/json' }, signal,
@@ -159,18 +166,47 @@ export function AhhhFaqItTool() {
             </div>
           </label>
 
-          <label className="block">
-            <span className="text-[13px] font-medium text-slate-700">Focus</span>
-            <select
-              value={scope}
-              onChange={(e) => setScope(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:border-botscrew-500"
-            >
-              <option value="all">🌐 Everything (macro sweep)</option>
-              {categories.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
-            </select>
-          </label>
+          <div className="block">
+            <div className="flex items-center justify-between">
+              <span className="text-[13px] font-medium text-slate-700">Questions</span>
+              <div className="inline-flex rounded-lg border border-slate-200 p-0.5 text-[11px] font-semibold">
+                <button type="button" onClick={() => setMode('focus')} className={`rounded-md px-2 py-0.5 transition ${mode === 'focus' ? 'bg-botscrew-500 text-white' : 'text-slate-500 hover:text-slate-700'}`}>Focus</button>
+                <button type="button" onClick={() => setMode('custom')} className={`rounded-md px-2 py-0.5 transition ${mode === 'custom' ? 'bg-botscrew-500 text-white' : 'text-slate-500 hover:text-slate-700'}`}>Custom</button>
+              </div>
+            </div>
+            {mode === 'focus' ? (
+              <select
+                value={scope}
+                onChange={(e) => setScope(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:border-botscrew-500"
+              >
+                <option value="all">🌐 Everything (macro sweep)</option>
+                {categories.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
+              </select>
+            ) : (
+              <textarea
+                value={customPrompt}
+                onChange={(e) => setCustomPrompt(e.target.value)}
+                rows={2}
+                spellCheck={false}
+                placeholder="Your own steer — e.g. 'hammer the new gondola + Ikon pass' or 'act like a frustrated first-timer'."
+                className="mt-1 w-full resize-y rounded-lg border border-slate-300 px-3 py-2 text-[13px] text-slate-800 outline-none focus:border-botscrew-500"
+              />
+            )}
+          </div>
         </div>
+
+        {/* Resort website — grounds questions in the real site (key for onboarding) */}
+        <label className="mt-4 block">
+          <span className="text-[13px] font-medium text-slate-700">Resort website <span className="text-slate-400">(optional — reads the real site so questions match this resort)</span></span>
+          <input
+            value={resortUrl}
+            onChange={(e) => setResortUrl(e.target.value)}
+            spellCheck={false}
+            placeholder="https://www.jacksonhole.com"
+            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-[13px] text-slate-800 outline-none focus:border-botscrew-500"
+          />
+        </label>
 
         {/* widget URL — auto-derived from the bot's UUID; paste only if none */}
         {!widgetUrl && (
@@ -213,12 +249,18 @@ export function AhhhFaqItTool() {
       {/* Results */}
       {guestResults.length > 0 && (
         <div className="mt-6 space-y-4">
-          {status === 'done' && (
+          {status === 'done' && summary.probed && (
             <div className="grid grid-cols-4 gap-3">
               <Stat label="Guests" value={guestResults.length} tone="plain" />
               <Stat label="Answered" value={summary.answered} tone="good" />
               <Stat label="Potential gaps" value={summary.gaps} tone={summary.gaps ? 'warn' : 'good'} />
               <Stat label="Categories hit" value={summary.covered} tone="plain" />
+            </div>
+          )}
+          {status === 'done' && !summary.probed && (
+            <div className="grid grid-cols-2 gap-3">
+              <Stat label="Guests" value={guestResults.length} tone="plain" />
+              <Stat label="Categories" value={summary.covered} tone="plain" />
             </div>
           )}
 

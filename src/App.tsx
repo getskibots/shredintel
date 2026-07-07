@@ -19,6 +19,9 @@ function ChannelShell() {
       ? 'Mountain Collective — Voice'
       : 'Jackson Hole — Chat'
 
+  // Ahhh FAQ It is its own standalone surface — no dashboard chrome.
+  if (location.pathname === '/tools/ahhh-faq-it') return <AhhhFaqItTool />
+
   return (
     <DashboardShell
       botLabel={botLabel}
@@ -35,7 +38,6 @@ function ChannelShell() {
         <Route path="/chat/jh" element={<Navigate to="/bot/43" replace />} />
         <Route path="/chat/mc" element={<Navigate to="/bot/2" replace />} />
         <Route path="/voice" element={<VoiceReportGrid />} />
-        <Route path="/tools/ahhh-faq-it" element={<AhhhFaqItTool />} />
         <Route path="/bot/:botId" element={<BotAnalyticsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

@@ -103,13 +103,16 @@ export function AhhhFaqItTool() {
   const busy = status === 'generating' || status === 'running'
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8 md:px-6">
-      {/* Branding */}
-      <header className="mb-6 text-center">
-        <div className="text-4xl">☁️❓</div>
-        <h1 className="mt-1 text-2xl font-bold tracking-tight" style={{ color: brand.heading }}>Ahhh FAQ It</h1>
-        <p className="mt-1 text-sm text-slate-500">Pepper a resort's bot with the questions that bury it — many guests, real conversations, live.</p>
-      </header>
+    <div
+      className="min-h-screen w-full bg-cover bg-center"
+      style={{ backgroundImage: "linear-gradient(263deg, rgba(0,0,0,0.84) 23%, rgba(150,20,20,0.35) 100%), url('https://getskibots.com/wp-content/uploads/2025/08/Untitled-1.jpg')" }}
+    >
+      <div className="mx-auto max-w-4xl px-4 py-10 md:px-6">
+        {/* Branding — mirrors getskibots.com/tools/ahhh-faq-it */}
+        <header className="mb-6 text-center">
+          <h1 className="text-3xl font-extrabold uppercase tracking-wide text-white sm:text-4xl" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>Ahhh FAQ It!</h1>
+          <p className="mx-auto mt-2 max-w-xl text-[13px] font-semibold uppercase tracking-widest text-white/85">Generate the top 100 questions that bury your resort year-round</p>
+        </header>
 
       {/* Config */}
       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -242,10 +245,11 @@ export function AhhhFaqItTool() {
       )}
 
       {guestResults.length === 0 && status === 'idle' && (
-        <p className="mt-6 flex items-center justify-center gap-1.5 text-center text-[12px] text-slate-400">
+        <p className="mt-6 flex items-center justify-center gap-1.5 text-center text-[12px] text-white/70">
           <Sparkles className="h-3.5 w-3.5" /> Pick a resort + focus, then Go. A GPT writes the guests; the droplet runs them live.
         </p>
       )}
+      </div>
     </div>
   )
 }

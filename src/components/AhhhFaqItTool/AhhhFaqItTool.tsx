@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Loader2, Play, CheckCircle2, AlertTriangle, RotateCcw, Users, Sparkles } from 'lucide-react'
 import { brand } from '../../lib/chartTheme'
 import { useAvailableBots } from '../../data/useAnalytics'
-import { probeUrlFor, isValidWidgetUrl } from '../../lib/probeTargets'
+import { probeUrlFor, widgetUrlFor, isValidWidgetUrl } from '../../lib/probeTargets'
 
 /**
  * Ahhh FAQ It — standalone tool. Pick a resort, choose a scope (everything, or
@@ -39,6 +39,8 @@ export function AhhhFaqItTool() {
   const { bots } = useAvailableBots()
   const [categories, setCategories] = useState<Category[]>(FALLBACK_CATEGORIES)
   const [botId, setBotId] = useState(43)
+  const [search, setSearch] = useState('')
+  const [pickerOpen, setPickerOpen] = useState(false)
   const [urlOverride, setUrlOverride] = useState('')
   const [scope, setScope] = useState('all')
   const [guests, setGuests] = useState(10)
@@ -55,9 +57,16 @@ export function AhhhFaqItTool() {
       .catch(() => { /* keep fallback */ })
   }, [])
 
-  const botName = useMemo(() => bots.find((b) => b.botId === botId)?.label || `Bot ${botId}`, [bots, botId])
-  const widgetUrl = urlOverride.trim() || probeUrlFor(botId) || ''
+  const selectedBot = useMemo(() => bots.find((b) => b.botId === botId), [bots, botId])
+  const botName = selectedBot?.label || `Bot ${botId}`
+  const widgetUrl = urlOverride.trim() || widgetUrlFor(selectedBot?.publicIdentifier) || probeUrlFor(botId) || ''
   const canRun = isValidWidgetUrl(widgetUrl) && status !== 'generating' && status !== 'running'
+
+  const matches = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    const list = q ? bots.filter((b) => b.label.toLowerCase().includes(q)) : bots
+    return list.slice(0, 60)
+  }, [bots, search])
 
   const summary = useMemo(() => {
     const turns = guestResults.flatMap((g) => g.result?.turns || [])
@@ -119,16 +128,35 @@ export function AhhhFaqItTool() {
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block">
             <span className="text-[13px] font-medium text-slate-700">Resort</span>
-            <select
-              value={botId}
-              onChange={(e) => { setBotId(Number(e.target.value)); setUrlOverride('') }}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:border-botscrew-500"
-            >
-              {bots.map((b) => (
-                <option key={b.botId} value={b.botId}>{b.label}{probeUrlFor(b.botId) ? '' : ' — needs URL'}</option>
-              ))}
-              {!bots.some((b) => b.botId === 43) && <option value={43}>Jackson Hole - ACTIVE</option>}
-            </select>
+            <div className="relative">
+              <input
+                value={pickerOpen ? search : botName}
+                onChange={(e) => { setSearch(e.target.value); setPickerOpen(true) }}
+                onFocus={() => { setSearch(''); setPickerOpen(true) }}
+                onBlur={() => setTimeout(() => setPickerOpen(false), 150)}
+                placeholder="Search resorts…"
+                spellCheck={false}
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:border-botscrew-500"
+              />
+              {pickerOpen && (
+                <ul className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
+                  {matches.length === 0 && <li className="px-3 py-2 text-[13px] text-slate-400">No resorts match</li>}
+                  {matches.map((b) => (
+                    <li key={b.botId}>
+                      <button
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => { setBotId(b.botId); setUrlOverride(''); setSearch(''); setPickerOpen(false) }}
+                        className={`flex w-full items-center justify-between px-3 py-2 text-left text-[13px] transition hover:bg-botscrew-50 ${b.botId === botId ? 'font-semibold text-botscrew-700' : 'text-slate-700'}`}
+                      >
+                        <span className="truncate">{b.label}</span>
+                        {!b.publicIdentifier && !probeUrlFor(b.botId) && <span className="ml-2 shrink-0 text-[10px] text-amber-500">needs URL</span>}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </label>
 
           <label className="block">
@@ -144,8 +172,8 @@ export function AhhhFaqItTool() {
           </label>
         </div>
 
-        {/* widget URL — auto for mapped resorts, paste for the rest */}
-        {!probeUrlFor(botId) && (
+        {/* widget URL — auto-derived from the bot's UUID; paste only if none */}
+        {!widgetUrl && (
           <label className="mt-4 block">
             <span className="text-[13px] font-medium text-slate-700">Test widget URL <span className="text-slate-400">(no mapping for this resort yet)</span></span>
             <input

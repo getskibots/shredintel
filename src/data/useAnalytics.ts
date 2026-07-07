@@ -841,10 +841,11 @@ export interface BotOption {
   botId: number
   label: string       // bot display name (falls back to "Bot <id>")
   route: string       // canonical route to view this bot
+  publicIdentifier?: string  // Botscrew UUID → derives the widget test URL
 }
 
 const KNOWN_BOTS: BotOption[] = [
-  { botId: 43,  label: 'Jackson Hole (chat)',        route: '/bot/43' },
+  { botId: 43,  label: 'Jackson Hole (chat)',        route: '/bot/43', publicIdentifier: '776bd241-fbc3-4e17-92c7-8af31e84e6dd' },
   { botId: 2,   label: 'Mountain Collective (chat)',  route: '/bot/2' },
   { botId: 248, label: 'Mountain Collective (voice)', route: '/voice' },
 ]
@@ -859,22 +860,35 @@ export function useAvailableBots(): { bots: BotOption[]; isLive: boolean; isLoad
       const supabase = getSupabase()
       if (!supabase) return
       try {
-        const { data, error } = await supabase
+        // Prefer public_identifier (the widget UUID → derives the test URL); if
+        // that column isn't exposed yet, fall back to id+name so the list loads.
+        type BotRow = { id: number; name: string | null; public_identifier?: string | null }
+        type Res = { data: BotRow[] | null; error: unknown }
+        let res = (await supabase
           .from('bots')
-          .select('id, name')
+          .select('id, name, public_identifier')
           .order('name', { ascending: true })
-          .limit(2000)
+          .limit(2000)) as Res
+        if (res.error) {
+          res = (await supabase
+            .from('bots')
+            .select('id, name')
+            .order('name', { ascending: true })
+            .limit(2000)) as Res
+        }
+        const { data, error } = res
         if (cancelled) return
         if (error || !data || data.length === 0) {
           setState({ bots: KNOWN_BOTS, isLive: false, isLoading: false })
           return
         }
-        const bots: BotOption[] = (data as { id: number; name: string | null }[])
+        const bots: BotOption[] = data
           .filter((r) => r?.id != null)
           .map((r) => ({
             botId: r.id,
             label: r.name?.trim() || `Bot ${r.id}`,
             route: `/bot/${r.id}`,
+            publicIdentifier: r.public_identifier || undefined,
           }))
         setState({ bots, isLive: true, isLoading: false })
       } catch {

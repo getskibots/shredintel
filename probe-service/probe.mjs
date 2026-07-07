@@ -19,17 +19,13 @@ import { chromium } from 'playwright'
 
 export const ALLOWED_HOST = 'bots.getskitickets.com'
 
-// One browser for the whole process; a fresh page (fresh guest session) per
-// thread. Launched lazily, reused across requests.
-let browserPromise = null
-async function getBrowser() {
-  if (!browserPromise) {
-    browserPromise = chromium.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-blink-features=AutomationControlled'],
-    })
-  }
-  return browserPromise
+// A FRESH browser per run (closed at the end) so memory never accumulates across
+// runs — a big parallel run must not leave the process bloated for the next one.
+async function launchBrowser() {
+  return chromium.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-blink-features=AutomationControlled'],
+  })
 }
 
 // Runs INSIDE the page. Opens the widget via a conversation starter, waits for it
@@ -53,11 +49,26 @@ async function askThreadInPage(page, questions) {
     const RECV = '[class*=bubbleReceived]'
     const ALL = '[class*=bubbleSent], [class*=bubbleReceived]'
 
-    // 1. Reveal the composer by clicking a conversation starter (a text button
-    // that isn't the collapse/minimise one).
+    // 1. Get to the composer. OPEN the widget by clicking its launcher bubble
+    // (Botscrew #botscrew-custom-bubble-wrap in the MAIN doc — it needs a full
+    // pointer-event sequence, not a bare .click()). If the bot still shows
+    // conversation starters, clicking one also reveals the composer (fallback).
+    const openWidget = () => {
+      const bubble = document.querySelector('#botscrew-custom-bubble-wrap')
+        || Array.from(document.querySelectorAll('div')).find((d) => {
+          const s = getComputedStyle(d); const r = d.getBoundingClientRect()
+          return s.position === 'fixed' && r.width > 40 && r.width < 120 && r.height > 40 && r.height < 120
+        })
+      if (!bubble) return
+      const t = bubble.querySelector('img, svg') || bubble
+      for (const ev of ['pointerover', 'pointerdown', 'mousedown', 'pointerup', 'mouseup', 'click']) {
+        t.dispatchEvent(new MouseEvent(ev, { bubbles: true, cancelable: true, composed: true, view: window }))
+      }
+    }
     let c = findComposer()
     const t0 = Date.now()
     while (!c && Date.now() - t0 < 45000) {
+      openWidget()
       for (const { doc } of frames()) {
         const starter = Array.from(doc.querySelectorAll('button')).find((b) => {
           const al = (b.getAttribute('aria-label') || '').toLowerCase()
@@ -67,22 +78,22 @@ async function askThreadInPage(page, questions) {
         })
         if (starter) { starter.click(); break }
       }
-      await wait(700)
+      await wait(800)
       c = findComposer()
     }
     if (!c) return { err: 'no composer input', turns: [] }
     const doc0 = c.doc
 
-    // 2. Wait for the widget to go quiet — the starter's own reply must appear
-    // (since the composer opened) and then be unchanged for 2.5s, 6s floor.
-    const startRecv = doc0.querySelectorAll(RECV).length
+    // 2. Wait for the widget to go quiet (welcome greeting and/or any starter
+    // reply finished) before asking. 3s floor so an initial lull doesn't read as
+    // quiet; no "must grow" requirement since a starterless bot posts no reply here.
     let sig = '', qStable = Date.now(), qStart = Date.now()
-    while (Date.now() - qStart < 35000) {
-      await wait(500)
+    while (Date.now() - qStart < 30000) {
+      await wait(400)
       const bs = doc0.querySelectorAll(ALL)
       const s = bs.length + '|' + (bs.length ? (bs[bs.length - 1].textContent || '').length : 0)
       if (s !== sig) { sig = s; qStable = Date.now() }
-      if (doc0.querySelectorAll(RECV).length > startRecv && Date.now() - qStable > 2500 && Date.now() - qStart > 6000) break
+      if (Date.now() - qStable > 2500 && Date.now() - qStart > 3000) break
     }
 
     // 3. Ask each question in the thread, capturing each reply.
@@ -123,40 +134,40 @@ async function askThreadInPage(page, questions) {
  * @param {{widgetUrl:string, threads:string[][], concurrency?:number}} opts
  * @returns Array<{ turns: [{q,a,ms,err?}], error? }> in input order.
  */
-export async function runProbe({ widgetUrl, threads, concurrency = 4 }) {
-  const browser = await getBrowser()
-  const context = await browser.newContext({
-    viewport: { width: 1280, height: 900 },
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-  })
-  await context.addInitScript(() => {
-    Object.defineProperty(navigator, 'webdriver', { get: () => false })
-  })
-
-  const results = new Array(threads.length)
-  let next = 0
-  const worker = async () => {
-    const page = await context.newPage()
-    try {
-      while (true) {
-        const i = next++
-        if (i >= threads.length) break
-        try {
-          await page.goto(widgetUrl, { waitUntil: 'domcontentloaded', timeout: 30000 })
-          const r = await askThreadInPage(page, threads[i])
-          results[i] = { turns: r.turns || [], error: r.err }
-        } catch (e) {
-          results[i] = { turns: [], error: (e && e.message) || 'probe failed' }
-        }
-      }
-    } finally {
-      await page.close().catch(() => {})
-    }
-  }
+export async function runProbe({ widgetUrl, threads, concurrency = 3 }) {
+  const browser = await launchBrowser()
   try {
+    const context = await browser.newContext({
+      viewport: { width: 1280, height: 900 },
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+    })
+    await context.addInitScript(() => {
+      Object.defineProperty(navigator, 'webdriver', { get: () => false })
+    })
+
+    const results = new Array(threads.length)
+    let next = 0
+    const worker = async () => {
+      const page = await context.newPage()
+      try {
+        while (true) {
+          const i = next++
+          if (i >= threads.length) break
+          try {
+            await page.goto(widgetUrl, { waitUntil: 'domcontentloaded', timeout: 30000 })
+            const r = await askThreadInPage(page, threads[i])
+            results[i] = { turns: r.turns || [], error: r.err }
+          } catch (e) {
+            results[i] = { turns: [], error: (e && e.message) || 'probe failed' }
+          }
+        }
+      } finally {
+        await page.close().catch(() => {})
+      }
+    }
     await Promise.all(Array.from({ length: Math.min(concurrency, threads.length) }, worker))
+    return results
   } finally {
-    await context.close().catch(() => {})
+    await browser.close().catch(() => {})
   }
-  return results
 }

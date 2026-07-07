@@ -13,6 +13,9 @@ const TOKEN = process.env.PROBE_TOKEN
 const MAX_THREADS = 40      // simultaneous guests per run
 const MAX_TURNS = 8         // questions per guest thread
 const MAX_QUESTIONS = 100   // flat back-compat cap
+// Hard ceiling on how many headless pages run at once. Each is ~150-250 MB, so a
+// 2 GB droplet safely handles ~3. Raise via MAX_CONCURRENCY env on a bigger box.
+const MAX_CONCURRENCY = Math.max(1, Number(process.env.MAX_CONCURRENCY) || 3)
 
 const app = express()
 app.use(express.json({ limit: '256kb' }))
@@ -44,7 +47,7 @@ app.post('/probe', async (req, res) => {
   }
   // Each unit of concurrency is a separate simultaneous guest conversation.
   // RAM on the droplet is the real ceiling (~150 MB per headless page).
-  const concurrency = Math.max(1, Math.min(16, Number(b.concurrency) || 4))
+  const concurrency = Math.max(1, Math.min(MAX_CONCURRENCY, Number(b.concurrency) || MAX_CONCURRENCY))
 
   let host = ''
   try { host = new URL(widgetUrl).host } catch { /* invalid */ }

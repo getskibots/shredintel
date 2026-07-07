@@ -31,6 +31,32 @@ const layerStyle = (layer: string) => ({
   dot: LAYER_COLOR[layer] ?? LAYER_COLOR.Instructions,
 })
 
+// A Text Edit has no admin deep-link (cross-origin, and the admin exposes no
+// per-edit URL — no route, no search param). Its list DOES have a client-side
+// Search box that filters by title, so we open the list AND copy the edit's
+// title; clicking flips the label to a "paste into Search" cue that persists
+// (~6s) so it's still visible when the user glances back from the new admin tab.
+function CopyOpenLink({ title, url }: { title: string; url: string }) {
+  const [copied, setCopied] = useState(false)
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noreferrer"
+      title={`Open Text Edits in the admin & copy "${title}" — paste it into the Search box to jump to this edit`}
+      onClick={(e) => {
+        e.stopPropagation()
+        navigator.clipboard?.writeText(title).catch(() => {})
+        setCopied(true)
+        window.setTimeout(() => setCopied(false), 6000)
+      }}
+      className="min-w-0 truncate underline decoration-dotted underline-offset-2 hover:opacity-80"
+    >
+      {copied ? '✓ copied — paste into Search' : title}
+    </a>
+  )
+}
+
 // page_path is host+path (query string already stripped). Drop a leading "www."
 // for readability; the full value stays in the title / link href.
 const prettyPage = (p: string) => p.replace(/^www\./, '')
@@ -335,18 +361,19 @@ export function ConversationExplorer({
                                         <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: st.dot }} />
                                         <span className="font-medium">{m.source.layer}</span>
                                         {m.source.url ? (
-                                          <a
-                                            href={m.source.url}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            onClick={(e) => {
-                                              e.stopPropagation()
-                                              if (isTextEdit && m.source?.label) navigator.clipboard?.writeText(m.source.label).catch(() => {})
-                                            }}
-                                            className="min-w-0 truncate underline decoration-dotted underline-offset-2 hover:opacity-80"
-                                          >
-                                            {m.source.label}
-                                          </a>
+                                          isTextEdit && m.source.label ? (
+                                            <CopyOpenLink title={m.source.label} url={m.source.url} />
+                                          ) : (
+                                            <a
+                                              href={m.source.url}
+                                              target="_blank"
+                                              rel="noreferrer"
+                                              onClick={(e) => e.stopPropagation()}
+                                              className="min-w-0 truncate underline decoration-dotted underline-offset-2 hover:opacity-80"
+                                            >
+                                              {m.source.label}
+                                            </a>
+                                          )
                                         ) : m.source.label ? (
                                           <span className="min-w-0 truncate opacity-80">· {m.source.label}</span>
                                         ) : m.source.layer === 'Instructions' ? (

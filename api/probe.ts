@@ -22,6 +22,15 @@ const ALLOWED_HOST = 'bots.getskitickets.com'
 const MAX_QUESTIONS = 60
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Diagnostic: GET reports which env vars the function can see (never values).
+  if (req.method === 'GET') {
+    return res.status(200).json({
+      hasUrl: !!process.env.PROBE_SERVICE_URL,
+      hasToken: !!process.env.PROBE_SERVICE_TOKEN,
+      probeKeys: Object.keys(process.env).filter((k) => k.startsWith('PROBE')),
+      vercelEnv: process.env.VERCEL_ENV || null,
+    })
+  }
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' })
 
   const base = process.env.PROBE_SERVICE_URL

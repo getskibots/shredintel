@@ -1,5 +1,7 @@
 import { useEffect, useState, type ReactNode, type FormEvent } from 'react'
 import logoUrl from '../../assets/logo.png'
+import { isEmbedMode } from '../../lib/embed'
+import { validEmbedClaims } from '../../lib/embedToken'
 
 /**
  * Soft password gate for the standalone site (analytics.getskibots.com).
@@ -53,7 +55,14 @@ async function sha256Hex(input: string): Promise<string> {
 }
 
 export function PasswordGate({ children }: { children: ReactNode }) {
-  const initialAuthed = (() => {
+  // A trusted host (the Botscrew iframe) opens us in embed mode with a botscrew-
+  // issued JWT. If that token is structurally valid and unexpired, unlock the gate
+  // synchronously — no password, no flash. This is a SOFT gate ("keep randoms out"):
+  // a bare ?embed=1 no longer bypasses it (that hole was closed 2026-07-02), but the
+  // decode isn't verification. Hard per-bot enforcement is the server-side JWT verify
+  // on the /api endpoints (strict mode). See src/lib/embedToken.ts.
+  const embedJwtOk = isEmbedMode() && validEmbedClaims() != null
+  const initialAuthed = embedJwtOk || (() => {
     try { return localStorage.getItem(STORAGE_KEY) === PASSWORD_HASH } catch { return false }
   })()
   const [authed, setAuthed] = useState(initialAuthed)

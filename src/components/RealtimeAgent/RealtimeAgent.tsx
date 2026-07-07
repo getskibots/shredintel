@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Square, Sparkles, Loader2, Bookmark, Check, Download, Mail, Copy, ArrowLeft } from 'lucide-react'
+import { useBranding } from '../../data/useBranding'
+import { BrandingBackdrop } from '../Branding'
 import { DEFAULT_VOICE_ID, profileFor } from '../../lib/voices'
 import { PeriodPicker } from '../PeriodPicker'
 import { ShreddingOverlay } from '../ShreddingOverlay'
@@ -97,6 +99,7 @@ export function RealtimeAgent({ botId, range, selection, onSelectionChange, shre
   active: boolean
   onEnd: () => void
 }) {
+  const { branding } = useBranding(botId)
   const [status, setStatus] = useState<Status>('connecting')
   const [busy, setBusy] = useState(false)
   const [ended, setEnded] = useState(false)
@@ -293,8 +296,14 @@ export function RealtimeAgent({ botId, range, selection, onSelectionChange, shre
       {/* Top bar — report actions */}
       <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3.5 md:px-6">
         <div className="flex items-center gap-2.5">
-          <Sparkles className="h-5 w-5 text-botscrew-500" strokeWidth={2} />
-          <span className="text-sm font-semibold text-slate-800">ShredIntel</span>
+          {branding?.logoUrl ? (
+            <img src={branding.logoUrl} alt="Resort logo" className="h-6 w-auto max-w-[160px] object-contain" />
+          ) : (
+            <>
+              <Sparkles className="h-5 w-5 text-botscrew-500" strokeWidth={2} />
+              <span className="text-sm font-semibold text-slate-800">ShredIntel</span>
+            </>
+          )}
           <span className="rounded-full bg-botscrew-50 px-2 py-0.5 text-[11px] font-medium text-botscrew-700">Analyst</span>
         </div>
         <div className="flex items-center gap-2">
@@ -335,8 +344,9 @@ export function RealtimeAgent({ botId, range, selection, onSelectionChange, shre
       {/* Orb cluster — the voice's face + its state + End, all inline; report builds downward.
           The "shredding" scan sweeps this region on a date change (same as the dashboard). */}
       <div className="relative min-h-0 flex-1">
+        <BrandingBackdrop url={branding?.backgroundUrl} overlay={branding?.overlay ?? 0.6} />
         <ShreddingOverlay active={!!shredding} />
-        <div className="h-full overflow-y-auto" onClick={() => shareOpen && setShareOpen(false)}>
+        <div className="relative z-10 h-full overflow-y-auto" onClick={() => shareOpen && setShareOpen(false)}>
         <div className="mx-auto max-w-3xl px-4 pt-12 pb-16 md:px-6">
           <div className="flex flex-col items-center text-center">
             <VoiceOrb state={orbState} />

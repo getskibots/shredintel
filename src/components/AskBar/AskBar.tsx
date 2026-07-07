@@ -1,5 +1,7 @@
 import { useRef, useState, type FormEvent } from 'react'
-import { Sparkles, ArrowUp, AudioLines, Mic, ChevronDown, Loader2, TriangleAlert, Target, Zap, TrendingUp, MessagesSquare } from 'lucide-react'
+import { Sparkles, ArrowUp, AudioLines, Mic, ChevronDown, Loader2, TriangleAlert, Target, Zap, TrendingUp, MessagesSquare, Brush } from 'lucide-react'
+import { useBranding } from '../../data/useBranding'
+import { BrandingBackdrop, BrandingEditor } from '../Branding'
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
 } from 'recharts'
@@ -56,6 +58,8 @@ function chartCaption(focus: string | null | undefined, rangeLabel?: string): st
 }
 
 export function AskBar({ botId, range, onVoice }: { botId: number; range?: { from: string; to: string; label: string }; onVoice?: () => void }) {
+  const { branding, reload: reloadBranding } = useBranding(botId)
+  const [brandingOpen, setBrandingOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<AskResult | null>(null)
@@ -134,11 +138,32 @@ export function AskBar({ botId, range, onVoice }: { botId: number; range?: { fro
 
   return (
     <div className="mb-10">
-      <div className="mx-auto flex min-h-[46vh] max-w-3xl flex-col items-center justify-center text-center">
-        {/* Header — replaces the old persona toggle, seated in the top third */}
-        <div className="mb-2 inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-botscrew-500">
-          <Sparkles className="h-3.5 w-3.5" strokeWidth={2.2} /> ShredIntel
+      <div className="relative">
+        <BrandingBackdrop url={branding?.backgroundUrl} overlay={branding?.overlay ?? 0.6} />
+        {/* discreet per-bot branding editor */}
+        <div className="absolute right-2 top-2 z-30">
+          <button
+            type="button"
+            onClick={() => setBrandingOpen((o) => !o)}
+            aria-label="Branding"
+            title="Branding"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white/70 text-slate-400 opacity-50 backdrop-blur transition hover:opacity-100 hover:text-slate-700"
+          >
+            <Brush className="h-4 w-4" />
+          </button>
+          {brandingOpen && (
+            <BrandingEditor botId={botId} branding={branding} onSaved={reloadBranding} onClose={() => setBrandingOpen(false)} />
+          )}
         </div>
+        <div className="relative z-10 mx-auto flex min-h-[46vh] max-w-3xl flex-col items-center justify-center text-center">
+          {/* Header — the per-bot logo (uploaded) or the ShredIntel wordmark */}
+          {branding?.logoUrl ? (
+            <img src={branding.logoUrl} alt="Resort logo" className="mb-3 h-9 w-auto max-w-[220px] object-contain" />
+          ) : (
+            <div className="mb-2 inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-botscrew-500">
+              <Sparkles className="h-3.5 w-3.5" strokeWidth={2.2} /> ShredIntel
+            </div>
+          )}
         <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-[30px] sm:leading-tight">
           Your conversational intelligence layer
         </h1>
@@ -224,6 +249,7 @@ export function AskBar({ botId, range, onVoice }: { botId: number; range?: { fro
         </p>
         <div className="mt-1.5">
           <PromptEditor botId={botId} />
+        </div>
         </div>
       </div>
 

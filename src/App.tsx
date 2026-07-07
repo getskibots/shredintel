@@ -1,4 +1,5 @@
 import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { AhhhFaqItTool } from './components/AhhhFaqItTool'
 import { BotAnalyticsPage } from './components/BotAnalyticsPage'
 import { BotIndexPage } from './components/BotIndexPage'
 import { DashboardShell } from './components/DashboardShell'
@@ -34,6 +35,7 @@ function ChannelShell() {
         <Route path="/chat/jh" element={<Navigate to="/bot/43" replace />} />
         <Route path="/chat/mc" element={<Navigate to="/bot/2" replace />} />
         <Route path="/voice" element={<VoiceReportGrid />} />
+        <Route path="/tools/ahhh-faq-it" element={<AhhhFaqItTool />} />
         <Route path="/bot/:botId" element={<BotAnalyticsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

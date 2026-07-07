@@ -18,24 +18,28 @@ import { chat } from './_lib/llm.js'
 
 export const maxDuration = 60
 
-// Ski-resort knowledge categories — aligned with ShredIntel's conversation
-// sections. Ecommerce first (the revenue path). Each `hint` steers generation.
+// Categories = the real "Ahhh FAQ It" GPT taxonomy: the 17 fixed emoji
+// categories (≈ ShredIntel intel_section 1:1), PLUS a cross-cutting Ecommerce
+// lens first (the revenue/checkout path). Each `hint` steers generation.
 export const CATEGORIES = [
-  { key: 'ecommerce', label: 'Ecommerce & Checkout', hint: 'buying tickets/passes online, pricing by date/age/number of days, promo & discount codes, cart or checkout problems, payment methods, online vs window pricing, changing or refunding an order' },
-  { key: 'tickets', label: 'Lift Tickets', hint: 'daily lift ticket price, what a ticket includes, age tiers, multi-day, where to buy, first tracks / early access' },
-  { key: 'passes', label: 'Season Passes', hint: 'season pass tiers, Ikon/partner passes, benefits, renewals, blackout dates, pass vs ticket, adding family members' },
-  { key: 'lessons', label: 'Lessons & School', hint: 'group vs private lessons, kids vs adult, ages, skill levels, booking, meeting points, what to bring' },
-  { key: 'rentals', label: 'Rentals & Demo', hint: 'ski/snowboard rentals, pricing, sizing, demo vs standard, reserving ahead, pickup/return, helmets' },
-  { key: 'parking', label: 'Parking & Transit', hint: 'where to park, cost, reservations, lot availability, shuttles, public transit, drop-off, getting to the mountain' },
-  { key: 'dining', label: 'Dining & Après', hint: 'on-mountain restaurants, hours, reservations, dietary options, après-ski, food pricing' },
-  { key: 'terrain', label: 'Terrain & Trails', hint: 'trail difficulty, terrain parks, grooming, which lifts/runs are open, beginner areas, notable runs' },
-  { key: 'lodging', label: 'Lodging', hint: 'on-mountain lodging, ski-in/ski-out, booking, packages, proximity to lifts, pet-friendly stays' },
-  { key: 'hours', label: 'Hours & Season', hint: 'operating hours, lift open/close times, opening & closing dates, night skiing, holiday hours' },
-  { key: 'conditions', label: 'Weather & Conditions', hint: "today's snow report, base depth, recent snowfall, road & lift status, webcams, what to wear" },
-  { key: 'family', label: 'Kids & Family', hint: 'kids programs, childcare, family tickets, age policies, kid-friendly terrain, gear for kids' },
-  { key: 'policies', label: 'Policies & Safety', hint: 'uphill/skinning policy, pets, refund & cancellation, weather holds, lost & found, accessibility / adaptive programs' },
-  { key: 'activities', label: 'Activities & Events', hint: 'tubing, snowshoeing, events, summer operations, non-ski activities, tram sightseeing, group/wedding inquiries' },
-  { key: 'gettinghere', label: 'Getting Here', hint: 'nearest airport, driving directions, distance, road conditions, tire chains, closest town' },
+  { key: 'ecommerce', label: '💳 Ecommerce & Checkout', hint: 'buying tickets/passes online, pricing by date/age/number of days, promo & discount codes, cart or checkout problems, payment methods, online vs window pricing, changing or refunding an order' },
+  { key: 'resort_info', label: '🏔 Resort Info', hint: 'about the mountain, elevation, vertical, terrain overview, vibe, what makes it special, first-visit basics' },
+  { key: 'tickets_passes', label: '🎫 Tickets & Passes', hint: 'lift ticket & pass pricing, what a ticket includes, age tiers, multi-day, where to buy, first tracks / early access' },
+  { key: 'refunds', label: '📆 Refund Policies', hint: 'refunds, cancellations, changing or moving dates, weather & injury policies, credits' },
+  { key: 'ski_activities', label: '⛷ Ski & Snowboard', hint: 'terrain, trails, difficulty, terrain parks, grooming, which runs/lifts are open, beginner areas, notable runs' },
+  { key: 'lessons', label: '🏫 Lessons & Ski School', hint: 'group vs private lessons, kids vs adult, ages, skill levels, booking, meeting points, what to bring' },
+  { key: 'rentals', label: '🎿 Equipment Rental', hint: 'ski/snowboard rentals, pricing, sizing, demo vs standard, reserving ahead, pickup/return, helmets' },
+  { key: 'winter_activities', label: '🌨 Non-Ski Winter', hint: 'tubing, snowshoeing, sleigh rides, ice skating, nordic/cross-country, fat biking' },
+  { key: 'summer_activities', label: '☀️ Summer Activities', hint: 'hiking, mountain biking, scenic tram/gondola rides, summer operations, festivals' },
+  { key: 'lodging', label: '🏨 Lodging', hint: 'on-mountain lodging, ski-in/ski-out, booking, packages, proximity to lifts, pet-friendly stays' },
+  { key: 'dining', label: '🍽 Dining & Après', hint: 'on-mountain restaurants, hours, reservations, dietary options, après-ski, food pricing' },
+  { key: 'guest_services', label: '🛎 Guest Services & Safety', hint: 'guest services, ski patrol, safety, lost & found, first aid, accessibility / adaptive programs' },
+  { key: 'parking_transit', label: '🚌 Parking & Transit', hint: 'where to park, cost, reservations, shuttles, public transit, getting to the mountain, nearest airport, directions' },
+  { key: 'events', label: '📅 Events', hint: 'events, festivals, races, live music, holiday happenings, group & wedding inquiries' },
+  { key: 'pass_programs', label: '🎟 Pass Programs', hint: 'Ikon / partner pass programs, reciprocal benefits, blackout dates, adding family members' },
+  { key: 'pets', label: '🐶 Pets & Service Animals', hint: 'pet policy, service animals, pet-friendly lodging, dogs on the mountain' },
+  { key: 'packing_gear', label: '🎒 Packing & Gear', hint: 'what to pack, what to wear, layering, gear recommendations for the conditions' },
+  { key: 'other', label: '🎉 Other', hint: 'gift cards, groups, jobs, weddings, anything that does not fit the categories above' },
 ] as const
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {

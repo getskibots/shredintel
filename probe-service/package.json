@@ -1,0 +1,14 @@
+{
+  "name": "gsb-probe-service",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Ahhh FAQ It probe engine — drives a live Botscrew chat widget headless (Playwright) and captures answers. Runs on a droplet; ShredIntel's /api/probe proxies to it.",
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "playwright": "1.49.0"
+  }
+}

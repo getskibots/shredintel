@@ -35,6 +35,9 @@ scripts/*.csv
 /data/
 etl/.env
 etl/node_modules/
+probe-service/node_modules/
+probe-service/.env
+probe-service/.token
 
 # Local environment variables
 .env

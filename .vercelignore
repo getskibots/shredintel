@@ -1,0 +1,4 @@
+# The probe engine runs on a droplet, not Vercel — don't ship it to the
+# serverless build. (ShredIntel reaches it via /api/probe → PROBE_SERVICE_URL.)
+probe-service
+etl

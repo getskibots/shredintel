@@ -11,23 +11,7 @@
  * per-resort auth gate is a later concern (same as the rest of the app).
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import pg from 'pg'
-
-let pool: pg.Pool | null = null
-function getPool(): pg.Pool {
-  if (pool) return pool
-  const cfg = process.env.SHREDINTEL_DB_URL
-    ? { connectionString: process.env.SHREDINTEL_DB_URL }
-    : {
-        host: process.env.SUPABASE_DB_HOST,
-        port: Number(process.env.SUPABASE_DB_PORT || 5432),
-        user: process.env.SUPABASE_DB_USER,
-        password: process.env.SUPABASE_DB_PASSWORD,
-        database: process.env.SUPABASE_DB_NAME || 'postgres',
-      }
-  pool = new pg.Pool({ ...cfg, ssl: { rejectUnauthorized: false }, max: 3, idleTimeoutMillis: 10_000 })
-  return pool
-}
+import { getPool } from './_lib/db.js'
 
 const CAP = { logo: 2 * 1024 * 1024, background: 6 * 1024 * 1024 } // decoded byte caps
 

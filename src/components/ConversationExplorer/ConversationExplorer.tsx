@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { X, Loader2, ChevronRight, Globe, Bot, User, MapPin } from 'lucide-react'
 import { getSupabase } from '../../lib/supabase'
 import { sentimentColors } from '../../lib/chartTheme'
+import { LAYER_COLOR, LAYER_BADGE } from '../../lib/knowledgeLayers'
 import { DRILL_DIMENSIONS, humanLabel, type DrillPayload } from '../../lib/drill'
 import { RichText } from '../shared'
 import { UsDotMap } from '../UsDotMap'
@@ -23,14 +24,12 @@ interface ConvRow { bot_id: number; conversation_id: number; topic: string | nul
 interface MsgSource { layer: string; url?: string; label?: string }
 interface Msg { sender: string; text: string; source?: MsgSource }
 
-// Per-message knowledge-layer badge styling (matches the Knowledge card).
-const LAYER_STYLE: Record<string, { bg: string; text: string; dot: string }> = {
-  'Text Edits': { bg: 'bg-emerald-50', text: 'text-emerald-700', dot: '#1D9E75' },
-  Website: { bg: 'bg-sky-50', text: 'text-sky-700', dot: '#2182BF' },
-  Files: { bg: 'bg-amber-50', text: 'text-amber-700', dot: '#EF9F27' },
-  Instructions: { bg: 'bg-violet-50', text: 'text-violet-700', dot: '#7F77DD' },
-  Failed: { bg: 'bg-rose-50', text: 'text-rose-700', dot: '#DC5B3B' },
-}
+// Per-message knowledge-layer badge style, from the shared taxonomy (bg/text
+// pill classes + the dot color) so it can't drift from the Knowledge card.
+const layerStyle = (layer: string) => ({
+  ...(LAYER_BADGE[layer] ?? LAYER_BADGE.Instructions),
+  dot: LAYER_COLOR[layer] ?? LAYER_COLOR.Instructions,
+})
 
 // page_path is host+path (query string already stripped). Drop a leading "www."
 // for readability; the full value stays in the title / link href.
@@ -320,7 +319,7 @@ export function ConversationExplorer({
                                 >
                                   <RichText text={m.text} />
                                   {!isUser && m.source && (() => {
-                                    const st = LAYER_STYLE[m.source.layer] ?? LAYER_STYLE.Instructions
+                                    const st = layerStyle(m.source.layer)
                                     return (
                                       <span
                                         className={`mt-1 inline-flex max-w-full items-center gap-1.5 rounded-full ${st.bg} px-2 py-0.5 text-[11px] ${st.text}`}

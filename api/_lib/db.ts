@@ -15,7 +15,9 @@
 import pg from 'pg'
 
 let pool: pg.Pool | null = null
-function getPool(): pg.Pool {
+/** Shared pg pool (report/raw DB creds). Reused by the transcript + branding
+ *  endpoints so the connection config lives in exactly one place. */
+export function getPool(): pg.Pool {
   if (pool) return pool
   const cfg = process.env.SHREDINTEL_DB_URL
     ? { connectionString: process.env.SHREDINTEL_DB_URL }

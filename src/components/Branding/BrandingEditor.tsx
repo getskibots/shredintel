@@ -78,7 +78,9 @@ export function BrandingEditor({
     } catch { /* non-fatal */ }
   }
 
-  const Row = ({ kind, label, current }: { kind: 'logo' | 'background'; label: string; current?: string }) => {
+  // A plain render helper (NOT a nested component) — called as a function so it
+  // doesn't remount the file input on every parent render.
+  const renderRow = ({ kind, label, current }: { kind: 'logo' | 'background'; label: string; current?: string }) => {
     const ref = kind === 'logo' ? logoInput : bgInput
     return (
       <div className="mb-3">
@@ -129,8 +131,8 @@ export function BrandingEditor({
       </div>
       <p className="mb-3 text-[11px] text-slate-400">Shown on the chat hero and the voice overlay. Saves for this bot.</p>
 
-      <Row kind="logo" label="Logo" current={branding?.logoUrl} />
-      <Row kind="background" label="Background image" current={branding?.backgroundUrl} />
+      {renderRow({ kind: 'logo', label: 'Logo', current: branding?.logoUrl })}
+      {renderRow({ kind: 'background', label: 'Background image', current: branding?.backgroundUrl })}
 
       <div className="mt-1">
         <div className="mb-1 flex items-center justify-between text-[11px] font-medium text-slate-500">

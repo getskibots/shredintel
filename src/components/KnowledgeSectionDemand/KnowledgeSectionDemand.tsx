@@ -3,26 +3,13 @@ import { BreakdownBars } from '../BreakdownBars'
 import { ConversationExplorer } from '../ConversationExplorer'
 import { EmptyState, Panel } from '../shared'
 import { formatNumber, formatPercent } from '../../lib/formatters'
+import { KNOWLEDGE_LAYERS, GROUNDED_LAYERS, LAYER_COLOR } from '../../lib/knowledgeLayers'
 import type {
   KnowledgeSectionDemandProps,
   KnowledgeLayersProps,
 } from '../../types/analytics'
 
 export type { KnowledgeSectionDemandProps } from '../../types/analytics'
-
-// The Botscrew "Knowledge Layers" the resort manages, + Failed. Grounded =
-// answered from an actual retrieved source (Text Edits / Website / Files);
-// Instructions = answered from the prompt with no retrieved entry.
-const LAYER_ORDER = ['Text Edits', 'Website', 'Files', 'Instructions', 'Failed']
-const LAYER_COLOR: Record<string, string> = {
-  'Text Edits': '#1D9E75', // teal — curated Q&A knowledge
-  Website: '#2182BF', // brand blue — crawled pages
-  Files: '#EF9F27', // amber — uploaded docs
-  Instructions: '#7F77DD', // purple — prompt-only (no retrieved source)
-  Failed: '#DC5B3B', // coral — couldn't answer
-}
-const GROUNDED = new Set(['Text Edits', 'Website', 'Files'])
-const NON_GROUNDED_ORDER = ['Text Edits', 'Website', 'Files', 'Instructions', 'Failed']
 
 const layerVal = (t: { layers: { layer: string; answers: number }[] }, name: string): number =>
   t.layers.find((l) => l.layer === name)?.answers ?? 0
@@ -52,11 +39,11 @@ export function KnowledgeSectionDemand({
 
   const ld = layers && layers.layers.length > 0 ? layers.layers : null
   const total = ld ? ld.reduce((s, l) => s + l.answers, 0) : 0
-  const grounded = ld ? ld.filter((l) => GROUNDED.has(l.layer)).reduce((s, l) => s + l.answers, 0) : 0
+  const grounded = ld ? ld.filter((l) => GROUNDED_LAYERS.has(l.layer)).reduce((s, l) => s + l.answers, 0) : 0
   const groundingRate = total > 0 ? grounded / total : 0
   const solidGrounding = groundingRate >= 0.7
   const ordered = ld
-    ? [...ld].sort((a, b) => LAYER_ORDER.indexOf(a.layer) - LAYER_ORDER.indexOf(b.layer))
+    ? [...ld].sort((a, b) => KNOWLEDGE_LAYERS.indexOf(a.layer) - KNOWLEDGE_LAYERS.indexOf(b.layer))
     : []
 
   // Fill-list: topics ranked by "unbacked" answers (Instructions + Failed) — the
@@ -170,7 +157,7 @@ export function KnowledgeSectionDemand({
                       {t.section}
                     </span>
                     <span className="flex h-4 flex-1 overflow-hidden rounded bg-slate-100">
-                      {NON_GROUNDED_ORDER.map((name) => {
+                      {KNOWLEDGE_LAYERS.map((name) => {
                         const v = layerVal(t, name)
                         return v > 0 ? (
                           <span

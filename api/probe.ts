@@ -43,9 +43,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const body = typeof req.body === 'object' && req.body ? req.body : {}
   const widgetUrl = String(body.widgetUrl || '')
-  const questions: string[] = Array.isArray(body.questions)
+  // Accept threads (multi-turn) or questions (flat); forward whichever is given.
+  const threads = Array.isArray(body.threads) ? body.threads : null
+  const questions: string[] | null = Array.isArray(body.questions)
     ? body.questions.map((q: unknown) => String(q)).filter(Boolean).slice(0, MAX_QUESTIONS)
-    : []
+    : null
   const concurrency = Math.max(1, Math.min(16, Number(body.concurrency) || 4))
 
   // Guard here too (defense in depth) so the droplet only ever probes our own
@@ -53,13 +55,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   let host = ''
   try { host = new URL(widgetUrl).host } catch { /* invalid */ }
   if (host !== ALLOWED_HOST) return res.status(400).json({ error: `widgetUrl must be on ${ALLOWED_HOST}` })
-  if (!questions.length) return res.status(400).json({ error: 'questions[] required' })
+  if (!threads && !questions?.length) return res.status(400).json({ error: 'threads[][] or questions[] required' })
 
   try {
     const upstream = await fetch(`${base.replace(/\/$/, '')}/probe`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
-      body: JSON.stringify({ widgetUrl, questions, concurrency }),
+      body: JSON.stringify(threads ? { widgetUrl, threads, concurrency } : { widgetUrl, questions, concurrency }),
     })
     const text = await upstream.text()
     res.status(upstream.status)

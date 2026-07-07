@@ -2,22 +2,25 @@ import { chromium } from 'playwright'
 
 /**
  * The probe engine. Drives a live Botscrew chat widget in headless Chromium and
- * captures each answer exactly as a guest would see it.
+ * captures answers exactly as a guest would see them.
  *
- * The widget is a same-origin iframe. On a FRESH session it opens to a
- * conversation-starters screen with NO composer — the composer only appears once
- * you click a starter (which enters the chat). So the proven flow is:
- *   1. wait for the composer; if absent, click a conversation starter to reveal it
- *   2. let the starter's own reply settle (so we don't capture it as ours)
- *   3. type the real question, send, and poll the received bubble until it stabilises
- * The widget messages over WebSocket (no HTTP send endpoint), so this must be a
- * real browser.
+ * A "thread" is one simulated guest: a fresh widget session that asks a natural
+ * sequence of questions (multi-turn) in ONE conversation. Many threads run
+ * concurrently — many guests peppering the bot at once.
+ *
+ * Per-thread flow (proven live): the widget-demo page opens a fresh session to a
+ * conversation-starters screen with NO composer; the composer (`<input>`) only
+ * appears after clicking a starter. So: click a starter → wait for the widget to
+ * go quiet (its own reply finished) → then ask each question in the thread in
+ * turn, capturing the first NEW received bubble once it stops streaming. The
+ * widget messages over WebSocket (no HTTP send endpoint), so this must be a real
+ * browser.
  */
 
 export const ALLOWED_HOST = 'bots.getskitickets.com'
 
-// One browser for the whole process; a fresh page (fresh widget session) per
-// question. Launched lazily, reused across requests.
+// One browser for the whole process; a fresh page (fresh guest session) per
+// thread. Launched lazily, reused across requests.
 let browserPromise = null
 async function getBrowser() {
   if (!browserPromise) {
@@ -29,14 +32,15 @@ async function getBrowser() {
   return browserPromise
 }
 
-// Runs INSIDE the page (same-origin as the widget iframe).
-async function askInPage(page, question) {
-  return page.evaluate(async (q) => {
+// Runs INSIDE the page. Opens the widget via a conversation starter, waits for it
+// to go quiet, then asks each question in `questions` in sequence in the same
+// thread. Returns { turns: [{ q, a, ms, err? }], err? }.
+async function askThreadInPage(page, questions) {
+  return page.evaluate(async (qs) => {
     const wait = (ms) => new Promise((r) => setTimeout(r, ms))
     const frames = () => Array.from(document.querySelectorAll('iframe'))
       .map((f) => { let d = null; try { d = f.contentDocument } catch { /* x-origin */ } return d ? { doc: d, win: f.contentWindow } : null })
       .filter(Boolean)
-    // scan light + shadow DOM for a text field
     const scanInput = (root) => {
       const e = root.querySelector('input, textarea')
       if (e) return e
@@ -44,10 +48,13 @@ async function askInPage(page, question) {
       return null
     }
     const findComposer = () => { for (const { doc, win } of frames()) { const el = scanInput(doc); if (el) return { doc, win, el } } return null }
+    const sendBtnIn = (doc) => Array.from(doc.querySelectorAll('button')).find((b) => (b.getAttribute('aria-label') || '').toLowerCase().includes('send'))
 
-    // 1. Get to the composer. On a fresh session it's hidden behind conversation
-    // starters — click a starter (a text button that isn't collapse/close/send)
-    // to reveal it. Never click the collapse button (it minimises the widget).
+    const RECV = '[class*=bubbleReceived]'
+    const ALL = '[class*=bubbleSent], [class*=bubbleReceived]'
+
+    // 1. Reveal the composer by clicking a conversation starter (a text button
+    // that isn't the collapse/minimise one).
     let c = findComposer()
     const t0 = Date.now()
     while (!c && Date.now() - t0 < 45000) {
@@ -63,67 +70,61 @@ async function askInPage(page, question) {
       await wait(700)
       c = findComposer()
     }
-    if (!c) {
-      const diag = {
-        frames: frames().map(({ doc }) => ({ inp: !!scanInput(doc), btns: doc.querySelectorAll('button').length })),
-        body: document.body.innerText.replace(/\s+/g, ' ').slice(0, 140),
-      }
-      return { a: '', ms: 0, err: 'no composer input :: ' + JSON.stringify(diag) }
-    }
+    if (!c) return { err: 'no composer input', turns: [] }
+    const doc0 = c.doc
 
-    const { doc, win, el } = c
-    const RECV = '[class*=bubbleReceived]'
-    const ALL = '[class*=bubbleSent], [class*=bubbleReceived]'
-
-    // 2. Wait for the widget to go QUIET before asking. The starter's own reply is
-    // inbound; don't settle until a received bubble has appeared SINCE the composer
-    // opened (that reply, not just the welcome) and things are then unchanged for
-    // 2.5s — with a 6s floor so a brief lull before the reply streams doesn't read
-    // as "quiet" (which would leave us one bubble off and capture the starter's answer).
-    const startRecv = doc.querySelectorAll(RECV).length
+    // 2. Wait for the widget to go quiet — the starter's own reply must appear
+    // (since the composer opened) and then be unchanged for 2.5s, 6s floor.
+    const startRecv = doc0.querySelectorAll(RECV).length
     let sig = '', qStable = Date.now(), qStart = Date.now()
     while (Date.now() - qStart < 35000) {
       await wait(500)
-      const bs = doc.querySelectorAll(ALL)
+      const bs = doc0.querySelectorAll(ALL)
       const s = bs.length + '|' + (bs.length ? (bs[bs.length - 1].textContent || '').length : 0)
       if (s !== sig) { sig = s; qStable = Date.now() }
-      const grew = doc.querySelectorAll(RECV).length > startRecv
-      if (grew && Date.now() - qStable > 2500 && Date.now() - qStart > 6000) break
+      if (doc0.querySelectorAll(RECV).length > startRecv && Date.now() - qStable > 2500 && Date.now() - qStart > 6000) break
     }
-    const before = doc.querySelectorAll(RECV).length
 
-    // 3. Send our question.
-    const proto = el.tagName === 'TEXTAREA' ? win.HTMLTextAreaElement.prototype : win.HTMLInputElement.prototype
-    Object.getOwnPropertyDescriptor(proto, 'value').set.call(el, q)
-    el.dispatchEvent(new win.Event('input', { bubbles: true }))
-    await wait(200)
-    const sb = Array.from(doc.querySelectorAll('button')).find((b) => (b.getAttribute('aria-label') || '').toLowerCase().includes('send'))
-    if (sb) sb.click()
-    else el.dispatchEvent(new win.KeyboardEvent('keydown', { key: 'Enter', keyCode: 13, bubbles: true }))
+    // 3. Ask each question in the thread, capturing each reply.
+    const turns = []
+    for (const q of qs) {
+      const comp = findComposer()
+      if (!comp) { turns.push({ q, a: '', ms: 0, err: 'composer lost' }); break }
+      const { doc, win, el } = comp
+      const before = doc.querySelectorAll(RECV).length
+      const proto = el.tagName === 'TEXTAREA' ? win.HTMLTextAreaElement.prototype : win.HTMLInputElement.prototype
+      Object.getOwnPropertyDescriptor(proto, 'value').set.call(el, q)
+      el.dispatchEvent(new win.Event('input', { bubbles: true }))
+      await wait(200)
+      const sb = sendBtnIn(doc)
+      if (sb) sb.click()
+      else el.dispatchEvent(new win.KeyboardEvent('keydown', { key: 'Enter', keyCode: 13, bubbles: true }))
 
-    // 4. Capture the first NEW received bubble (index `before`) once it stops streaming.
-    const start = Date.now()
-    let last = '', ansStable = Date.now()
-    while (Date.now() - start < 42000) {
-      await wait(400)
-      const recv = doc.querySelectorAll(RECV)
-      if (recv.length > before) {
-        const txt = (recv[before].textContent || '').replace(/\s+/g, ' ').trim()
-        if (txt && txt === last) { if (Date.now() - ansStable > 1800) break } else { last = txt; ansStable = Date.now() }
+      const start = Date.now()
+      let last = '', ansStable = Date.now()
+      while (Date.now() - start < 42000) {
+        await wait(400)
+        const recv = doc.querySelectorAll(RECV)
+        if (recv.length > before) {
+          const txt = (recv[before].textContent || '').replace(/\s+/g, ' ').trim()
+          if (txt && txt === last) { if (Date.now() - ansStable > 1800) break } else { last = txt; ansStable = Date.now() }
+        }
       }
+      turns.push({ q, a: last, ms: Date.now() - start, err: last ? undefined : 'no reply' })
+      await wait(700) // let the turn settle before the next question
     }
-    return { a: last, ms: Date.now() - start, err: last ? undefined : 'no reply' }
-  }, question)
+    return { turns }
+  }, questions)
 }
 
 /**
- * Run a batch of questions against one widget. Each question runs in a fresh
- * page (a fresh widget session), up to `concurrency` at once.
- * @returns Array<{ q, a, ms, error? }> in input order.
+ * Run a batch of THREADS against one widget. Each thread is a fresh guest session
+ * asking its questions multi-turn; up to `concurrency` guests at once.
+ * @param {{widgetUrl:string, threads:string[][], concurrency?:number}} opts
+ * @returns Array<{ turns: [{q,a,ms,err?}], error? }> in input order.
  */
-export async function runProbe({ widgetUrl, questions, concurrency = 4 }) {
+export async function runProbe({ widgetUrl, threads, concurrency = 4 }) {
   const browser = await getBrowser()
-  // Look like a real desktop Chrome, not headless automation.
   const context = await browser.newContext({
     viewport: { width: 1280, height: 900 },
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
@@ -132,21 +133,20 @@ export async function runProbe({ widgetUrl, questions, concurrency = 4 }) {
     Object.defineProperty(navigator, 'webdriver', { get: () => false })
   })
 
-  const results = new Array(questions.length)
+  const results = new Array(threads.length)
   let next = 0
   const worker = async () => {
     const page = await context.newPage()
     try {
       while (true) {
         const i = next++
-        if (i >= questions.length) break
-        const q = questions[i]
+        if (i >= threads.length) break
         try {
           await page.goto(widgetUrl, { waitUntil: 'domcontentloaded', timeout: 30000 })
-          const r = await askInPage(page, q)
-          results[i] = { q, a: r.a || '', ms: r.ms || 0, error: r.err }
+          const r = await askThreadInPage(page, threads[i])
+          results[i] = { turns: r.turns || [], error: r.err }
         } catch (e) {
-          results[i] = { q, a: '', ms: 0, error: (e && e.message) || 'probe failed' }
+          results[i] = { turns: [], error: (e && e.message) || 'probe failed' }
         }
       }
     } finally {
@@ -154,7 +154,7 @@ export async function runProbe({ widgetUrl, questions, concurrency = 4 }) {
     }
   }
   try {
-    await Promise.all(Array.from({ length: Math.min(concurrency, questions.length) }, worker))
+    await Promise.all(Array.from({ length: Math.min(concurrency, threads.length) }, worker))
   } finally {
     await context.close().catch(() => {})
   }

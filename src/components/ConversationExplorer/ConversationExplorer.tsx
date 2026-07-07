@@ -320,10 +320,17 @@ export function ConversationExplorer({
                                   <RichText text={m.text} />
                                   {!isUser && m.source && (() => {
                                     const st = layerStyle(m.source.layer)
+                                    // Text Edits has no admin deep-link (no per-edit route, no URL
+                                    // search param). But the admin's list has a client-side Search box
+                                    // that filters by title — so we open the page AND copy the edit's
+                                    // title, and the user pastes into Search to land on this exact edit.
+                                    const isTextEdit = m.source.layer === 'Text Edits'
                                     return (
                                       <span
                                         className={`mt-1 inline-flex max-w-full items-center gap-1.5 rounded-full ${st.bg} px-2 py-0.5 text-[11px] ${st.text}`}
-                                        title={m.source.url || m.source.label || m.source.layer}
+                                        title={isTextEdit
+                                          ? 'Open Text Edits in the admin — the title is copied to your clipboard; paste it into the Search box to jump to this edit'
+                                          : (m.source.url || m.source.label || m.source.layer)}
                                       >
                                         <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: st.dot }} />
                                         <span className="font-medium">{m.source.layer}</span>
@@ -332,7 +339,10 @@ export function ConversationExplorer({
                                             href={m.source.url}
                                             target="_blank"
                                             rel="noreferrer"
-                                            onClick={(e) => e.stopPropagation()}
+                                            onClick={(e) => {
+                                              e.stopPropagation()
+                                              if (isTextEdit && m.source?.label) navigator.clipboard?.writeText(m.source.label).catch(() => {})
+                                            }}
                                             className="min-w-0 truncate underline decoration-dotted underline-offset-2 hover:opacity-80"
                                           >
                                             {m.source.label}

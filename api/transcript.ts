@@ -56,18 +56,33 @@ function pickText(raw: unknown): string {
 const prettyUrl = (u: string) => u.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')
 const fileName = (u: string) => decodeURIComponent(u.split('?')[0].split('/').pop() || u)
 
+// Deep-link a Text Edit back to the resort's own admin so a weak answer can be
+// fixed at the source. The edit opens in a client-side modal (no per-edit route),
+// so we link to the text-edits list pre-filtered by the edit's title via ?search=.
+// If the admin ignores the param the link still lands on the right page — and the
+// badge names the exact edit — so it degrades gracefully either way.
+const textEditUrl = (botId: number, name?: string) => {
+  const base = `https://bots.getskitickets.com/admin/bot/${botId}/knowledge/text-edits`
+  return name ? `${base}?search=${encodeURIComponent(name)}` : base
+}
+
 /** Map a matched admin_knowledge_reply row → the resort's Knowledge Layer + a
  *  clickable/labelled source. Undefined for non-knowledge bot turns (greetings,
  *  buttons) and guest turns (no matched row). */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function buildSource(r: any): { layer: string; url?: string; label?: string } | undefined {
+function buildSource(r: any, botId: number): { layer: string; url?: string; label?: string } | undefined {
   if (!r.matched) return undefined
   if (r.is_failed) return { layer: 'Failed' }
   const st = r.source_type as string | null
   const val = (r.source_value as string | null) || ''
   if (st === 'WEBSITE') return { layer: 'Website', url: val || undefined, label: val ? prettyUrl(val) : undefined }
   if (st === 'FILE') return { layer: 'Files', url: val || undefined, label: val ? fileName(val) : undefined }
-  if (st === 'TEXT') return { layer: 'Text Edits', label: (r.source_name as string | null)?.trim() || undefined }
+  if (st === 'TEXT') {
+    // source_name = the edit's title (e.g. "change date on reservation"); it's
+    // the human-searchable handle and what we already show in the badge.
+    const name = (r.source_name as string | null)?.trim() || undefined
+    return { layer: 'Text Edits', label: name, url: textEditUrl(botId, name) }
+  }
   return { layer: 'Instructions' } // matched reply, no retrieved source = prompt-only
 }
 
@@ -130,7 +145,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       const messages = msgs.rows
         .map((r) => {
-          const source = buildSource(r)
+          const source = buildSource(r, botId)
           return {
             sender: r.sender as string,
             text: scrub((pickText(r.fch) || pickText(r.msg)).replace(/\s+/g, ' ').trim()),

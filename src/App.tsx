@@ -4,7 +4,6 @@ import { BotAnalyticsPage } from './components/BotAnalyticsPage'
 import { BotIndexPage } from './components/BotIndexPage'
 import { DashboardShell } from './components/DashboardShell'
 import { PasswordGate } from './components/PasswordGate'
-import { TelephonyConfig } from './components/TelephonyConfig/TelephonyConfig'
 import { VoiceReportGrid } from './components/VoiceReportGrid'
 import { VoiceAnalyticsPage } from './components/VoiceAnalyticsPage/VoiceAnalyticsPage'
 import { isEmbedMode, useEmbedHeightSync } from './lib/embed'
@@ -58,9 +57,6 @@ function ChannelShell() {
         <Route path="/voice" element={<VoiceReportGrid />} />
         <Route path="/voice/:botId" element={<VoiceAnalyticsPage />} />
         <Route path="/bot/:botId" element={<BotRoute />} />
-        {/* GSB-INTERNAL. Off the directory, admin-key gated at the API. Maps each
-            voice bot → its Twilio account (SID + number) for recordings + transfers. */}
-        <Route path="/admin/telephony" element={<TelephonyConfig />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </DashboardShell>

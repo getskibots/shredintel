@@ -16,6 +16,7 @@ import { GuestIdentitySplit } from '../GuestIdentitySplit'
 import { PeriodPicker } from '../PeriodPicker'
 import { SenderMixStack } from '../SenderMixStack'
 import { RealtimeAgent } from '../RealtimeAgent'
+import { TwilioConnect } from '../TwilioConnect/TwilioConnect'
 import { ShreddingOverlay, useShredPulse } from '../ShreddingOverlay'
 import { useBotAnalytics } from '../../data/useAnalytics'
 import {
@@ -97,6 +98,7 @@ export function BotAnalyticsPage() {
               />
               {isLive ? 'Live' : 'Demo'}
             </span>
+            <TwilioConnect botId={botId} />
           </div>
           <PeriodPicker value={selection} onChange={setSelection} align="end" />
         </div>

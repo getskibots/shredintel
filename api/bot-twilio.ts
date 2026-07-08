@@ -1,23 +1,27 @@
 /**
- * GET/POST /api/bot-twilio — GSB-INTERNAL Twilio config console API.
+ * GET/POST /api/bot-twilio — per-bot Twilio config (Account SID + inbound number).
  *
- * GET  → every voice bot + its current bot_twilio mapping (account_sid, number).
- * POST → upsert one bot's mapping { bot_id, account_sid, phone_number?, label? }.
+ * GET ?botId=252  → that one bot's current mapping (for the dashboard "Connect Twilio"
+ *                   control). Returns { mapping: {...} | null }.
+ * GET (no botId)  → every voice bot + its mapping ({ bots: [...] }) for a bulk view.
+ * POST            → upsert one bot's mapping { bot_id, account_sid, phone_number?, label? }.
  *
- * Gated by GSB_ADMIN_KEY (x-gsb-admin-key header) — this is the access control that
- * keeps resorts out of the console regardless of the embed guard. The Account SID is
- * NOT a secret (semi-public); the auth TOKEN stays in env for now (encrypted-in-DB +
- * the key field = the Option-A finalization). report.bot_twilio is server-only.
+ * NOT GATED for now (GSB-internal tool, whole app is behind the password gate; the
+ * dashboard control is hidden inside the resort embed). Re-gating later is one block:
+ * uncomment the GSB_ADMIN_KEY check below. The Account SID is semi-public; the auth
+ * TOKEN never touches this table — it stays in server env keyed by account_sid.
+ * report.bot_twilio is server-only (not anon-granted).
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { getPool } from './_lib/db.js'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const adminKey = (process.env.GSB_ADMIN_KEY || '').trim()
-  const provided = ((req.headers['x-gsb-admin-key'] as string) || '').trim()
-  if (!adminKey || provided !== adminKey) {
-    return res.status(401).json({ error: 'unauthorized (GSB admin key required)' })
-  }
+  // --- Optional gate (disabled). To re-enable, set GSB_ADMIN_KEY in env + uncomment:
+  // const adminKey = (process.env.GSB_ADMIN_KEY || '').trim()
+  // if (adminKey) {
+  //   const provided = ((req.headers['x-gsb-admin-key'] as string) || '').trim()
+  //   if (provided !== adminKey) return res.status(401).json({ error: 'unauthorized' })
+  // }
 
   const pool = getPool()
   try {
@@ -26,6 +30,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       updated_at timestamptz not null default now())`)
 
     if (req.method === 'GET') {
+      const botId = Number(req.query.botId)
+      if (botId) {
+        // Single bot — what the dashboard "Connect Twilio" control reads. Works for
+        // ANY bot_id (omni-channel: every bot can carry a voice channel), so this
+        // does NOT depend on bot_channel classification.
+        const { rows } = await pool.query(
+          `select b.id as bot_id, b.name,
+                  bt.account_sid, bt.phone_number, bt.label
+           from public.bots b
+           left join report.bot_twilio bt on bt.bot_id = b.id
+           where b.id = $1
+           limit 1`,
+          [botId],
+        )
+        return res.status(200).json({ mapping: rows[0] ?? null })
+      }
       const { rows } = await pool.query(`
         select bc.bot_id, b.name, bc.voice_convs,
                bt.account_sid, bt.phone_number, bt.label

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Search, TrendingUp, Headphones, Settings2 } from 'lucide-react'
+import { Search, TrendingUp, Headphones } from 'lucide-react'
 import { useAvailableBots } from '../../data/useAnalytics'
 
 /**
@@ -86,20 +86,6 @@ export function BotIndexPage() {
               </div>
             </Link>
           ))}
-        </div>
-      )}
-
-      {/* GSB-internal admin entry — discreet, not shown to resorts (page itself is
-          admin-key gated). Hidden inside the embed so a resort iframe never sees it. */}
-      {!location.search.includes('embed') && (
-        <div className="mt-10 border-t border-slate-100 pt-4">
-          <Link
-            to={hrefFor('/admin/telephony')}
-            className="inline-flex items-center gap-1.5 text-xs text-slate-300 transition hover:text-slate-500"
-          >
-            <Settings2 className="h-3.5 w-3.5" strokeWidth={1.75} />
-            Telephony config
-          </Link>
         </div>
       )}
     </div>

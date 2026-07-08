@@ -18,6 +18,7 @@ import { resolveSelection, type PeriodSelection } from '../../lib/period'
 import { useVoiceCallAnalytics, type VoiceBreakdown } from '../../data/useVoiceCallAnalytics'
 import { useAvailableBots } from '../../data/useAnalytics'
 import { ConversationExplorer } from '../ConversationExplorer/ConversationExplorer'
+import { TwilioConnect } from '../TwilioConnect/TwilioConnect'
 import { NaDotMap } from '../NaDotMap/NaDotMap'
 import { AskBar } from '../AskBar'
 import { RealtimeAgent } from '../RealtimeAgent'
@@ -152,6 +153,7 @@ export function VoiceAnalyticsPage() {
               <span className={['h-1.5 w-1.5 rounded-full', isLive ? 'bg-emerald-500' : 'bg-slate-400'].join(' ')} />
               {isLive ? 'LIVE' : 'Demo'}
             </span>
+            <TwilioConnect botId={botId} />
           </div>
           <PeriodPicker value={selection} onChange={setSelection} />
         </div>

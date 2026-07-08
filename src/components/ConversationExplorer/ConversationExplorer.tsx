@@ -20,7 +20,7 @@ import { UsDotMap } from '../UsDotMap'
  * comes from the bot-scoped, PII-scrubbed /api/transcript.
  */
 
-interface ConvRow { bot_id: number; conversation_id: number; topic: string | null; sentiment: string | null; day: string; started_local: string | null; duration_sec: number | null; page_path: string | null; city: string | null; region: string | null; country_iso: string | null; lat: number | null; lon: number | null }
+interface ConvRow { bot_id: number; conversation_id: number; topic: string | null; sentiment: string | null; day: string; started_local: string | null; duration_sec: number | null; page_path: string | null; city: string | null; region: string | null; country_iso: string | null; lat: number | null; lon: number | null; recording_sid?: string | null }
 interface MsgSource { layer: string; url?: string; label?: string }
 interface Msg { sender: string; text: string; source?: MsgSource }
 
@@ -151,7 +151,7 @@ export function ConversationExplorer({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let q: any = isVoice
         ? sb.schema('report').from('call_base')
-            .select('bot_id, conversation_id, topic, sentiment, day, duration_sec:dur_sec, city:from_city, country_iso:from_country', { count: 'exact' })
+            .select('bot_id, conversation_id, topic, sentiment, day, duration_sec:dur_sec, city:from_city, country_iso:from_country, recording_sid', { count: 'exact' })
             .eq('bot_id', p.botId)
         : sb.schema('report').from('conversation_time')
             .select('bot_id, conversation_id, topic, sentiment, day, started_local, duration_sec, page_path, city, region, country_iso, lat, lon', { count: 'exact' })
@@ -312,6 +312,18 @@ export function ConversationExplorer({
                   </button>
                   {openCid === r.conversation_id && (
                     <div className="border-t border-slate-100 bg-slate-50/60 px-3 py-3">
+                      {source === 'voice' && r.recording_sid ? (
+                        <div className="mb-3">
+                          <audio
+                            controls
+                            preload="none"
+                            className="h-9 w-full"
+                            src={`/api/recording?botId=${botId}&cid=${r.conversation_id}`}
+                          >
+                            Your browser can’t play this recording.
+                          </audio>
+                        </div>
+                      ) : null}
                       {(fmtDur(r.duration_sec) || r.city) ? (
                         <div className="mb-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-slate-100 pb-2 text-[11px]">
                           {fmtDur(r.duration_sec) ? (

@@ -19,6 +19,9 @@ import { useVoiceCallAnalytics, type VoiceBreakdown } from '../../data/useVoiceC
 import { useAvailableBots } from '../../data/useAnalytics'
 import { ConversationExplorer } from '../ConversationExplorer/ConversationExplorer'
 import { NaDotMap } from '../NaDotMap/NaDotMap'
+import { AskBar } from '../AskBar'
+import { RealtimeAgent } from '../RealtimeAgent'
+import { useShredPulse } from '../ShreddingOverlay'
 import { type DrillPayload } from '../../lib/drill'
 import { Panel, Metric, EmptyState } from '../shared'
 import { formatNumber, formatPercent } from '../../lib/formatters'
@@ -96,6 +99,10 @@ export function VoiceAnalyticsPage() {
 
   const range = useMemo(() => resolveSelection(selection), [selection])
   const openDrill = (dims: Partial<DrillPayload>) => setDrill({ botId, from: range.from, to: range.to, ...dims })
+  // Conversational-intelligence layer (ask + voice), scoped to this bot + window.
+  const askRange = { from: range.from, to: range.to, label: range.label }
+  const [voiceActive, setVoiceActive] = useState(false)
+  const shredding = useShredPulse(`${range.from}|${range.to}`)
 
   const botLabel = useMemo(
     () => bots.find((b) => b.botId === botId)?.label ?? `Bot ${botId}`,
@@ -141,6 +148,20 @@ export function VoiceAnalyticsPage() {
           </div>
           <PeriodPicker value={selection} onChange={setSelection} />
         </div>
+      </div>
+
+      {/* Conversational intelligence layer — ask/search + voice AI (same as chat), scoped to this voice bot */}
+      <div className="mb-6">
+        <AskBar botId={botId} range={askRange} onVoice={() => setVoiceActive(true)} />
+        <RealtimeAgent
+          botId={botId}
+          range={askRange}
+          selection={selection}
+          onSelectionChange={setSelection}
+          shredding={shredding}
+          active={voiceActive}
+          onEnd={() => setVoiceActive(false)}
+        />
       </div>
 
       {isLoading && !m ? (

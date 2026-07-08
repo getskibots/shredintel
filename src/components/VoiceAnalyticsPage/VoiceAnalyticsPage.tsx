@@ -218,31 +218,6 @@ export function VoiceAnalyticsPage() {
               <Metric label="Total talk time" value={fmtTalk(m.talkSec)} subValue={m.durationSource === 'twilio' ? 'Twilio truth' : 'estimated'} />
             </div>
 
-            {/* AI-handled vs human talk time — Twilio truth (parent call duration −
-                human transfer leg). The headline Voice-AI metric; shown only when the
-                bot has Twilio call_facts (else duration is the unreliable mirror). */}
-            {m.durationSource === 'twilio' && m.aiTalkSec != null && m.humanTalkSec != null && m.aiTalkSec + m.humanTalkSec > 0 && (() => {
-              const total = m.aiTalkSec + m.humanTalkSec
-              const aiPct = Math.round((100 * m.aiTalkSec) / total)
-              const humanPct = 100 - aiPct
-              return (
-                <div className="mt-4 rounded-xl border border-slate-200 bg-white p-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">AI-handled vs human talk time</span>
-                    <span className="text-[11px] text-slate-400">Twilio truth · {fmtTalk(m.talkSec)} total</span>
-                  </div>
-                  <div className="mt-2 flex h-3 overflow-hidden rounded-full bg-slate-100">
-                    <div style={{ width: `${aiPct}%`, background: brand.blue }} title={`AI ${fmtTalk(m.aiTalkSec)}`} />
-                    <div style={{ width: `${humanPct}%`, background: brand.gold }} title={`Human ${fmtTalk(m.humanTalkSec)}`} />
-                  </div>
-                  <div className="mt-1.5 flex items-center justify-between text-xs">
-                    <span className="font-medium text-botscrew-700">AI handled {fmtTalk(m.aiTalkSec)} · {aiPct}%</span>
-                    <span className="font-medium text-amber-700">{humanPct}% · {fmtTalk(m.humanTalkSec)} with a human</span>
-                  </div>
-                </div>
-              )
-            })()}
-
             {m.volumeTrend.length > 1 && (
               <div className="mt-5">
                 <ResponsiveContainer width="100%" height={220}>
@@ -268,6 +243,78 @@ export function VoiceAnalyticsPage() {
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
+            )}
+          </Panel>
+
+          {/* AI vs human — the headline Voice-AI story, standalone. Ground truth from
+              Twilio transfers (call-level) + call_facts durations (talk-time). */}
+          <Panel
+            className="lg:col-span-12"
+            eyebrow="Voice AI"
+            title="AI resolution vs human escalation"
+            description="How often ShredIntel handles the call itself versus escalating to your team — ground truth from Twilio."
+          >
+            {m.transfers ? (() => {
+              const tr = m.transfers
+              const escalated = tr.transferred
+              const aiResolved = Math.max(0, tr.checked - tr.transferred)
+              const escalatedPct = tr.transferRate
+              const aiResolvedPct = Math.max(0, 100 - escalatedPct)
+              return (
+                <>
+                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                    <Metric label="AI resolved" value={formatNumber(aiResolved)} subValue={`${formatPercent(aiResolvedPct)} · no human`} tone="good" />
+                    <Metric label="Escalated to team" value={formatNumber(escalated)} subValue={`${formatPercent(escalatedPct)} · to 8x8`} tone="accent" />
+                    <Metric label="Escalations answered" value={formatPercent(tr.answeredRate)} subValue={`${formatNumber(tr.answered)} picked up`} tone="good" />
+                    <Metric label="Avg time with a person" value={fmtDuration(tr.avgHumanSec)} subValue="human leg" />
+                  </div>
+
+                  {/* Call-level split — how many calls the AI closed alone vs escalated */}
+                  <div className="mt-5">
+                    <div className="mb-1.5 flex items-center justify-between">
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Calls resolved by AI vs escalated</span>
+                      <span className="text-[11px] text-slate-400">{formatNumber(tr.checked)} calls · Twilio truth</span>
+                    </div>
+                    <div className="flex h-3 overflow-hidden rounded-full bg-slate-100">
+                      <div style={{ width: `${aiResolvedPct}%`, background: brand.blue }} title={`AI resolved ${formatNumber(aiResolved)}`} />
+                      <div style={{ width: `${escalatedPct}%`, background: brand.gold }} title={`Escalated ${formatNumber(escalated)}`} />
+                    </div>
+                    <div className="mt-1.5 flex items-center justify-between text-xs">
+                      <span className="font-medium text-botscrew-700">AI resolved {formatPercent(aiResolvedPct)}</span>
+                      <span className="font-medium text-amber-700">{formatPercent(escalatedPct)} escalated</span>
+                    </div>
+                  </div>
+
+                  {/* Talk-time split — where the minutes actually go (moved from overview) */}
+                  {m.durationSource === 'twilio' && m.aiTalkSec != null && m.humanTalkSec != null && m.aiTalkSec + m.humanTalkSec > 0 && (() => {
+                    const total = m.aiTalkSec + m.humanTalkSec
+                    const aiPct = Math.round((100 * m.aiTalkSec) / total)
+                    const humanPct = 100 - aiPct
+                    return (
+                      <div className="mt-5">
+                        <div className="mb-1.5 flex items-center justify-between">
+                          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Talk time — AI vs human</span>
+                          <span className="text-[11px] text-slate-400">{fmtTalk(m.talkSec)} total · Twilio truth</span>
+                        </div>
+                        <div className="flex h-3 overflow-hidden rounded-full bg-slate-100">
+                          <div style={{ width: `${aiPct}%`, background: brand.blue }} title={`AI ${fmtTalk(m.aiTalkSec)}`} />
+                          <div style={{ width: `${humanPct}%`, background: brand.gold }} title={`Human ${fmtTalk(m.humanTalkSec)}`} />
+                        </div>
+                        <div className="mt-1.5 flex items-center justify-between text-xs">
+                          <span className="font-medium text-botscrew-700">AI handled {fmtTalk(m.aiTalkSec)} · {aiPct}%</span>
+                          <span className="font-medium text-amber-700">{humanPct}% · {fmtTalk(m.humanTalkSec)} with a human</span>
+                        </div>
+                      </div>
+                    )
+                  })()}
+
+                  <p className="mt-4 text-[11px] text-slate-400">
+                    Escalations route to your 8x8 team. “AI resolved” = the AI handled the call end-to-end with no transfer. The AI fronts every call and answers the rest of the line even when it escalates.
+                  </p>
+                </>
+              )
+            })() : (
+              <EmptyState title="No transfer data yet" message="Run the Twilio transfer ingest for this bot to light up the AI-vs-human split." />
             )}
           </Panel>
 

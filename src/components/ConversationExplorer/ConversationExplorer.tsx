@@ -151,7 +151,7 @@ export function ConversationExplorer({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let q: any = isVoice
         ? sb.schema('report').from('call_base')
-            .select('bot_id, conversation_id, topic, sentiment, day, duration_sec:dur_sec, city:from_city, country_iso:from_country, recording_sid', { count: 'exact' })
+            .select('bot_id, conversation_id, topic, sentiment, day, started_local, duration_sec:dur_sec, city:from_city, country_iso:from_country, recording_sid', { count: 'exact' })
             .eq('bot_id', p.botId)
         : sb.schema('report').from('conversation_time')
             .select('bot_id, conversation_id, topic, sentiment, day, started_local, duration_sec, page_path, city, region, country_iso, lat, lon', { count: 'exact' })
@@ -177,9 +177,9 @@ export function ConversationExplorer({
       if (lockedSentiment) q = q.eq('sentiment', lockedSentiment)
       else if (sentFilter !== 'all') q = q.eq('sentiment', sentFilter)
 
-      // call_base has no started_at; order by day then id. chat orders by exact ts.
+      // voice orders by the resort-local call time; chat by its exact UTC ts.
       const ordered = isVoice
-        ? q.order('day', { ascending: false }).order('conversation_id', { ascending: false })
+        ? q.order('started_local', { ascending: false })
         : q.order('started_at', { ascending: false })
       const { data, count: total } = await ordered.limit(LIST_CAP)
       if (!cancelled) {

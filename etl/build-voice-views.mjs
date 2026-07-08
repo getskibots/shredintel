@@ -46,6 +46,7 @@ await c.query(`create materialized view report.call_base as
   select
     vc.bot_id, vc.conversation_id, vc.user_id,
     ac.id as call_id, ac.call_sid, ac.recording_sid,
+    ((vc.started_at at time zone 'UTC') at time zone coalesce(tz.tz,'America/Denver')) as started_local,
     ((vc.started_at at time zone 'UTC') at time zone coalesce(tz.tz,'America/Denver'))::date as day,
     extract(hour from ((vc.started_at at time zone 'UTC') at time zone coalesce(tz.tz,'America/Denver')))::int as hour_local,
     greatest(extract(epoch from (vc.closed_at - vc.started_at)), 0)::int as dur_sec,

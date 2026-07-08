@@ -437,6 +437,21 @@ export interface CallTransferStatsRow {
   human_talk_sec: number | null
 }
 
+/** report.call_facts_stats — per bot/day Twilio TRUTH (parent-call ingest; anon-safe:
+ *  counts + durations only). The trusted source for duration/talk-time (the mirror
+ *  dur_sec is unreliable). human_talk_sec (from transfers) lets the app derive
+ *  AI-handled = talk_sec − human_talk_sec. Empty until build-call-facts(-stats) run. */
+export interface CallFactsStatsRow {
+  bot_id: number
+  day: string
+  calls: number
+  completed: number
+  talk_sec: number | null
+  median_dur_sec: number | null
+  avg_dur_sec: number | null
+  human_talk_sec: number | null
+}
+
 export interface VoiceBundle {
   callVolume: CallVolumeRow[]
   callGeo: CallGeoRow[]
@@ -446,6 +461,8 @@ export interface VoiceBundle {
   callerStats: CallCallerStatsRow | null
   /** Ground-truth transfers (Twilio). Empty until the ingest + stats view exist. */
   callTransfers: CallTransferStatsRow[]
+  /** Twilio parent-call truth (duration/talk-time + AI-vs-human). Empty until ingested. */
+  callFacts: CallFactsStatsRow[]
   /** Reused enrichment (works for voice bots — a call is a conversation). */
   intelHandover: IntelBreakdownRow[]
   intelSection: IntelBreakdownRow[]
@@ -484,7 +501,7 @@ export async function fetchVoiceBundle(
       .schema('report').from('call_caller_stats')
       .select('*').eq('bot_id', botId).maybeSingle() as unknown as Promise<{ data: CallCallerStatsRow | null; error: unknown }>
 
-    const [volume, geo, hours, hand, section, sentiment, callers, stats, transfers] = await withTimeout(Promise.all([
+    const [volume, geo, hours, hand, section, sentiment, callers, stats, transfers, facts] = await withTimeout(Promise.all([
       q<CallVolumeRow>('call_volume'),
       q<CallGeoRow>('call_geo'),
       q<CallHoursRow>('call_hours'),
@@ -494,6 +511,7 @@ export async function fetchVoiceBundle(
       callersQ,
       statsQ,
       q<CallTransferStatsRow>('call_transfer_stats'),
+      q<CallFactsStatsRow>('call_facts_stats'),
     ]))
 
     // call_volume is the spine — if it errors, the voice views aren't there → fixtures.
@@ -510,6 +528,7 @@ export async function fetchVoiceBundle(
       callCallers: callers.error ? [] : (callers.data ?? []),
       callerStats: stats.error ? null : (stats.data ?? null),
       callTransfers: transfers.error ? [] : (transfers.data ?? []),
+      callFacts: facts.error ? [] : (facts.data ?? []),
       intelHandover: hand.error ? [] : (hand.data ?? []),
       intelSection: section.error ? [] : (section.data ?? []),
       intelSentiment: sentiment.error ? [] : (sentiment.data ?? []),

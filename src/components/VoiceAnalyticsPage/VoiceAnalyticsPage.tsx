@@ -203,10 +203,35 @@ export function VoiceAnalyticsPage() {
               <Metric label="Didn't connect" value={formatNumber(m.unconnected)} subValue={`${formatPercent(m.abandonPct)} hung up`} />
               <Metric label="Engaged" value={formatNumber(m.engagedCalls)} subValue="got past hello" tone="good" />
               <Metric label="Handover-flagged" value={formatNumber(m.handoverCalls)} subValue={`${formatPercent((m.handoverCalls / m.voiceConvs) * 100)} of calls`} tone="risk" />
-              <Metric label="Typical length" value={fmtDuration(m.medianDurSec)} subValue="median (connected)" />
-              <Metric label="Avg length" value={fmtDuration(m.avgDurSec)} subValue="mean (connected)" />
-              <Metric label="Total talk time" value={fmtTalk(m.talkSec)} subValue="connected time" />
+              <Metric label="Typical length" value={fmtDuration(m.medianDurSec)} subValue={m.durationSource === 'twilio' ? 'median · Twilio' : 'median (est.)'} />
+              <Metric label="Avg length" value={fmtDuration(m.avgDurSec)} subValue={m.durationSource === 'twilio' ? 'mean · Twilio' : 'mean (est.)'} />
+              <Metric label="Total talk time" value={fmtTalk(m.talkSec)} subValue={m.durationSource === 'twilio' ? 'Twilio truth' : 'estimated'} />
             </div>
+
+            {/* AI-handled vs human talk time — Twilio truth (parent call duration −
+                human transfer leg). The headline Voice-AI metric; shown only when the
+                bot has Twilio call_facts (else duration is the unreliable mirror). */}
+            {m.durationSource === 'twilio' && m.aiTalkSec != null && m.humanTalkSec != null && m.aiTalkSec + m.humanTalkSec > 0 && (() => {
+              const total = m.aiTalkSec + m.humanTalkSec
+              const aiPct = Math.round((100 * m.aiTalkSec) / total)
+              const humanPct = 100 - aiPct
+              return (
+                <div className="mt-4 rounded-xl border border-slate-200 bg-white p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">AI-handled vs human talk time</span>
+                    <span className="text-[11px] text-slate-400">Twilio truth · {fmtTalk(m.talkSec)} total</span>
+                  </div>
+                  <div className="mt-2 flex h-3 overflow-hidden rounded-full bg-slate-100">
+                    <div style={{ width: `${aiPct}%`, background: brand.blue }} title={`AI ${fmtTalk(m.aiTalkSec)}`} />
+                    <div style={{ width: `${humanPct}%`, background: brand.gold }} title={`Human ${fmtTalk(m.humanTalkSec)}`} />
+                  </div>
+                  <div className="mt-1.5 flex items-center justify-between text-xs">
+                    <span className="font-medium text-botscrew-700">AI handled {fmtTalk(m.aiTalkSec)} · {aiPct}%</span>
+                    <span className="font-medium text-amber-700">{humanPct}% · {fmtTalk(m.humanTalkSec)} with a human</span>
+                  </div>
+                </div>
+              )
+            })()}
 
             {m.volumeTrend.length > 1 && (
               <div className="mt-5">

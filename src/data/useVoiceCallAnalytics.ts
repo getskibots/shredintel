@@ -78,6 +78,13 @@ export interface VoiceMetrics {
   medianDurSec: number | null
   avgDurSec: number | null // mean connected call length
   talkSec: number // total connected talk time (seconds)
+  /** Where duration/talk-time comes from: 'twilio' (call_facts truth, preferred) or
+   *  'mirror' (unreliable closed_at−started_at, only until a bot is Twilio-ingested). */
+  durationSource: 'twilio' | 'mirror'
+  /** AI-vs-human talk split (Twilio truth). null until the bot is Twilio-ingested.
+   *  aiTalkSec = total call time − human-leg time; humanTalkSec = transferred human legs. */
+  aiTalkSec: number | null
+  humanTalkSec: number | null
   // series
   volumeTrend: VoiceTrendPoint[]
   hours: VoiceHourPoint[] // always length 24 (0..23), zero-filled
@@ -96,6 +103,7 @@ export interface VoiceMetrics {
 export const EMPTY_VOICE_METRICS: VoiceMetrics = {
   voiceConvs: 0, connectedCalls: 0, unconnected: 0, abandonPct: 0, engagedCalls: 0,
   handoverCalls: 0, medianDurSec: null, avgDurSec: null, talkSec: 0,
+  durationSource: 'mirror', aiTalkSec: null, humanTalkSec: null,
   volumeTrend: [], hours: [], geo: [], callers: null, topCallers: [], transfers: null,
   handoverMix: [], sentimentMix: [], sectionMix: [],
 }
@@ -120,17 +128,36 @@ export function deriveVoiceMetrics(b: VoiceBundle): VoiceMetrics {
   const handoverCalls = sum(vol, (r) => r.handover_calls)
   const abandonPct = voiceConvs > 0 ? Math.round((unconnected / voiceConvs) * 100) : 0
 
-  const durRows = vol.filter((r) => r.median_dur_sec != null && r.connected_calls > 0)
-  const durWeight = sum(durRows, (r) => r.connected_calls)
-  const medianDurSec = durWeight
-    ? Math.round(sum(durRows, (r) => (r.median_dur_sec as number) * r.connected_calls) / durWeight)
-    : null
-  const avgRows = vol.filter((r) => r.avg_dur_sec != null && r.connected_calls > 0)
-  const avgWeight = sum(avgRows, (r) => r.connected_calls)
-  const avgDurSec = avgWeight
-    ? Math.round(sum(avgRows, (r) => (r.avg_dur_sec as number) * r.connected_calls) / avgWeight)
-    : null
-  const talkSec = sum(vol, (r) => r.talk_sec ?? 0)
+  // Duration / talk-time: PREFER Twilio truth (call_facts_stats) — the mirror
+  // dur_sec is unreliable (recon 2026-07-08: 0/40 matched Twilio, undercounts ~2×).
+  // Fall back to the mirror only for bots not yet Twilio-ingested (no call_facts).
+  const wavg = <T,>(rows: T[], val: (r: T) => number | null, weight: (r: T) => number): number | null => {
+    const w = sum(rows, weight)
+    return w ? Math.round(sum(rows, (r) => (val(r) ?? 0) * weight(r)) / w) : null
+  }
+  const facts = b.callFacts
+  const twTalk = sum(facts, (r) => r.talk_sec ?? 0)
+  const hasFacts = facts.length > 0 && twTalk > 0
+
+  let medianDurSec: number | null
+  let avgDurSec: number | null
+  let talkSec: number
+  let humanTalkSec: number | null
+  let aiTalkSec: number | null
+  if (hasFacts) {
+    medianDurSec = wavg(facts.filter((r) => r.median_dur_sec != null && r.completed > 0), (r) => r.median_dur_sec, (r) => r.completed)
+    avgDurSec = wavg(facts.filter((r) => r.avg_dur_sec != null && r.completed > 0), (r) => r.avg_dur_sec, (r) => r.completed)
+    talkSec = twTalk
+    humanTalkSec = sum(facts, (r) => r.human_talk_sec ?? 0)
+    aiTalkSec = Math.max(0, twTalk - humanTalkSec)
+  } else {
+    medianDurSec = wavg(vol.filter((r) => r.median_dur_sec != null && r.connected_calls > 0), (r) => r.median_dur_sec, (r) => r.connected_calls)
+    avgDurSec = wavg(vol.filter((r) => r.avg_dur_sec != null && r.connected_calls > 0), (r) => r.avg_dur_sec, (r) => r.connected_calls)
+    talkSec = sum(vol, (r) => r.talk_sec ?? 0)
+    humanTalkSec = null
+    aiTalkSec = null
+  }
+  const durationSource: 'twilio' | 'mirror' = hasFacts ? 'twilio' : 'mirror'
 
   const volumeTrend: VoiceTrendPoint[] = [...vol]
     .sort((a, b) => a.day.localeCompare(b.day))
@@ -174,6 +201,7 @@ export function deriveVoiceMetrics(b: VoiceBundle): VoiceMetrics {
   const cs = b.callerStats
   return {
     voiceConvs, connectedCalls, unconnected, abandonPct, engagedCalls, handoverCalls, medianDurSec, avgDurSec, talkSec,
+    durationSource, aiTalkSec, humanTalkSec,
     volumeTrend, hours, geo, transfers,
     callers: cs
       ? {

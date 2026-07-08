@@ -426,6 +426,17 @@ export interface CallCallerStatsRow {
   total_calls: number
 }
 
+/** report.call_transfer_stats — per bot/day GROUND-TRUTH transfers (Twilio child-leg
+ *  ingest; anon-safe: counts + duration only, no destination numbers). */
+export interface CallTransferStatsRow {
+  bot_id: number
+  day: string
+  checked: number
+  transfers: number
+  answered_transfers: number
+  human_talk_sec: number | null
+}
+
 export interface VoiceBundle {
   callVolume: CallVolumeRow[]
   callGeo: CallGeoRow[]
@@ -433,6 +444,8 @@ export interface VoiceBundle {
   /** Top callers (by all-time call count) + the per-bot repeat-caller aggregate. */
   callCallers: CallCallerRow[]
   callerStats: CallCallerStatsRow | null
+  /** Ground-truth transfers (Twilio). Empty until the ingest + stats view exist. */
+  callTransfers: CallTransferStatsRow[]
   /** Reused enrichment (works for voice bots — a call is a conversation). */
   intelHandover: IntelBreakdownRow[]
   intelSection: IntelBreakdownRow[]
@@ -471,7 +484,7 @@ export async function fetchVoiceBundle(
       .schema('report').from('call_caller_stats')
       .select('*').eq('bot_id', botId).maybeSingle() as unknown as Promise<{ data: CallCallerStatsRow | null; error: unknown }>
 
-    const [volume, geo, hours, hand, section, sentiment, callers, stats] = await withTimeout(Promise.all([
+    const [volume, geo, hours, hand, section, sentiment, callers, stats, transfers] = await withTimeout(Promise.all([
       q<CallVolumeRow>('call_volume'),
       q<CallGeoRow>('call_geo'),
       q<CallHoursRow>('call_hours'),
@@ -480,6 +493,7 @@ export async function fetchVoiceBundle(
       q<IntelBreakdownRow>('intel_sentiment'),
       callersQ,
       statsQ,
+      q<CallTransferStatsRow>('call_transfer_stats'),
     ]))
 
     // call_volume is the spine — if it errors, the voice views aren't there → fixtures.
@@ -495,6 +509,7 @@ export async function fetchVoiceBundle(
       callHours: hours.error ? [] : (hours.data ?? []),
       callCallers: callers.error ? [] : (callers.data ?? []),
       callerStats: stats.error ? null : (stats.data ?? null),
+      callTransfers: transfers.error ? [] : (transfers.data ?? []),
       intelHandover: hand.error ? [] : (hand.data ?? []),
       intelSection: section.error ? [] : (section.data ?? []),
       intelSentiment: sentiment.error ? [] : (sentiment.data ?? []),

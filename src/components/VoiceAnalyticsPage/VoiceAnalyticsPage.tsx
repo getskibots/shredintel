@@ -356,8 +356,26 @@ export function VoiceAnalyticsPage() {
             className="lg:col-span-6"
             eyebrow="Service"
             title="Human handover"
-            description="Callers who needed (or asked for) a person — click to review those calls."
+            description="Whether the call actually transferred to a person (ground truth from Twilio) vs the AI's read of the conversation."
+            action={
+              m.transfers ? (
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 px-4 py-2 text-right">
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-emerald-700">Actually transferred</div>
+                  <div className="mt-0.5 font-display text-2xl font-semibold tabular-nums text-emerald-700">{formatPercent(m.transfers.transferRate)}</div>
+                </div>
+              ) : undefined
+            }
           >
+            {m.transfers ? (
+              <div className="mb-4 grid grid-cols-3 gap-3">
+                <Metric label="Transferred" value={formatNumber(m.transfers.transferred)} subValue={`of ${formatNumber(m.transfers.checked)} calls`} tone="accent" />
+                <Metric label="Human answered" value={formatPercent(m.transfers.answeredRate)} subValue={`${formatNumber(m.transfers.answered)} connected`} tone="good" />
+                <Metric label="Time with human" value={fmtDuration(m.transfers.avgHumanSec)} subValue="avg" />
+              </div>
+            ) : null}
+            <div className="mb-1.5 text-[11px] font-medium uppercase tracking-wider text-slate-400">
+              {m.transfers ? "AI's read of the conversation" : 'Handover need (AI-inferred)'}
+            </div>
             <RankedBars
               items={toBars(m.handoverMix)}
               colorFor={(label) => (label.toLowerCase().includes('no handover') ? brand.blueSoft : brand.gold)}

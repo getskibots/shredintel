@@ -56,6 +56,14 @@ export interface VoiceTopCaller {
   lastDay: string
   activeDays: number
 }
+export interface VoiceTransferAgg {
+  checked: number // calls we have Twilio truth for
+  transferred: number // actually <Dial>'d a human
+  answered: number // human picked up
+  transferRate: number // transferred / checked (%)
+  answeredRate: number // answered / transferred (%)
+  avgHumanSec: number | null // avg time with the human
+}
 
 export interface VoiceMetrics {
   // headline KPIs (period totals)
@@ -77,6 +85,8 @@ export interface VoiceMetrics {
   // repeat callers (all-time; keyed on the phone identity)
   callers: VoiceCallerAgg | null
   topCallers: VoiceTopCaller[]
+  // ground-truth transfers (Twilio) — null until ingested
+  transfers: VoiceTransferAgg | null
   // reused enrichment
   handoverMix: VoiceBreakdown[]
   sentimentMix: VoiceBreakdown[]
@@ -86,7 +96,7 @@ export interface VoiceMetrics {
 export const EMPTY_VOICE_METRICS: VoiceMetrics = {
   voiceConvs: 0, connectedCalls: 0, unconnected: 0, abandonPct: 0, engagedCalls: 0,
   handoverCalls: 0, medianDurSec: null, avgDurSec: null, talkSec: 0,
-  volumeTrend: [], hours: [], geo: [], callers: null, topCallers: [],
+  volumeTrend: [], hours: [], geo: [], callers: null, topCallers: [], transfers: null,
   handoverMix: [], sentimentMix: [], sectionMix: [],
 }
 
@@ -146,10 +156,23 @@ export function deriveVoiceMetrics(b: VoiceBundle): VoiceMetrics {
   }
   const geo = Array.from(geoMap.values()).sort((a, b) => b.calls - a.calls)
 
+  const tChecked = sum(b.callTransfers, (r) => r.checked)
+  const tXfer = sum(b.callTransfers, (r) => r.transfers)
+  const tAns = sum(b.callTransfers, (r) => r.answered_transfers)
+  const tHuman = sum(b.callTransfers, (r) => r.human_talk_sec ?? 0)
+  const transfers = tChecked > 0
+    ? {
+        checked: tChecked, transferred: tXfer, answered: tAns,
+        transferRate: Math.round((100 * tXfer) / tChecked),
+        answeredRate: tXfer > 0 ? Math.round((100 * tAns) / tXfer) : 0,
+        avgHumanSec: tAns > 0 ? Math.round(tHuman / tAns) : null,
+      }
+    : null
+
   const cs = b.callerStats
   return {
     voiceConvs, connectedCalls, unconnected, abandonPct, engagedCalls, handoverCalls, medianDurSec, avgDurSec, talkSec,
-    volumeTrend, hours, geo,
+    volumeTrend, hours, geo, transfers,
     callers: cs
       ? {
           unique: cs.callers,

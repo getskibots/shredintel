@@ -1,4 +1,4 @@
-import { HashRouter, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom'
+import { HashRouter, Navigate, Route, Routes, useLocation, useParams, useSearchParams } from 'react-router-dom'
 import { AhhhFaqItTool } from './components/AhhhFaqItTool'
 import { BotAnalyticsPage } from './components/BotAnalyticsPage'
 import { BotIndexPage } from './components/BotIndexPage'
@@ -8,6 +8,22 @@ import { VoiceReportGrid } from './components/VoiceReportGrid'
 import { VoiceAnalyticsPage } from './components/VoiceAnalyticsPage/VoiceAnalyticsPage'
 import { isEmbedMode, useEmbedHeightSync } from './lib/embed'
 import { useBotChannel } from './data/useAnalytics'
+import { omniGroupByKey, routeForChannel } from './lib/omniGroups'
+
+/**
+ * /omni/:key — enter an omni group (prototype). Redirects to the group's default
+ * (first) channel route, carrying ?omni={key} so the channel toggle renders. Lets
+ * us feel the omni Chat/Voice toggle now, using two real bot_ids behind one entity.
+ */
+function OmniEntry() {
+  const { key } = useParams<{ key: string }>()
+  const [params] = useSearchParams()
+  const group = omniGroupByKey(key)
+  if (!group || group.channels.length === 0) return <Navigate to="/" replace />
+  const sp = new URLSearchParams(params)
+  sp.set('omni', group.key)
+  return <Navigate to={`${routeForChannel(group.channels[0])}?${sp.toString()}`} replace />
+}
 
 /**
  * /bot/:botId dispatcher — renders the channel-appropriate card. Voice bots get
@@ -57,6 +73,8 @@ function ChannelShell() {
         <Route path="/voice" element={<VoiceReportGrid />} />
         <Route path="/voice/:botId" element={<VoiceAnalyticsPage />} />
         <Route path="/bot/:botId" element={<BotRoute />} />
+        {/* Omni-channel prototype — enter a group, land on its default channel + toggle */}
+        <Route path="/omni/:key" element={<OmniEntry />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </DashboardShell>

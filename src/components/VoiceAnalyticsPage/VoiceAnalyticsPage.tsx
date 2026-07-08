@@ -9,7 +9,7 @@
  * Data from report.call_* via useVoiceCallAnalytics; honest empties when no voice.
  */
 import { useMemo, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import {
   Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts'
@@ -19,6 +19,8 @@ import { useVoiceCallAnalytics, type VoiceBreakdown } from '../../data/useVoiceC
 import { useAvailableBots } from '../../data/useAnalytics'
 import { ConversationExplorer } from '../ConversationExplorer/ConversationExplorer'
 import { TwilioConnect } from '../TwilioConnect/TwilioConnect'
+import { ChannelToggle } from '../ChannelToggle/ChannelToggle'
+import { omniGroupByKey } from '../../lib/omniGroups'
 import { NaDotMap } from '../NaDotMap/NaDotMap'
 import { AskBar } from '../AskBar'
 import { RealtimeAgent } from '../RealtimeAgent'
@@ -100,6 +102,8 @@ const DEFAULT_PERIOD: PeriodSelection = { kind: 'preset', preset: '30d' }
 export function VoiceAnalyticsPage() {
   const { botId: botIdParam } = useParams<{ botId: string }>()
   const botId = Number(botIdParam)
+  const [params] = useSearchParams()
+  const omniGroup = omniGroupByKey(params.get('omni'))
   const [selection, setSelection] = useState<PeriodSelection>(DEFAULT_PERIOD)
   const { data, isLoading, isLive } = useVoiceCallAnalytics(botId, selection)
   const { bots } = useAvailableBots()
@@ -142,8 +146,9 @@ export function VoiceAnalyticsPage() {
       <div className="sticky top-0 z-20 -mx-4 mb-5 border-b border-slate-200 bg-botscrew-50/80 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
+            {omniGroup && <ChannelToggle group={omniGroup} active="voice" />}
             <h1 className="text-lg font-semibold tracking-tight text-slate-900">Voice Analytics</h1>
-            <span className="rounded-md bg-white px-2 py-0.5 text-xs font-medium text-slate-600 shadow-sm">{botLabel}</span>
+            {!omniGroup && <span className="rounded-md bg-white px-2 py-0.5 text-xs font-medium text-slate-600 shadow-sm">{botLabel}</span>}
             <span
               className={[
                 'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold',

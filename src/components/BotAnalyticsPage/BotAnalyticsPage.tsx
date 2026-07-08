@@ -17,6 +17,8 @@ import { PeriodPicker } from '../PeriodPicker'
 import { SenderMixStack } from '../SenderMixStack'
 import { RealtimeAgent } from '../RealtimeAgent'
 import { TwilioConnect } from '../TwilioConnect/TwilioConnect'
+import { ChannelToggle } from '../ChannelToggle/ChannelToggle'
+import { omniGroupByKey } from '../../lib/omniGroups'
 import { ShreddingOverlay, useShredPulse } from '../ShreddingOverlay'
 import { useBotAnalytics } from '../../data/useAnalytics'
 import {
@@ -37,6 +39,7 @@ export function BotAnalyticsPage() {
   const botId = Number(botIdParam)
   const [searchParams, setSearchParams] = useSearchParams()
   const selection = selectionFromSearchParams(searchParams)
+  const omniGroup = omniGroupByKey(searchParams.get('omni'))
   const setSelection = (next: PeriodSelection) => {
     const params = writeSelectionToSearchParams(new URLSearchParams(searchParams), next)
     setSearchParams(params, { replace: true })
@@ -80,10 +83,11 @@ export function BotAnalyticsPage() {
       <div className="sticky top-14 z-20 border-b border-slate-200 bg-white">
         <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 md:px-6">
           <div className="flex flex-wrap items-center gap-2">
+            {omniGroup && <ChannelToggle group={omniGroup} active="chat" />}
             <h1 className="text-lg font-semibold tracking-tight text-slate-900 md:text-xl">
               Analytics
             </h1>
-            <BotSelector />
+            {!omniGroup && <BotSelector />}
             <span
               className={
                 isLive

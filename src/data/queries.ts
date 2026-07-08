@@ -353,6 +353,112 @@ export async function fetchLiveBundle(
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// VOICE — the call_* views (report.call_volume / call_geo / call_hours), built by
+// etl/build-voice-views.mjs on the VOICE_TWILIO conversation set. A voice call IS a
+// conversation, so enrichment (intel_*) is reused for handover/section/sentiment.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** report.call_volume — per bot/day voice metrics. `voice_convs` = all voice
+ *  sessions; `connected_calls` = those with a call record; `unconnected` +
+ *  `abandon_pct` = didn't-connect (the KPI chat has no analog for). */
+export interface CallVolumeRow {
+  bot_id: number
+  day: string
+  voice_convs: number
+  connected_calls: number
+  unconnected: number
+  abandon_pct: number
+  engaged_calls: number
+  handover_calls: number
+  median_dur_sec: number | null
+  unengaged: number
+}
+
+/** report.call_geo — per bot/day/city, phone-based (connected calls only). */
+export interface CallGeoRow {
+  bot_id: number
+  day: string
+  from_country: string | null
+  from_city: string | null
+  calls: number
+  engaged_calls: number
+}
+
+/** report.call_hours — per bot/day/local-hour (peak-hours / staffing). */
+export interface CallHoursRow {
+  bot_id: number
+  day: string
+  hour_local: number
+  calls: number
+  connected_calls: number
+  engaged_calls: number
+}
+
+export interface VoiceBundle {
+  callVolume: CallVolumeRow[]
+  callGeo: CallGeoRow[]
+  callHours: CallHoursRow[]
+  /** Reused enrichment (works for voice bots — a call is a conversation). */
+  intelHandover: IntelBreakdownRow[]
+  intelSection: IntelBreakdownRow[]
+  intelSentiment: IntelBreakdownRow[]
+}
+
+/**
+ * Fetches the voice call_* views (+ reused enrichment) for a voice bot, filtered
+ * to (bot_id, day BETWEEN from AND to). Returns null if the client isn't
+ * configured OR the call_* views are unreachable → caller falls back to fixtures.
+ */
+export async function fetchVoiceBundle(
+  botId: number,
+  from: string,
+  to: string,
+): Promise<VoiceBundle | null> {
+  const supabase = getSupabase()
+  if (!supabase) return null
+
+  const q = <T,>(view: string) =>
+    supabase
+      .schema('report')
+      .from(view)
+      .select('*')
+      .eq('bot_id', botId)
+      .gte('day', from)
+      .lte('day', to) as unknown as Promise<{ data: T[] | null; error: unknown }>
+
+  try {
+    const [volume, geo, hours, hand, section, sentiment] = await withTimeout(Promise.all([
+      q<CallVolumeRow>('call_volume'),
+      q<CallGeoRow>('call_geo'),
+      q<CallHoursRow>('call_hours'),
+      q<IntelBreakdownRow>('intel_handover'),
+      q<IntelBreakdownRow>('intel_section'),
+      q<IntelBreakdownRow>('intel_sentiment'),
+    ]))
+
+    // call_volume is the spine — if it errors, the voice views aren't there → fixtures.
+    if (volume.error) {
+      // eslint-disable-next-line no-console
+      console.warn('[shredintel] voice call_volume unavailable, falling back to fixtures', volume.error)
+      return null
+    }
+
+    return {
+      callVolume: volume.data ?? [],
+      callGeo: geo.error ? [] : (geo.data ?? []),
+      callHours: hours.error ? [] : (hours.data ?? []),
+      intelHandover: hand.error ? [] : (hand.data ?? []),
+      intelSection: section.error ? [] : (section.data ?? []),
+      intelSentiment: sentiment.error ? [] : (sentiment.data ?? []),
+    }
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.warn('[shredintel] voice live-fetch threw', err)
+    return null
+  }
+}
+
 /**
  * Compute (from, to) ISO dates for a period selector. The upper bound is
  * always "yesterday UTC" (the ETL runs nightly, today's rollup isn't in yet).

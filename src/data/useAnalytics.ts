@@ -840,14 +840,15 @@ export function useMCChatAnalytics(period: MCChatPeriodKey): AnalyticsState<MCCh
 export interface BotOption {
   botId: number
   label: string       // bot display name (falls back to "Bot <id>")
-  route: string       // canonical route to view this bot
+  route: string       // canonical route to view this bot (channel-aware)
+  channel?: 'chat' | 'voice' // from report.bot_channel — drives picker split + routing
   publicIdentifier?: string  // Botscrew UUID → derives the widget test URL
 }
 
 const KNOWN_BOTS: BotOption[] = [
-  { botId: 43,  label: 'Jackson Hole (chat)',        route: '/bot/43', publicIdentifier: '776bd241-fbc3-4e17-92c7-8af31e84e6dd' },
-  { botId: 2,   label: 'Mountain Collective (chat)',  route: '/bot/2' },
-  { botId: 248, label: 'Mountain Collective (voice)', route: '/voice' },
+  { botId: 43,  label: 'Jackson Hole (chat)',        route: '/bot/43',   channel: 'chat',  publicIdentifier: '776bd241-fbc3-4e17-92c7-8af31e84e6dd' },
+  { botId: 2,   label: 'Mountain Collective (chat)',  route: '/bot/2',    channel: 'chat' },
+  { botId: 248, label: 'Mountain Collective (voice)', route: '/voice/248', channel: 'voice' },
 ]
 
 export function useAvailableBots(): { bots: BotOption[]; isLive: boolean; isLoading: boolean } {
@@ -882,14 +883,30 @@ export function useAvailableBots(): { bots: BotOption[]; isLive: boolean; isLoad
           setState({ bots: KNOWN_BOTS, isLive: false, isLoading: false })
           return
         }
+        // Channel per bot (report.bot_channel) → drives the picker split + routing.
+        // Non-fatal: default 'chat' if the view isn't reachable.
+        const chMap = new Map<number, 'chat' | 'voice'>()
+        try {
+          const ch = (await supabase
+            .schema('report')
+            .from('bot_channel')
+            .select('bot_id, channel')
+            .limit(2000)) as { data: { bot_id: number; channel: string }[] | null; error: unknown }
+          if (!ch.error && ch.data) for (const r of ch.data) chMap.set(r.bot_id, r.channel === 'voice' ? 'voice' : 'chat')
+        } catch { /* non-fatal */ }
+        if (cancelled) return
         const bots: BotOption[] = data
           .filter((r) => r?.id != null)
-          .map((r) => ({
-            botId: r.id,
-            label: r.name?.trim() || `Bot ${r.id}`,
-            route: `/bot/${r.id}`,
-            publicIdentifier: r.public_identifier || undefined,
-          }))
+          .map((r) => {
+            const channel = chMap.get(r.id) ?? 'chat'
+            return {
+              botId: r.id,
+              label: r.name?.trim() || `Bot ${r.id}`,
+              channel,
+              route: channel === 'voice' ? `/voice/${r.id}` : `/bot/${r.id}`,
+              publicIdentifier: r.public_identifier || undefined,
+            }
+          })
         setState({ bots, isLive: true, isLoading: false })
       } catch {
         if (cancelled) return
@@ -898,6 +915,47 @@ export function useAvailableBots(): { bots: BotOption[]; isLive: boolean; isLoad
     })()
     return () => { cancelled = true }
   }, [])
+
+  return state
+}
+
+/**
+ * The channel ('chat' | 'voice') for a single bot, from report.bot_channel.
+ * Drives the /bot/:botId dispatcher so voice bots render the voice card — and the
+ * Botscrew embed (which always opens /bot/{id}) auto-covers voice bots with no
+ * loader change. Defaults to 'chat' when Supabase is unconfigured or no channel row.
+ */
+export function useBotChannel(botId: number): { channel: 'chat' | 'voice'; isLoading: boolean } {
+  const [state, setState] = useState<{ channel: 'chat' | 'voice'; isLoading: boolean }>({
+    channel: 'chat',
+    isLoading: supabaseConfigured,
+  })
+
+  useEffect(() => {
+    if (!supabaseConfigured || !Number.isFinite(botId)) {
+      setState({ channel: 'chat', isLoading: false })
+      return
+    }
+    let cancelled = false
+    ;(async () => {
+      try {
+        const supabase = getSupabase()
+        if (!supabase) { setState({ channel: 'chat', isLoading: false }); return }
+        const { data } = (await supabase
+          .schema('report')
+          .from('bot_channel')
+          .select('channel')
+          .eq('bot_id', botId)
+          .maybeSingle()) as { data: { channel: string } | null; error: unknown }
+        if (cancelled) return
+        setState({ channel: data?.channel === 'voice' ? 'voice' : 'chat', isLoading: false })
+      } catch {
+        if (cancelled) return
+        setState({ channel: 'chat', isLoading: false })
+      }
+    })()
+    return () => { cancelled = true }
+  }, [botId])
 
   return state
 }

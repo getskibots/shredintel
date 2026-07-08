@@ -1,11 +1,28 @@
-import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { HashRouter, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom'
 import { AhhhFaqItTool } from './components/AhhhFaqItTool'
 import { BotAnalyticsPage } from './components/BotAnalyticsPage'
 import { BotIndexPage } from './components/BotIndexPage'
 import { DashboardShell } from './components/DashboardShell'
 import { PasswordGate } from './components/PasswordGate'
 import { VoiceReportGrid } from './components/VoiceReportGrid'
+import { VoiceAnalyticsPage } from './components/VoiceAnalyticsPage/VoiceAnalyticsPage'
 import { isEmbedMode, useEmbedHeightSync } from './lib/embed'
+import { useBotChannel } from './data/useAnalytics'
+
+/**
+ * /bot/:botId dispatcher — renders the channel-appropriate card. Voice bots get
+ * VoiceAnalyticsPage, chat bots get BotAnalyticsPage. This is what makes the
+ * Botscrew embed (which always opens /bot/{id}) auto-cover voice bots with no
+ * loader change.
+ */
+function BotRoute() {
+  const { botId } = useParams<{ botId: string }>()
+  const { channel, isLoading } = useBotChannel(Number(botId))
+  if (isLoading) {
+    return <div className="py-24 text-center text-sm text-slate-400">Loading…</div>
+  }
+  return channel === 'voice' ? <VoiceAnalyticsPage /> : <BotAnalyticsPage />
+}
 
 function ChannelShell() {
   const location = useLocation()
@@ -38,7 +55,8 @@ function ChannelShell() {
         <Route path="/chat/jh" element={<Navigate to="/bot/43" replace />} />
         <Route path="/chat/mc" element={<Navigate to="/bot/2" replace />} />
         <Route path="/voice" element={<VoiceReportGrid />} />
-        <Route path="/bot/:botId" element={<BotAnalyticsPage />} />
+        <Route path="/voice/:botId" element={<VoiceAnalyticsPage />} />
+        <Route path="/bot/:botId" element={<BotRoute />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </DashboardShell>

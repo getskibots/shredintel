@@ -375,12 +375,16 @@ export interface CallVolumeRow {
   unengaged: number
 }
 
-/** report.call_geo — per bot/day/city, phone-based (connected calls only). */
+/** report.call_geo — per bot/day/city, phone-based (connected calls only).
+ *  from_lat/from_lon geocoded by reusing report.ip_geo's MaxMind coords (nullable
+ *  when the city didn't match). */
 export interface CallGeoRow {
   bot_id: number
   day: string
   from_country: string | null
   from_city: string | null
+  from_lat: number | null
+  from_lon: number | null
   calls: number
   engaged_calls: number
 }

@@ -1,11 +1,12 @@
 /**
- * VoiceAnalyticsPage — the voice-native dashboard card (route /voice/:botId).
+ * VoiceAnalyticsPage — the voice-native dashboard card (route /voice/:botId,
+ * and the /bot/:botId dispatcher renders it for voice bots).
  *
- * Unlike the chat template, this renders the metrics only a phone channel has:
- * call volume + ABANDON rate (didn't-connect), typical call length, peak-hours
- * staffing, phone-based caller geography — plus the reused enrichment signals
- * (handover / sentiment) since a voice call IS a conversation. Data comes from
- * report.call_* via useVoiceCallAnalytics; honest empties when a bot has no voice.
+ * Voice-native panels (call volume + ABANDON rate, typical duration, peak-hours
+ * staffing, phone-based caller geo) alongside the reused enrichment (topics,
+ * handover, sentiment). EVERYTHING drills: click any mark → the exact calls
+ * (ConversationExplorer source="voice", backed by report.call_base) → transcript.
+ * Data from report.call_* via useVoiceCallAnalytics; honest empties when no voice.
  */
 import { useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
@@ -13,9 +14,12 @@ import {
   Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts'
 import { PeriodPicker } from '../PeriodPicker/PeriodPicker'
-import { type PeriodSelection } from '../../lib/period'
+import { resolveSelection, type PeriodSelection } from '../../lib/period'
 import { useVoiceCallAnalytics, type VoiceBreakdown } from '../../data/useVoiceCallAnalytics'
 import { useAvailableBots } from '../../data/useAnalytics'
+import { ConversationExplorer } from '../ConversationExplorer/ConversationExplorer'
+import { NaDotMap } from '../NaDotMap/NaDotMap'
+import { type DrillPayload } from '../../lib/drill'
 import { Panel, Metric, EmptyState } from '../shared'
 import { formatNumber, formatPercent } from '../../lib/formatters'
 import { brand, chart, sentimentColors } from '../../lib/chartTheme'
@@ -34,33 +38,37 @@ function fmtHour(h: number): string {
   return `${hr}${ap}`
 }
 
-/** A simple ranked-bar list (leaderboard) — used for caller cities + breakdowns. */
+/** Ranked-bar list (leaderboard). `onSelect(label)` makes each row drillable. */
 function RankedBars({
-  items, colorFor,
+  items, colorFor, onSelect,
 }: {
   items: { label: string; value: number }[]
   colorFor?: (label: string, i: number) => string
+  onSelect?: (label: string) => void
 }) {
   const max = Math.max(1, ...items.map((i) => i.value))
   if (items.length === 0) return <EmptyState title="No data" message="Nothing in this range yet." />
   return (
     <div className="space-y-2">
-      {items.map((it, i) => (
-        <div key={it.label} className="flex items-center gap-3">
-          <div className="w-28 shrink-0 truncate text-xs font-medium text-slate-600" title={it.label}>
-            {it.label}
-          </div>
-          <div className="relative h-5 flex-1 overflow-hidden rounded bg-slate-100">
-            <div
-              className="h-full rounded"
-              style={{ width: `${(it.value / max) * 100}%`, background: colorFor ? colorFor(it.label, i) : brand.blue }}
-            />
-          </div>
-          <div className="w-14 shrink-0 text-right text-xs font-semibold tabular-nums text-slate-700">
-            {formatNumber(it.value)}
-          </div>
-        </div>
-      ))}
+      {items.map((it, i) => {
+        const inner = (
+          <>
+            <div className="w-28 shrink-0 truncate text-xs font-medium text-slate-600" title={it.label}>{it.label}</div>
+            <div className="relative h-5 flex-1 overflow-hidden rounded bg-slate-100">
+              <div className="h-full rounded" style={{ width: `${(it.value / max) * 100}%`, background: colorFor ? colorFor(it.label, i) : brand.blue }} />
+            </div>
+            <div className="w-14 shrink-0 text-right text-xs font-semibold tabular-nums text-slate-700">{formatNumber(it.value)}</div>
+          </>
+        )
+        return onSelect ? (
+          <button key={it.label} type="button" onClick={() => onSelect(it.label)}
+            className="flex w-full items-center gap-3 rounded-md px-1 py-0.5 text-left transition hover:bg-slate-50">
+            {inner}
+          </button>
+        ) : (
+          <div key={it.label} className="flex items-center gap-3">{inner}</div>
+        )
+      })}
     </div>
   )
 }
@@ -84,6 +92,10 @@ export function VoiceAnalyticsPage() {
   const [selection, setSelection] = useState<PeriodSelection>(DEFAULT_PERIOD)
   const { data, isLoading, isLive } = useVoiceCallAnalytics(botId, selection)
   const { bots } = useAvailableBots()
+  const [drill, setDrill] = useState<DrillPayload | null>(null)
+
+  const range = useMemo(() => resolveSelection(selection), [selection])
+  const openDrill = (dims: Partial<DrillPayload>) => setDrill({ botId, from: range.from, to: range.to, ...dims })
 
   const botLabel = useMemo(
     () => bots.find((b) => b.botId === botId)?.label ?? `Bot ${botId}`,
@@ -100,6 +112,14 @@ export function VoiceAnalyticsPage() {
     () => (m ? m.geo.slice(0, 8).map((g) => ({ label: g.city || g.country || 'Unknown', value: g.calls })) : []),
     [m],
   )
+  const mapPoints = useMemo(
+    () => (m
+      ? m.geo
+          .filter((g) => g.lat != null && g.lon != null && g.city)
+          .map((g) => ({ city: g.city as string, lat: g.lat as number, lon: g.lon as number, conversations: g.calls }))
+      : []),
+    [m],
+  )
 
   return (
     <div className="mx-auto max-w-[1400px] px-4 pb-16 pt-4 sm:px-6">
@@ -108,9 +128,7 @@ export function VoiceAnalyticsPage() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <h1 className="text-lg font-semibold tracking-tight text-slate-900">Voice Analytics</h1>
-            <span className="rounded-md bg-white px-2 py-0.5 text-xs font-medium text-slate-600 shadow-sm">
-              {botLabel}
-            </span>
+            <span className="rounded-md bg-white px-2 py-0.5 text-xs font-medium text-slate-600 shadow-sm">{botLabel}</span>
             <span
               className={[
                 'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold',
@@ -129,10 +147,7 @@ export function VoiceAnalyticsPage() {
         <div className="py-24 text-center text-sm text-slate-400">Loading voice analytics…</div>
       ) : !m || m.voiceConvs === 0 ? (
         <Panel eyebrow="Voice" title="Call activity">
-          <EmptyState
-            title="No voice calls in this range"
-            message="This bot has no VOICE_TWILIO conversations for the selected period."
-          />
+          <EmptyState title="No voice calls in this range" message="This bot has no VOICE_TWILIO conversations for the selected period." />
         </Panel>
       ) : (
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-12 lg:items-start">
@@ -141,43 +156,38 @@ export function VoiceAnalyticsPage() {
             className="lg:col-span-12"
             eyebrow="Overview"
             title="Call volume & connection"
-            description="How many calls came in, how many connected, and how many dropped before connecting."
+            description="How many calls came in, how many connected, and how many dropped before connecting. Click a metric to see those calls."
             action={
-              <div className="rounded-2xl border border-amber-200 bg-amber-50/70 px-4 py-2 text-right">
+              <button
+                type="button"
+                onClick={() => openDrill({ handover: 'Clear Handover' })}
+                className="rounded-2xl border border-amber-200 bg-amber-50/70 px-4 py-2 text-right transition hover:bg-amber-100/70"
+                title="See calls flagged for a human handover"
+              >
                 <div className="text-[10px] font-semibold uppercase tracking-wider text-amber-700">Abandon rate</div>
-                <div className="mt-0.5 font-display text-2xl font-semibold tabular-nums text-amber-700">
-                  {formatPercent(m.abandonPct)}
-                </div>
-              </div>
+                <div className="mt-0.5 font-display text-2xl font-semibold tabular-nums text-amber-700">{formatPercent(m.abandonPct)}</div>
+              </button>
             }
           >
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
               <Metric label="Voice calls" value={formatNumber(m.voiceConvs)} subValue="total sessions" tone="accent" />
-              <Metric
-                label="Connected"
-                value={formatNumber(m.connectedCalls)}
-                subValue={`${formatPercent((m.connectedCalls / m.voiceConvs) * 100)} of calls`}
-              />
-              <Metric
-                label="Didn't connect"
-                value={formatNumber(m.unconnected)}
-                subValue={`${formatPercent(m.abandonPct)} abandon`}
-                tone="warn"
-              />
+              <Metric label="Connected" value={formatNumber(m.connectedCalls)} subValue={`${formatPercent((m.connectedCalls / m.voiceConvs) * 100)} of calls`} />
+              <Metric label="Didn't connect" value={formatNumber(m.unconnected)} subValue={`${formatPercent(m.abandonPct)} abandon`} tone="warn" />
               <Metric label="Engaged" value={formatNumber(m.engagedCalls)} subValue="got past hello" tone="good" />
-              <Metric
-                label="Handover-flagged"
-                value={formatNumber(m.handoverCalls)}
-                subValue={`${formatPercent((m.handoverCalls / m.voiceConvs) * 100)} of calls`}
-                tone="risk"
-              />
+              <Metric label="Handover-flagged" value={formatNumber(m.handoverCalls)} subValue={`${formatPercent((m.handoverCalls / m.voiceConvs) * 100)} of calls`} tone="risk" />
               <Metric label="Typical length" value={fmtDuration(m.medianDurSec)} subValue="median (connected)" />
             </div>
 
             {m.volumeTrend.length > 1 && (
               <div className="mt-5">
                 <ResponsiveContainer width="100%" height={220}>
-                  <AreaChart data={m.volumeTrend}>
+                  <AreaChart
+                    data={m.volumeTrend}
+                    onClick={(e: { activeLabel?: string | number } | null) => {
+                      const d = e?.activeLabel
+                      if (d != null) openDrill({ day: String(d) })
+                    }}
+                  >
                     <defs>
                       <linearGradient id="voiceVol" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor={brand.blue} stopOpacity={0.25} />
@@ -198,17 +208,15 @@ export function VoiceAnalyticsPage() {
 
           {/* Peak hours (staffing) */}
           <Panel
-            className="lg:col-span-7"
+            className="lg:col-span-6"
             eyebrow="Staffing"
             title="When the phone rings"
-            description="Calls by hour of the resort's local day — where to point coverage."
+            description="Calls by hour of the resort's local day — click an hour to see those calls."
             action={
               peakHour ? (
                 <div className="rounded-2xl border border-sky-200 bg-sky-50/60 px-4 py-2 text-right">
                   <div className="text-[10px] font-semibold uppercase tracking-wider text-sky-700">Peak hour</div>
-                  <div className="mt-0.5 font-display text-2xl font-semibold tabular-nums text-sky-700">
-                    {fmtHour(peakHour.hour)}
-                  </div>
+                  <div className="mt-0.5 font-display text-2xl font-semibold tabular-nums text-sky-700">{fmtHour(peakHour.hour)}</div>
                 </div>
               ) : undefined
             }
@@ -219,7 +227,13 @@ export function VoiceAnalyticsPage() {
                 <XAxis dataKey="hour" tickFormatter={fmtHour} {...chart.xAxis} interval={1} />
                 <YAxis {...chart.yAxis} />
                 <Tooltip {...chart.tooltip} labelFormatter={(h) => `${fmtHour(Number(h))} local`} />
-                <Bar dataKey="calls" radius={[4, 4, 0, 0]} isAnimationActive={false}>
+                <Bar
+                  dataKey="calls"
+                  radius={[4, 4, 0, 0]}
+                  isAnimationActive={false}
+                  cursor="pointer"
+                  onClick={(d) => { const h = (d as { payload?: { hour?: number } })?.payload?.hour; if (h != null) openDrill({ hour_local: String(h) }) }}
+                >
                   {m.hours.map((h) => (
                     <Cell key={h.hour} fill={peakHour && h.hour === peakHour.hour ? brand.gold : brand.blue} />
                   ))}
@@ -228,14 +242,29 @@ export function VoiceAnalyticsPage() {
             </ResponsiveContainer>
           </Panel>
 
-          {/* Caller geography (phone-based) */}
+          {/* Caller geography (phone-based) — map + ranked list, both drill by city */}
           <Panel
-            className="lg:col-span-5"
+            className="lg:col-span-6"
             eyebrow="Your callers"
             title="Where calls come from"
-            description="Phone-based caller cities — cleaner than IP (no VPNs)."
+            description="Phone-based caller cities — click a dot or a city for its calls."
           >
-            <RankedBars items={cityBars} />
+            {mapPoints.length > 0 && (
+              <div className="mb-4 rounded-xl border border-slate-100 bg-slate-50/40 p-1">
+                <NaDotMap points={mapPoints} height={240} onSelect={(city) => openDrill({ city })} />
+              </div>
+            )}
+            <RankedBars items={cityBars} onSelect={(city) => openDrill({ city })} />
+          </Panel>
+
+          {/* What callers ask (topics / knowledge sections) */}
+          <Panel
+            className="lg:col-span-12"
+            eyebrow="Message intelligence"
+            title="What callers ask about"
+            description="The knowledge topics driving calls — click one to hear those conversations."
+          >
+            <RankedBars items={toBars(m.sectionMix, 12)} onSelect={(section) => openDrill({ section })} />
           </Panel>
 
           {/* Handover need */}
@@ -243,11 +272,12 @@ export function VoiceAnalyticsPage() {
             className="lg:col-span-6"
             eyebrow="Service"
             title="Human handover"
-            description="Callers who needed (or asked for) a person."
+            description="Callers who needed (or asked for) a person — click to review those calls."
           >
             <RankedBars
               items={toBars(m.handoverMix)}
-              colorFor={(label) => (label.toLowerCase().includes('no ') || label.toLowerCase() === 'no handover' ? brand.blueSoft : brand.gold)}
+              colorFor={(label) => (label.toLowerCase().includes('no handover') ? brand.blueSoft : brand.gold)}
+              onSelect={(handover) => openDrill({ handover })}
             />
           </Panel>
 
@@ -256,11 +286,21 @@ export function VoiceAnalyticsPage() {
             className="lg:col-span-6"
             eyebrow="Service"
             title="Caller sentiment"
-            description="Tone of the conversation, from the enrichment layer."
+            description="Tone of the conversation — click to review those calls."
           >
-            <RankedBars items={toBars(m.sentimentMix)} colorFor={sentimentColorFor} />
+            <RankedBars items={toBars(m.sentimentMix)} colorFor={sentimentColorFor} onSelect={(sentiment) => openDrill({ sentiment })} />
           </Panel>
         </div>
+      )}
+
+      {drill && (
+        <ConversationExplorer
+          botId={botId}
+          source="voice"
+          payload={drill}
+          range={{ from: range.from, to: range.to }}
+          onClose={() => setDrill(null)}
+        />
       )}
     </div>
   )

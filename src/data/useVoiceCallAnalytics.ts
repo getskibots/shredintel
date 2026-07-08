@@ -20,6 +20,8 @@ import type { AnalyticsState } from './useAnalytics'
 export interface VoiceGeoPoint {
   country: string | null
   city: string | null
+  lat: number | null
+  lon: number | null
   calls: number
 }
 export interface VoiceHourPoint {
@@ -109,7 +111,7 @@ export function deriveVoiceMetrics(b: VoiceBundle): VoiceMetrics {
   const geoMap = new Map<string, VoiceGeoPoint>()
   for (const r of b.callGeo) {
     const key = `${r.from_country ?? ''}|${r.from_city ?? ''}`
-    const cur = geoMap.get(key) ?? { country: r.from_country, city: r.from_city, calls: 0 }
+    const cur = geoMap.get(key) ?? { country: r.from_country, city: r.from_city, lat: r.from_lat, lon: r.from_lon, calls: 0 }
     cur.calls += r.calls
     geoMap.set(key, cur)
   }

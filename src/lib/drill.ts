@@ -8,8 +8,10 @@
  * filter value. Click any mark → payloadFromDatum(datum, ctx) → explorer.
  */
 
-/** Contract dimensions a datum can carry, in drill precedence order. */
-export const DRILL_DIMENSIONS = ['section', 'pinchpoint', 'sentiment', 'funnel_stage', 'topic', 'city', 'day'] as const
+/** Contract dimensions a datum can carry, in drill precedence order.
+ *  `handover` + `hour_local` are voice-relevant (backed by report.call_base);
+ *  `city` doubles as the caller city for voice. */
+export const DRILL_DIMENSIONS = ['section', 'pinchpoint', 'sentiment', 'funnel_stage', 'topic', 'handover', 'city', 'hour_local', 'day'] as const
 export type DrillDimension = (typeof DRILL_DIMENSIONS)[number]
 
 export interface DrillPayload {
@@ -21,7 +23,9 @@ export interface DrillPayload {
   sentiment?: string
   funnel_stage?: string
   topic?: string
+  handover?: string
   city?: string
+  hour_local?: string
   day?: string
 }
 
@@ -32,7 +36,9 @@ export const FIELD_LABELS: Record<string, string> = {
   sentiment: 'Sentiment',
   funnel_stage: 'Funnel stage',
   topic: 'Topic',
+  handover: 'Handover need',
   city: 'City',
+  hour_local: 'Call hour',
   day: 'Day',
   conversations: 'Conversations',
   negative: 'Frustrated',

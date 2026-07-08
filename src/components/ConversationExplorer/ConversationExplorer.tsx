@@ -102,6 +102,7 @@ export function ConversationExplorer({
   filter,
   payload,
   range,
+  source = 'chat',
   onClose,
 }: {
   botId: number
@@ -111,6 +112,10 @@ export function ConversationExplorer({
   payload?: DrillPayload
   /** Scope to the same window as the dashboard/AI. Omit for all-time. */
   range?: { from: string; to: string }
+  /** 'voice' lists from report.call_base (phone-geo + call dims: from_city→city,
+   *  dur_sec→duration_sec, hour_local, handover); 'chat' (default) uses
+   *  conversation_time. Same modal + the bot-scoped /api/transcript either way. */
+  source?: 'chat' | 'voice'
   onClose: () => void
 }) {
   const p: DrillPayload = payload ?? legacyToPayload(filter as LegacyFilter, botId, range)
@@ -139,27 +144,43 @@ export function ConversationExplorer({
     ;(async () => {
       const sb = getSupabase()
       if (!sb) { setRows([]); setCount(0); return }
-      // conversation_time is the local time-spine superset — every drill dimension
-      // PLUS started_local/duration, so each conversation shows when it happened.
+      const isVoice = source === 'voice'
+      // chat: conversation_time (the local time-spine superset). voice: call_base —
+      // one row per voice conversation, phone-geo + call dims aliased to the chat
+      // shape (from_city→city, dur_sec→duration_sec). Same modal + /api/transcript.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let q: any = sb
-        .schema('report')
-        .from('conversation_time')
-        .select('bot_id, conversation_id, topic, sentiment, day, started_local, duration_sec, page_path, city, region, country_iso, lat, lon', { count: 'exact' })
-        .eq('bot_id', p.botId)
-        .eq('substantive', true)
+      let q: any = isVoice
+        ? sb.schema('report').from('call_base')
+            .select('bot_id, conversation_id, topic, sentiment, day, duration_sec:dur_sec, city:from_city, country_iso:from_country', { count: 'exact' })
+            .eq('bot_id', p.botId)
+        : sb.schema('report').from('conversation_time')
+            .select('bot_id, conversation_id, topic, sentiment, day, started_local, duration_sec, page_path, city, region, country_iso, lat, lon', { count: 'exact' })
+            .eq('bot_id', p.botId)
+            .eq('substantive', true)
+      // shared drill dims
       if (p.section) q = q.ilike('section', p.section)
-      if (p.pinchpoint) q = q.ilike('pinchpoint', p.pinchpoint)
-      if (p.funnel_stage) q = q.eq('funnel_stage', p.funnel_stage)
       if (p.topic) q = q.ilike('topic', `%${p.topic}%`)
-      if (p.city) q = q.eq('city', p.city)
       if (p.day) q = q.eq('day', p.day)
+      if (isVoice) {
+        // voice: caller city + call-hour + handover live on call_base
+        if (p.city) q = q.eq('from_city', p.city)
+        if (p.hour_local != null && p.hour_local !== '') q = q.eq('hour_local', Number(p.hour_local))
+        if (p.handover) q = q.eq('handover', p.handover)
+      } else {
+        if (p.pinchpoint) q = q.ilike('pinchpoint', p.pinchpoint)
+        if (p.funnel_stage) q = q.eq('funnel_stage', p.funnel_stage)
+        if (p.city) q = q.eq('city', p.city)
+      }
       if (from && to) q = q.gte('day', from).lte('day', to)
       // Sentiment: a locked sentiment (drill target) wins; otherwise the toggle.
       if (lockedSentiment) q = q.eq('sentiment', lockedSentiment)
       else if (sentFilter !== 'all') q = q.eq('sentiment', sentFilter)
 
-      const { data, count: total } = await q.order('started_at', { ascending: false }).limit(LIST_CAP)
+      // call_base has no started_at; order by day then id. chat orders by exact ts.
+      const ordered = isVoice
+        ? q.order('day', { ascending: false }).order('conversation_id', { ascending: false })
+        : q.order('started_at', { ascending: false })
+      const { data, count: total } = await ordered.limit(LIST_CAP)
       if (!cancelled) {
         setRows((data as ConvRow[]) ?? [])
         setCount(total ?? (data?.length ?? 0))
@@ -167,7 +188,7 @@ export function ConversationExplorer({
     })()
     return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [p.botId, p.section, p.pinchpoint, p.sentiment, p.funnel_stage, p.topic, p.city, p.day, from, to, sentFilter])
+  }, [p.botId, p.section, p.pinchpoint, p.sentiment, p.funnel_stage, p.topic, p.city, p.day, p.handover, p.hour_local, source, from, to, sentFilter])
 
   async function openConv(cid: number) {
     if (openCid === cid) { setOpenCid(null); setTranscript(null); return }

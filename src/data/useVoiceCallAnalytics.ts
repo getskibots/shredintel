@@ -73,6 +73,10 @@ export interface VoiceMetrics {
   abandonPct: number // unconnected / voiceConvs
   engagedCalls: number
   handoverCalls: number
+  /** Where volume/connection comes from: 'twilio' (call_inbound truth — real call
+   *  count, supersedes the double-counted mirror) or 'mirror' (conversation count,
+   *  inflated ~1.6× by Botscrew's per-leg logging). Drives which KPIs are shown. */
+  volumeSource: 'twilio' | 'mirror'
   /** Connected-weighted average of daily medians — a "typical call length" proxy
    *  (a true period median needs per-call rows). null when no connected calls. */
   medianDurSec: number | null
@@ -102,7 +106,7 @@ export interface VoiceMetrics {
 
 export const EMPTY_VOICE_METRICS: VoiceMetrics = {
   voiceConvs: 0, connectedCalls: 0, unconnected: 0, abandonPct: 0, engagedCalls: 0,
-  handoverCalls: 0, medianDurSec: null, avgDurSec: null, talkSec: 0,
+  handoverCalls: 0, volumeSource: 'mirror', medianDurSec: null, avgDurSec: null, talkSec: 0,
   durationSource: 'mirror', aiTalkSec: null, humanTalkSec: null,
   volumeTrend: [], hours: [], geo: [], callers: null, topCallers: [], transfers: null,
   handoverMix: [], sentimentMix: [], sectionMix: [],
@@ -121,10 +125,17 @@ function aggByKey(rows: IntelBreakdownRow[]): VoiceBreakdown[] {
 /** Fold the daily call_* rows into the period-level shape the page renders. */
 export function deriveVoiceMetrics(b: VoiceBundle): VoiceMetrics {
   const vol = b.callVolume
-  const voiceConvs = sum(vol, (r) => r.voice_convs)
-  const connectedCalls = sum(vol, (r) => r.connected_calls)
-  const unconnected = sum(vol, (r) => r.unconnected)
-  const engagedCalls = sum(vol, (r) => r.engaged_calls)
+  // Volume + connection: PREFER Twilio truth (call_inbound_stats — the real call
+  // count). The mirror's voice_convs double-counts (~1.6 conv records per call →
+  // a phantom "41% didn't connect"). Fall back to the mirror only for bots not yet
+  // Twilio-ingested (no call_inbound).
+  const inb = b.callInbound
+  const hasInbound = inb.length > 0 && sum(inb, (r) => r.inbound) > 0
+  const volumeSource: 'twilio' | 'mirror' = hasInbound ? 'twilio' : 'mirror'
+  const voiceConvs = hasInbound ? sum(inb, (r) => r.inbound) : sum(vol, (r) => r.voice_convs)
+  const connectedCalls = hasInbound ? sum(inb, (r) => r.completed) : sum(vol, (r) => r.connected_calls)
+  const unconnected = hasInbound ? sum(inb, (r) => r.not_connected) : sum(vol, (r) => r.unconnected)
+  const engagedCalls = sum(vol, (r) => r.engaged_calls) // conversation-grain; hidden in the Twilio path
   const handoverCalls = sum(vol, (r) => r.handover_calls)
   const abandonPct = voiceConvs > 0 ? Math.round((unconnected / voiceConvs) * 100) : 0
 
@@ -159,9 +170,14 @@ export function deriveVoiceMetrics(b: VoiceBundle): VoiceMetrics {
   }
   const durationSource: 'twilio' | 'mirror' = hasFacts ? 'twilio' : 'mirror'
 
-  const volumeTrend: VoiceTrendPoint[] = [...vol]
-    .sort((a, b) => a.day.localeCompare(b.day))
-    .map((r) => ({ date: r.day, voiceConvs: r.voice_convs, connectedCalls: r.connected_calls, unconnected: r.unconnected }))
+  // Trend follows the same source as the headline so the chart and totals agree.
+  const volumeTrend: VoiceTrendPoint[] = hasInbound
+    ? [...inb]
+        .sort((a, b) => a.day.localeCompare(b.day))
+        .map((r) => ({ date: r.day, voiceConvs: r.inbound, connectedCalls: r.completed, unconnected: r.not_connected }))
+    : [...vol]
+        .sort((a, b) => a.day.localeCompare(b.day))
+        .map((r) => ({ date: r.day, voiceConvs: r.voice_convs, connectedCalls: r.connected_calls, unconnected: r.unconnected }))
 
   const hourMap = new Map<number, { calls: number; connectedCalls: number }>()
   for (const r of b.callHours) {
@@ -200,7 +216,7 @@ export function deriveVoiceMetrics(b: VoiceBundle): VoiceMetrics {
 
   const cs = b.callerStats
   return {
-    voiceConvs, connectedCalls, unconnected, abandonPct, engagedCalls, handoverCalls, medianDurSec, avgDurSec, talkSec,
+    voiceConvs, connectedCalls, unconnected, abandonPct, engagedCalls, handoverCalls, volumeSource, medianDurSec, avgDurSec, talkSec,
     durationSource, aiTalkSec, humanTalkSec,
     volumeTrend, hours, geo, transfers,
     callers: cs

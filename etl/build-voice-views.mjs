@@ -43,13 +43,19 @@ await c.query(`create materialized view report.call_base as
     join raw.admin_conversation cv on cv.user_id = u.id
     where u.platform = 'VOICE_TWILIO' and cv.started_at >= '2024-10-01'
   ),
-  city_coord as (
-    -- reuse MaxMind coords (report.ip_geo) to geocode the phone city per call, so the
-    -- per-call drill-down can pin the caller on a map (same source as call_geo).
-    select lower(city) city_l, country_iso,
-      avg(lat)::double precision lat, avg(lon)::double precision lon
+  city_region as (
+    select lower(city) city_l, country_iso, region,
+      count(*) n, avg(lat)::double precision lat, avg(lon)::double precision lon
     from report.ip_geo where city is not null and lat is not null
-    group by lower(city), country_iso
+    group by lower(city), country_iso, region
+  ),
+  city_coord as (
+    -- Geocode the phone city per call from MaxMind coords (report.ip_geo). Pick the
+    -- DOMINANT region (mode by IP count), NOT an average across every same-named city —
+    -- averaging lands ambiguous names ("Washington" = DC + PA + NC…) in a meaningless
+    -- midpoint. This gives the representative coord + the region to label (e.g. "DC").
+    select distinct on (city_l, country_iso) city_l, country_iso, region, lat, lon
+    from city_region order by city_l, country_iso, n desc
   )
   select
     vc.bot_id, vc.conversation_id, vc.user_id,
@@ -63,6 +69,7 @@ await c.query(`create materialized view report.call_base as
     (vc.outcome is distinct from 'UNENGAGED') as engaged,
     nullif(ac.from_country,'') as from_country,
     initcap(lower(nullif(ac.from_city,''))) as from_city,
+    cc.region as from_region,
     cc.lat as from_lat, cc.lon as from_lon,
     ci.substantive, ci.section, ci.pinchpoint, ci.sentiment, ci.urgency, ci.handover, ci.topic
   from voice_conv vc
@@ -110,20 +117,12 @@ await c.query('drop materialized view if exists report.call_geo cascade')
 // aggregated city + a representative lat/lon into call_geo (anon-granted, no raw IP).
 // Match on (city, country); ~93% of bot-248's calls resolve, incl. Calgary/Edmonton.
 await c.query(`create materialized view report.call_geo as
-  with city_coord as (
-    select lower(city) city_l, country_iso,
-      avg(lat)::double precision lat, avg(lon)::double precision lon
-    from report.ip_geo where city is not null and lat is not null
-    group by lower(city), country_iso
-  )
   select cb.bot_id, cb.day, cb.from_country, cb.from_city,
-    cc.lat as from_lat, cc.lon as from_lon,
+    cb.from_lat, cb.from_lon,
     count(*)::int calls, count(*) filter (where cb.engaged)::int engaged_calls
   from report.call_base cb
-  left join city_coord cc
-    on cc.city_l = lower(cb.from_city) and cc.country_iso = cb.from_country
   where cb.from_country is not null
-  group by cb.bot_id, cb.day, cb.from_country, cb.from_city, cc.lat, cc.lon`)
+  group by cb.bot_id, cb.day, cb.from_country, cb.from_city, cb.from_lat, cb.from_lon`)
 await c.query('create index call_geo_bot_day on report.call_geo (bot_id, day)')
 await c.query('grant select on report.call_geo to anon, authenticated')
 

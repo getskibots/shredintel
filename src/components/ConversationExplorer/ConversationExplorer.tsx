@@ -152,7 +152,7 @@ export function ConversationExplorer({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let q: any = isVoice
         ? sb.schema('report').from('call_base')
-            .select('bot_id, conversation_id, topic, sentiment, day, started_local, duration_sec:dur_sec, city:from_city, country_iso:from_country, lat:from_lat, lon:from_lon, recording_sid', { count: 'exact' })
+            .select('bot_id, conversation_id, topic, sentiment, day, started_local, duration_sec:dur_sec, city:from_city, region:from_region, country_iso:from_country, lat:from_lat, lon:from_lon, recording_sid', { count: 'exact' })
             .eq('bot_id', p.botId)
         : sb.schema('report').from('conversation_time')
             .select('bot_id, conversation_id, topic, sentiment, day, started_local, duration_sec, page_path, city, region, country_iso, lat, lon', { count: 'exact' })
@@ -342,13 +342,14 @@ export function ConversationExplorer({
                       ) : null}
                       {r.lat != null && r.lon != null ? (
                         <div className="mb-2.5 overflow-hidden rounded-lg border border-slate-100 bg-white">
-                          {source === 'voice' ? (
-                            // North-America map (voice callers skew Canadian — Calgary/Edmonton lead)
+                          {source === 'voice' && r.country_iso && r.country_iso !== 'US' ? (
+                            // North-America map for non-US callers (Calgary/Edmonton lead the voice traffic)
                             <NaDotMap
                               points={[{ city: r.city ?? 'Location', lat: r.lat, lon: r.lon, conversations: 1 }]}
                               height={170}
                             />
                           ) : (
+                            // US map reads clearly for US callers (e.g. DC on the east coast)
                             <UsDotMap
                               points={[{ city: r.city ?? 'Location', lat: r.lat, lon: r.lon, conversations: 1 }]}
                               single

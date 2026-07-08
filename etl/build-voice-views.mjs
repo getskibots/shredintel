@@ -92,11 +92,25 @@ await c.query('grant select on report.call_volume to anon, authenticated')
 //    geo). `day` lets the dashboard period-scope the caller map like chat's geo_city. ──
 console.log('  · call_geo …')
 await c.query('drop materialized view if exists report.call_geo cascade')
+// Geocode the phone cities by reusing the MaxMind coords already in report.ip_geo
+// (internal-only, has raw IP). We read it here (service creds) and emit only the
+// aggregated city + a representative lat/lon into call_geo (anon-granted, no raw IP).
+// Match on (city, country); ~93% of bot-248's calls resolve, incl. Calgary/Edmonton.
 await c.query(`create materialized view report.call_geo as
-  select bot_id, day, from_country, from_city,
-    count(*)::int calls, count(*) filter (where engaged)::int engaged_calls
-  from report.call_base where from_country is not null
-  group by bot_id, day, from_country, from_city`)
+  with city_coord as (
+    select lower(city) city_l, country_iso,
+      avg(lat)::double precision lat, avg(lon)::double precision lon
+    from report.ip_geo where city is not null and lat is not null
+    group by lower(city), country_iso
+  )
+  select cb.bot_id, cb.day, cb.from_country, cb.from_city,
+    cc.lat as from_lat, cc.lon as from_lon,
+    count(*)::int calls, count(*) filter (where cb.engaged)::int engaged_calls
+  from report.call_base cb
+  left join city_coord cc
+    on cc.city_l = lower(cb.from_city) and cc.country_iso = cb.from_country
+  where cb.from_country is not null
+  group by cb.bot_id, cb.day, cb.from_country, cb.from_city, cc.lat, cc.lon`)
 await c.query('create index call_geo_bot_day on report.call_geo (bot_id, day)')
 await c.query('grant select on report.call_geo to anon, authenticated')
 

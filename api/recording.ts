@@ -17,6 +17,7 @@
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { getPool } from './_lib/db.js'
+import { resolveTwilio } from './_lib/twilio.js'
 
 export const maxDuration = 30
 
@@ -26,11 +27,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const cid = Number(req.query.cid)
     if (!botId || !cid) return res.status(400).json({ error: 'botId and cid are required' })
 
-    const accountSid = process.env.TWILIO_ACCOUNT_SID
-    const authToken = process.env.TWILIO_AUTH_TOKEN
-    if (!accountSid || !authToken) {
-      return res.status(503).json({ error: 'recording playback not configured (missing Twilio credentials)' })
+    // Account-aware: resolve THIS bot's Twilio account + token (report.bot_twilio +
+    // env), so multi-account (the 461-495 fleet on a second account) just works.
+    const creds = await resolveTwilio(getPool(), botId)
+    if (!creds) {
+      return res.status(503).json({ error: 'recording playback not configured (no Twilio account mapped for this bot)' })
     }
+    const { accountSid, token: authToken } = creds
 
     // bot-scoping: the recording_sid must belong to a call for THIS bot.
     const client = await getPool().connect()

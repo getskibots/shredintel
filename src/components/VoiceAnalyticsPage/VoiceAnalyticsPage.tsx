@@ -27,7 +27,7 @@ import { RealtimeAgent } from '../RealtimeAgent'
 import { useShredPulse } from '../ShreddingOverlay'
 import { type DrillPayload } from '../../lib/drill'
 import { Panel, Metric, EmptyState } from '../shared'
-import { formatNumber, formatPercent, formatPercentSmart } from '../../lib/formatters'
+import { formatNumber, formatPercent } from '../../lib/formatters'
 import { brand, chart, sentimentColors } from '../../lib/chartTheme'
 
 function fmtDuration(sec: number | null): string {
@@ -323,10 +323,31 @@ export function VoiceAnalyticsPage() {
             )}
           </Panel>
 
-          {/* Peak hours (staffing) */}
+          {/* What callers ask about (topics) — mirrors chat's Knowledge band */}
+          <Panel
+            className="lg:col-span-12"
+            eyebrow="Knowledge"
+            title="What callers ask about"
+            description="The knowledge topics driving calls — click one to hear those conversations."
+          >
+            <RankedBars items={toBars(m.sectionMix, 12)} onSelect={(section) => openDrill({ section })} />
+          </Panel>
+
+          {/* Sentiment — handover ground truth lives in the Voice AI band above, so this
+              band is sentiment only (no duplicate handover panel). */}
+          <Panel
+            className="lg:col-span-12"
+            eyebrow="Service quality"
+            title="Caller sentiment"
+            description="Tone of the conversation — click to review those calls."
+          >
+            <RankedBars items={toBars(m.sentimentMix)} colorFor={sentimentColorFor} onSelect={(sentiment) => openDrill({ sentiment })} />
+          </Panel>
+
+          {/* Your callers — when they call, where from, and who calls back */}
           <Panel
             className="lg:col-span-6"
-            eyebrow="Staffing"
+            eyebrow="Your callers"
             title="When the phone rings"
             description="Calls by hour of the resort's local day — click an hour to see those calls."
             action={
@@ -427,58 +448,6 @@ export function VoiceAnalyticsPage() {
               )}
             </Panel>
           )}
-
-          {/* What callers ask (topics / knowledge sections) */}
-          <Panel
-            className="lg:col-span-12"
-            eyebrow="Message intelligence"
-            title="What callers ask about"
-            description="The knowledge topics driving calls — click one to hear those conversations."
-          >
-            <RankedBars items={toBars(m.sectionMix, 12)} onSelect={(section) => openDrill({ section })} />
-          </Panel>
-
-          {/* Handover need */}
-          <Panel
-            className="lg:col-span-6"
-            eyebrow="Service"
-            title="Human handover"
-            description="Whether the call actually transferred to a person (ground truth from Twilio) vs the AI's read of the conversation."
-            action={
-              m.transfers ? (
-                <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 px-4 py-2 text-right">
-                  <div className="text-[10px] font-semibold uppercase tracking-wider text-emerald-700">Actually transferred</div>
-                  <div className="mt-0.5 font-display text-2xl font-semibold tabular-nums text-emerald-700">{formatPercent(m.transfers.transferRate)}</div>
-                </div>
-              ) : undefined
-            }
-          >
-            {m.transfers ? (
-              <div className="mb-4 grid grid-cols-3 gap-3">
-                <Metric label="Transferred" value={formatNumber(m.transfers.transferred)} subValue={`of ${formatNumber(m.transfers.checked)} calls`} tone="accent" />
-                <Metric label="Human answered" value={formatPercentSmart(m.transfers.answeredRate)} subValue={`${formatNumber(m.transfers.answered)} connected`} tone="good" />
-                <Metric label="Time with human" value={fmtDuration(m.transfers.avgHumanSec)} subValue="avg" />
-              </div>
-            ) : null}
-            <div className="mb-1.5 text-[11px] font-medium uppercase tracking-wider text-slate-400">
-              {m.transfers ? "AI's read of the conversation" : 'Handover need (AI-inferred)'}
-            </div>
-            <RankedBars
-              items={toBars(m.handoverMix)}
-              colorFor={(label) => (label.toLowerCase().includes('no handover') ? brand.blueSoft : brand.gold)}
-              onSelect={(handover) => openDrill({ handover })}
-            />
-          </Panel>
-
-          {/* Sentiment */}
-          <Panel
-            className="lg:col-span-6"
-            eyebrow="Service"
-            title="Caller sentiment"
-            description="Tone of the conversation — click to review those calls."
-          >
-            <RankedBars items={toBars(m.sentimentMix)} colorFor={sentimentColorFor} onSelect={(sentiment) => openDrill({ sentiment })} />
-          </Panel>
         </div>
       )}
 

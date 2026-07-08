@@ -163,8 +163,10 @@ export function deriveVoiceMetrics(b: VoiceBundle): VoiceMetrics {
   const transfers = tChecked > 0
     ? {
         checked: tChecked, transferred: tXfer, answered: tAns,
-        transferRate: Math.round((100 * tXfer) / tChecked),
-        answeredRate: tXfer > 0 ? Math.round((100 * tAns) / tXfer) : 0,
+        // Keep as floats — the panel formats them (transferRate via 1-decimal,
+        // answeredRate via formatPercentSmart so 99.75% doesn't collapse to 100%).
+        transferRate: (100 * tXfer) / tChecked,
+        answeredRate: tXfer > 0 ? (100 * tAns) / tXfer : 0,
         avgHumanSec: tAns > 0 ? Math.round(tHuman / tAns) : null,
       }
     : null

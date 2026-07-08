@@ -25,7 +25,7 @@ import { RealtimeAgent } from '../RealtimeAgent'
 import { useShredPulse } from '../ShreddingOverlay'
 import { type DrillPayload } from '../../lib/drill'
 import { Panel, Metric, EmptyState } from '../shared'
-import { formatNumber, formatPercent } from '../../lib/formatters'
+import { formatNumber, formatPercent, formatPercentSmart } from '../../lib/formatters'
 import { brand, chart, sentimentColors } from '../../lib/chartTheme'
 
 function fmtDuration(sec: number | null): string {
@@ -371,7 +371,7 @@ export function VoiceAnalyticsPage() {
             {m.transfers ? (
               <div className="mb-4 grid grid-cols-3 gap-3">
                 <Metric label="Transferred" value={formatNumber(m.transfers.transferred)} subValue={`of ${formatNumber(m.transfers.checked)} calls`} tone="accent" />
-                <Metric label="Human answered" value={formatPercent(m.transfers.answeredRate)} subValue={`${formatNumber(m.transfers.answered)} connected`} tone="good" />
+                <Metric label="Human answered" value={formatPercentSmart(m.transfers.answeredRate)} subValue={`${formatNumber(m.transfers.answered)} connected`} tone="good" />
                 <Metric label="Time with human" value={fmtDuration(m.transfers.avgHumanSec)} subValue="avg" />
               </div>
             ) : null}

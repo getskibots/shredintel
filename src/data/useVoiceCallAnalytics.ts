@@ -39,6 +39,23 @@ export interface VoiceBreakdown {
   key: string
   conversations: number
 }
+export interface VoiceCallerAgg {
+  unique: number
+  repeat: number
+  repeatPct: number
+  oneTime: number
+  twoThree: number
+  fourPlus: number
+  avgCalls: number
+  maxCalls: number
+}
+export interface VoiceTopCaller {
+  userId: number
+  calls: number
+  firstDay: string
+  lastDay: string
+  activeDays: number
+}
 
 export interface VoiceMetrics {
   // headline KPIs (period totals)
@@ -51,10 +68,15 @@ export interface VoiceMetrics {
   /** Connected-weighted average of daily medians — a "typical call length" proxy
    *  (a true period median needs per-call rows). null when no connected calls. */
   medianDurSec: number | null
+  avgDurSec: number | null // mean connected call length
+  talkSec: number // total connected talk time (seconds)
   // series
   volumeTrend: VoiceTrendPoint[]
   hours: VoiceHourPoint[] // always length 24 (0..23), zero-filled
   geo: VoiceGeoPoint[] // sorted desc by calls
+  // repeat callers (all-time; keyed on the phone identity)
+  callers: VoiceCallerAgg | null
+  topCallers: VoiceTopCaller[]
   // reused enrichment
   handoverMix: VoiceBreakdown[]
   sentimentMix: VoiceBreakdown[]
@@ -63,7 +85,8 @@ export interface VoiceMetrics {
 
 export const EMPTY_VOICE_METRICS: VoiceMetrics = {
   voiceConvs: 0, connectedCalls: 0, unconnected: 0, abandonPct: 0, engagedCalls: 0,
-  handoverCalls: 0, medianDurSec: null, volumeTrend: [], hours: [], geo: [],
+  handoverCalls: 0, medianDurSec: null, avgDurSec: null, talkSec: 0,
+  volumeTrend: [], hours: [], geo: [], callers: null, topCallers: [],
   handoverMix: [], sentimentMix: [], sectionMix: [],
 }
 
@@ -92,6 +115,12 @@ export function deriveVoiceMetrics(b: VoiceBundle): VoiceMetrics {
   const medianDurSec = durWeight
     ? Math.round(sum(durRows, (r) => (r.median_dur_sec as number) * r.connected_calls) / durWeight)
     : null
+  const avgRows = vol.filter((r) => r.avg_dur_sec != null && r.connected_calls > 0)
+  const avgWeight = sum(avgRows, (r) => r.connected_calls)
+  const avgDurSec = avgWeight
+    ? Math.round(sum(avgRows, (r) => (r.avg_dur_sec as number) * r.connected_calls) / avgWeight)
+    : null
+  const talkSec = sum(vol, (r) => r.talk_sec ?? 0)
 
   const volumeTrend: VoiceTrendPoint[] = [...vol]
     .sort((a, b) => a.day.localeCompare(b.day))
@@ -117,9 +146,20 @@ export function deriveVoiceMetrics(b: VoiceBundle): VoiceMetrics {
   }
   const geo = Array.from(geoMap.values()).sort((a, b) => b.calls - a.calls)
 
+  const cs = b.callerStats
   return {
-    voiceConvs, connectedCalls, unconnected, abandonPct, engagedCalls, handoverCalls, medianDurSec,
+    voiceConvs, connectedCalls, unconnected, abandonPct, engagedCalls, handoverCalls, medianDurSec, avgDurSec, talkSec,
     volumeTrend, hours, geo,
+    callers: cs
+      ? {
+          unique: cs.callers,
+          repeat: cs.repeat_callers,
+          repeatPct: cs.callers > 0 ? Math.round((100 * cs.repeat_callers) / cs.callers) : 0,
+          oneTime: cs.one_time, twoThree: cs.two_three, fourPlus: cs.four_plus,
+          avgCalls: Number(cs.avg_calls), maxCalls: cs.max_calls,
+        }
+      : null,
+    topCallers: b.callCallers.map((r) => ({ userId: r.user_id, calls: r.calls, firstDay: r.first_day, lastDay: r.last_day, activeDays: r.active_days })),
     handoverMix: aggByKey(b.intelHandover),
     sentimentMix: aggByKey(b.intelSentiment),
     sectionMix: aggByKey(b.intelSection),

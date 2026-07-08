@@ -41,6 +41,13 @@ function fmtHour(h: number): string {
   return `${hr}${ap}`
 }
 
+function fmtTalk(sec: number): string {
+  if (!sec) return '—'
+  const h = sec / 3600
+  if (h >= 1) return `${h.toFixed(h >= 10 ? 0 : 1)} h`
+  return `${Math.round(sec / 60)} min`
+}
+
 /** Ranked-bar list (leaderboard). `onSelect(label)` makes each row drillable. */
 function RankedBars({
   items, colorFor, onSelect,
@@ -190,13 +197,15 @@ export function VoiceAnalyticsPage() {
               </button>
             }
           >
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
               <Metric label="Voice calls" value={formatNumber(m.voiceConvs)} subValue="total sessions" tone="accent" />
               <Metric label="Connected" value={formatNumber(m.connectedCalls)} subValue={`${formatPercent((m.connectedCalls / m.voiceConvs) * 100)} of calls`} />
               <Metric label="Didn't connect" value={formatNumber(m.unconnected)} subValue={`${formatPercent(m.abandonPct)} abandon`} tone="warn" />
               <Metric label="Engaged" value={formatNumber(m.engagedCalls)} subValue="got past hello" tone="good" />
               <Metric label="Handover-flagged" value={formatNumber(m.handoverCalls)} subValue={`${formatPercent((m.handoverCalls / m.voiceConvs) * 100)} of calls`} tone="risk" />
               <Metric label="Typical length" value={fmtDuration(m.medianDurSec)} subValue="median (connected)" />
+              <Metric label="Avg length" value={fmtDuration(m.avgDurSec)} subValue="mean (connected)" />
+              <Metric label="Total talk time" value={fmtTalk(m.talkSec)} subValue="connected time" />
             </div>
 
             {m.volumeTrend.length > 1 && (
@@ -277,6 +286,60 @@ export function VoiceAnalyticsPage() {
             )}
             <RankedBars items={cityBars} onSelect={(city) => openDrill({ city })} />
           </Panel>
+
+          {/* Repeat callers — voice identity IS the phone number, so we can see who calls back */}
+          {m.callers && m.callers.unique > 0 && (
+            <Panel
+              className="lg:col-span-12"
+              eyebrow="Your callers"
+              title="Repeat callers"
+              description="Voice identity is the phone number — so we can see who calls back. Click a caller to hear all their calls across days."
+              action={
+                <div className="rounded-2xl border border-sky-200 bg-sky-50/60 px-4 py-2 text-right">
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-sky-700">Repeat rate</div>
+                  <div className="mt-0.5 font-display text-2xl font-semibold tabular-nums text-sky-700">{formatPercent(m.callers.repeatPct)}</div>
+                </div>
+              }
+            >
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                <Metric label="Unique callers" value={formatNumber(m.callers.unique)} subValue="distinct phone numbers" tone="accent" />
+                <Metric label="Repeat callers" value={formatNumber(m.callers.repeat)} subValue={`${formatPercent(m.callers.repeatPct)} called again`} tone="good" />
+                <Metric label="Avg calls / caller" value={m.callers.avgCalls.toFixed(1)} subValue="all-time" />
+                <Metric label="Most by one caller" value={formatNumber(m.callers.maxCalls)} subValue="calls" tone="warn" />
+              </div>
+
+              <div className="mt-4">
+                <div className="mb-1.5 text-[11px] font-medium uppercase tracking-wider text-slate-400">How often they call</div>
+                <RankedBars
+                  items={[
+                    { label: 'One-time', value: m.callers.oneTime },
+                    { label: '2–3 calls', value: m.callers.twoThree },
+                    { label: '4+ calls', value: m.callers.fourPlus },
+                  ]}
+                />
+              </div>
+
+              {m.topCallers.length > 0 && (
+                <div className="mt-5">
+                  <div className="mb-1.5 text-[11px] font-medium uppercase tracking-wider text-slate-400">Most frequent callers — click to hear all their calls</div>
+                  <div className="space-y-1.5">
+                    {m.topCallers.map((c) => (
+                      <button
+                        key={c.userId}
+                        type="button"
+                        onClick={() => openDrill({ user_id: String(c.userId) })}
+                        className="flex w-full items-center gap-3 rounded-md px-2 py-1.5 text-left transition hover:bg-slate-50"
+                      >
+                        <span className="w-36 shrink-0 truncate text-xs font-medium text-slate-600">Caller #{c.userId}</span>
+                        <span className="flex-1 text-xs text-slate-400">{c.activeDays} day{c.activeDays === 1 ? '' : 's'} active</span>
+                        <span className="shrink-0 rounded-full bg-botscrew-50 px-2 py-0.5 text-xs font-semibold text-botscrew-700">{formatNumber(c.calls)} calls</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </Panel>
+          )}
 
           {/* What callers ask (topics / knowledge sections) */}
           <Panel

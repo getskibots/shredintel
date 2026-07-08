@@ -372,6 +372,8 @@ export interface CallVolumeRow {
   engaged_calls: number
   handover_calls: number
   median_dur_sec: number | null
+  avg_dur_sec: number | null
+  talk_sec: number | null
   unengaged: number
 }
 
@@ -399,10 +401,38 @@ export interface CallHoursRow {
   engaged_calls: number
 }
 
+/** report.call_callers — per bot/caller (user_id = phone identity), all-time.
+ *  Powers the top-callers leaderboard; the caller drill filters call_base by user_id. */
+export interface CallCallerRow {
+  bot_id: number
+  user_id: number
+  calls: number
+  engaged_calls: number
+  first_day: string
+  last_day: string
+  active_days: number
+}
+
+/** report.call_caller_stats — ONE row per bot: the repeat-caller aggregate. */
+export interface CallCallerStatsRow {
+  bot_id: number
+  callers: number
+  repeat_callers: number
+  one_time: number
+  two_three: number
+  four_plus: number
+  avg_calls: number
+  max_calls: number
+  total_calls: number
+}
+
 export interface VoiceBundle {
   callVolume: CallVolumeRow[]
   callGeo: CallGeoRow[]
   callHours: CallHoursRow[]
+  /** Top callers (by all-time call count) + the per-bot repeat-caller aggregate. */
+  callCallers: CallCallerRow[]
+  callerStats: CallCallerStatsRow | null
   /** Reused enrichment (works for voice bots — a call is a conversation). */
   intelHandover: IntelBreakdownRow[]
   intelSection: IntelBreakdownRow[]
@@ -432,13 +462,24 @@ export async function fetchVoiceBundle(
       .lte('day', to) as unknown as Promise<{ data: T[] | null; error: unknown }>
 
   try {
-    const [volume, geo, hours, hand, section, sentiment] = await withTimeout(Promise.all([
+    // call_callers / call_caller_stats have no `day` column → bot-only queries.
+    const callersQ = supabase
+      .schema('report').from('call_callers')
+      .select('bot_id, user_id, calls, engaged_calls, first_day, last_day, active_days')
+      .eq('bot_id', botId).order('calls', { ascending: false }).limit(12) as unknown as Promise<{ data: CallCallerRow[] | null; error: unknown }>
+    const statsQ = supabase
+      .schema('report').from('call_caller_stats')
+      .select('*').eq('bot_id', botId).maybeSingle() as unknown as Promise<{ data: CallCallerStatsRow | null; error: unknown }>
+
+    const [volume, geo, hours, hand, section, sentiment, callers, stats] = await withTimeout(Promise.all([
       q<CallVolumeRow>('call_volume'),
       q<CallGeoRow>('call_geo'),
       q<CallHoursRow>('call_hours'),
       q<IntelBreakdownRow>('intel_handover'),
       q<IntelBreakdownRow>('intel_section'),
       q<IntelBreakdownRow>('intel_sentiment'),
+      callersQ,
+      statsQ,
     ]))
 
     // call_volume is the spine — if it errors, the voice views aren't there → fixtures.
@@ -452,6 +493,8 @@ export async function fetchVoiceBundle(
       callVolume: volume.data ?? [],
       callGeo: geo.error ? [] : (geo.data ?? []),
       callHours: hours.error ? [] : (hours.data ?? []),
+      callCallers: callers.error ? [] : (callers.data ?? []),
+      callerStats: stats.error ? null : (stats.data ?? null),
       intelHandover: hand.error ? [] : (hand.data ?? []),
       intelSection: section.error ? [] : (section.data ?? []),
       intelSentiment: sentiment.error ? [] : (sentiment.data ?? []),

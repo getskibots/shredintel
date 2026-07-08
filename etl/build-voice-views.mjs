@@ -42,6 +42,14 @@ await c.query(`create materialized view report.call_base as
     from raw.admin_user u
     join raw.admin_conversation cv on cv.user_id = u.id
     where u.platform = 'VOICE_TWILIO' and cv.started_at >= '2024-10-01'
+  ),
+  city_coord as (
+    -- reuse MaxMind coords (report.ip_geo) to geocode the phone city per call, so the
+    -- per-call drill-down can pin the caller on a map (same source as call_geo).
+    select lower(city) city_l, country_iso,
+      avg(lat)::double precision lat, avg(lon)::double precision lon
+    from report.ip_geo where city is not null and lat is not null
+    group by lower(city), country_iso
   )
   select
     vc.bot_id, vc.conversation_id, vc.user_id,
@@ -55,6 +63,7 @@ await c.query(`create materialized view report.call_base as
     (vc.outcome is distinct from 'UNENGAGED') as engaged,
     nullif(ac.from_country,'') as from_country,
     initcap(lower(nullif(ac.from_city,''))) as from_city,
+    cc.lat as from_lat, cc.lon as from_lon,
     ci.substantive, ci.section, ci.pinchpoint, ci.sentiment, ci.urgency, ci.handover, ci.topic
   from voice_conv vc
   left join lateral (
@@ -65,6 +74,7 @@ await c.query(`create materialized view report.call_base as
     limit 1
   ) ac on true
   left join report.bot_timezone tz on tz.bot_id = vc.bot_id
+  left join city_coord cc on cc.city_l = lower(nullif(ac.from_city,'')) and cc.country_iso = nullif(ac.from_country,'')
   left join report.conversation_intel ci on ci.conversation_id = vc.conversation_id`)
 await c.query('create unique index call_base_pk on report.call_base (conversation_id)')
 await c.query('create index call_base_bot_day on report.call_base (bot_id, day)')

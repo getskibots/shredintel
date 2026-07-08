@@ -6,6 +6,7 @@ import { LAYER_COLOR, LAYER_BADGE } from '../../lib/knowledgeLayers'
 import { DRILL_DIMENSIONS, humanLabel, type DrillPayload } from '../../lib/drill'
 import { RichText } from '../shared'
 import { UsDotMap } from '../UsDotMap'
+import { NaDotMap } from '../NaDotMap/NaDotMap'
 
 /**
  * Drill-down: any chart mark / sliver → the matching conversations → the actual
@@ -151,7 +152,7 @@ export function ConversationExplorer({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let q: any = isVoice
         ? sb.schema('report').from('call_base')
-            .select('bot_id, conversation_id, topic, sentiment, day, started_local, duration_sec:dur_sec, city:from_city, country_iso:from_country, recording_sid', { count: 'exact' })
+            .select('bot_id, conversation_id, topic, sentiment, day, started_local, duration_sec:dur_sec, city:from_city, country_iso:from_country, lat:from_lat, lon:from_lon, recording_sid', { count: 'exact' })
             .eq('bot_id', p.botId)
         : sb.schema('report').from('conversation_time')
             .select('bot_id, conversation_id, topic, sentiment, day, started_local, duration_sec, page_path, city, region, country_iso, lat, lon', { count: 'exact' })
@@ -341,11 +342,19 @@ export function ConversationExplorer({
                       ) : null}
                       {r.lat != null && r.lon != null ? (
                         <div className="mb-2.5 overflow-hidden rounded-lg border border-slate-100 bg-white">
-                          <UsDotMap
-                            points={[{ city: r.city ?? 'Location', lat: r.lat, lon: r.lon, conversations: 1 }]}
-                            single
-                            height={150}
-                          />
+                          {source === 'voice' ? (
+                            // North-America map (voice callers skew Canadian — Calgary/Edmonton lead)
+                            <NaDotMap
+                              points={[{ city: r.city ?? 'Location', lat: r.lat, lon: r.lon, conversations: 1 }]}
+                              height={170}
+                            />
+                          ) : (
+                            <UsDotMap
+                              points={[{ city: r.city ?? 'Location', lat: r.lat, lon: r.lon, conversations: 1 }]}
+                              single
+                              height={150}
+                            />
+                          )}
                         </div>
                       ) : null}
                       {loadingT ? (

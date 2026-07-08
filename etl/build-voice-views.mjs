@@ -38,13 +38,13 @@ await c.query(`create materialized view report.call_base as
   with voice_conv as (
     -- start from VOICE_TWILIO users so we don't drag the full 900k-conversation
     -- scan; index-join to their conversations.
-    select cv.id as conversation_id, cv.started_at, cv.closed_at, cv.outcome, u.bot_id
+    select cv.id as conversation_id, cv.user_id, cv.started_at, cv.closed_at, cv.outcome, u.bot_id
     from raw.admin_user u
     join raw.admin_conversation cv on cv.user_id = u.id
     where u.platform = 'VOICE_TWILIO' and cv.started_at >= '2024-10-01'
   )
   select
-    vc.bot_id, vc.conversation_id,
+    vc.bot_id, vc.conversation_id, vc.user_id,
     ac.id as call_id, ac.call_sid, ac.recording_sid,
     ((vc.started_at at time zone 'UTC') at time zone coalesce(tz.tz,'America/Denver'))::date as day,
     extract(hour from ((vc.started_at at time zone 'UTC') at time zone coalesce(tz.tz,'America/Denver')))::int as hour_local,
@@ -83,6 +83,8 @@ await c.query(`create materialized view report.call_volume as
     count(*) filter (where handover in ('Possible Handover','Clear Handover'))::int handover_calls,
     (percentile_cont(0.5) within group (order by dur_sec)
        filter (where connected and dur_sec between 1 and 3600))::int median_dur_sec,
+    round(avg(dur_sec) filter (where connected and dur_sec between 1 and 3600))::int avg_dur_sec,
+    sum(dur_sec) filter (where connected and dur_sec between 1 and 3600)::bigint talk_sec,
     count(*) filter (where outcome = 'UNENGAGED')::int unengaged
   from report.call_base group by bot_id, day`)
 await c.query('create unique index call_volume_pk on report.call_volume (bot_id, day)')
@@ -128,6 +130,42 @@ await c.query(`create materialized view report.call_hours as
 await c.query('create unique index call_hours_pk on report.call_hours (bot_id, day, hour_local)')
 await c.query('grant select on report.call_hours to anon, authenticated')
 
+// ── call_callers: per bot/caller (admin_user, keyed by the phone number) — the
+//    repeat-caller rollup. user_id groups a guest's calls across days (78% of 248's
+//    callers call >1x). All-time per caller; NO phone/PII here — just the internal
+//    user_id + counts (the caller drill filters call_base by user_id). ─────────────
+console.log('  · call_callers …')
+await c.query('drop materialized view if exists report.call_callers cascade')
+await c.query(`create materialized view report.call_callers as
+  select bot_id, user_id,
+    count(*)::int calls,
+    count(*) filter (where engaged)::int engaged_calls,
+    min(day) as first_day, max(day) as last_day,
+    count(distinct day)::int active_days
+  from report.call_base where user_id is not null
+  group by bot_id, user_id`)
+await c.query('create unique index call_callers_pk on report.call_callers (bot_id, user_id)')
+await c.query('create index call_callers_bot on report.call_callers (bot_id)')
+await c.query('grant select on report.call_callers to anon, authenticated')
+
+// ── call_caller_stats: ONE row per bot — the repeat-caller aggregate (so the panel
+//    reads a single row, not 6.7k caller rows). All-time. ──────────────────────────
+console.log('  · call_caller_stats …')
+await c.query('drop materialized view if exists report.call_caller_stats cascade')
+await c.query(`create materialized view report.call_caller_stats as
+  select bot_id,
+    count(*)::int callers,
+    count(*) filter (where calls > 1)::int repeat_callers,
+    count(*) filter (where calls = 1)::int one_time,
+    count(*) filter (where calls between 2 and 3)::int two_three,
+    count(*) filter (where calls >= 4)::int four_plus,
+    round(avg(calls), 2)::numeric avg_calls,
+    max(calls)::int max_calls,
+    sum(calls)::int total_calls
+  from report.call_callers group by bot_id`)
+await c.query('create unique index call_caller_stats_pk on report.call_caller_stats (bot_id)')
+await c.query('grant select on report.call_caller_stats to anon, authenticated')
+
 await c.query(`notify pgrst, 'reload schema'`)
 console.log('✓ voice views built + granted: call_base, call_volume, call_geo, call_hours')
 
@@ -141,5 +179,7 @@ const v = (await c.query(`select
 console.log(`\nbot 248: ${v.voice_convs} voice convs · ${v.connected} connected (${v.unconnected} unconnected = ${v.abandon_pct}% abandon) · ${v.engaged} engaged · ${v.handover} handover-flagged · ~${v.median_dur}s median`)
 console.log('top caller cities:', (await c.query(`select from_city, sum(calls)::int n from report.call_geo where bot_id=248 and from_city is not null group by from_city order by n desc limit 8`)).rows.map(r=>`${r.from_city} ${r.n}`).join(' · '))
 console.log('busiest local hours:', (await c.query(`select hour_local, sum(calls)::int calls from report.call_hours where bot_id=248 group by hour_local order by calls desc limit 5`)).rows.map(r=>`${r.hour_local}:00 (${r.calls})`).join(' · '))
+const rc = (await c.query(`select count(*)::int callers, count(*) filter (where calls>1)::int repeat, max(calls)::int max_calls, round(avg(calls),2) avg_calls from report.call_callers where bot_id=248`)).rows[0]
+console.log(`repeat callers: ${rc.callers} unique · ${rc.repeat} called >1x (${Math.round(100*rc.repeat/Math.max(rc.callers,1))}%) · avg ${rc.avg_calls}/caller · max ${rc.max_calls}`)
 await c.end()
 console.log('\ndone.')

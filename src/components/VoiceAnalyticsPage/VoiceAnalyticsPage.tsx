@@ -186,23 +186,21 @@ export function VoiceAnalyticsPage() {
             className="lg:col-span-12"
             eyebrow="Overview"
             title="Call volume & connection"
-            description="How many calls came in, how many connected, and how many dropped before connecting. Click a metric to see those calls."
+            description="How many calls came in, how many connected, and how many callers hung up before connecting."
             action={
-              <button
-                type="button"
-                onClick={() => openDrill({ handover: 'Clear Handover' })}
-                className="rounded-2xl border border-amber-200 bg-amber-50/70 px-4 py-2 text-right transition hover:bg-amber-100/70"
-                title="See calls flagged for a human handover"
+              <div
+                className="rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-2 text-right"
+                title="Share of callers who hung up before the AI answered — their choice, not a dropped call"
               >
-                <div className="text-[10px] font-semibold uppercase tracking-wider text-amber-700">Abandon rate</div>
-                <div className="mt-0.5 font-display text-2xl font-semibold tabular-nums text-amber-700">{formatPercent(m.abandonPct)}</div>
-              </button>
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Hung up early</div>
+                <div className="mt-0.5 font-display text-2xl font-semibold tabular-nums text-slate-700">{formatPercent(m.abandonPct)}</div>
+              </div>
             }
           >
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
               <Metric label="Voice calls" value={formatNumber(m.voiceConvs)} subValue="total sessions" tone="accent" />
               <Metric label="Connected" value={formatNumber(m.connectedCalls)} subValue={`${formatPercent((m.connectedCalls / m.voiceConvs) * 100)} of calls`} />
-              <Metric label="Didn't connect" value={formatNumber(m.unconnected)} subValue={`${formatPercent(m.abandonPct)} abandon`} tone="warn" />
+              <Metric label="Didn't connect" value={formatNumber(m.unconnected)} subValue={`${formatPercent(m.abandonPct)} hung up`} />
               <Metric label="Engaged" value={formatNumber(m.engagedCalls)} subValue="got past hello" tone="good" />
               <Metric label="Handover-flagged" value={formatNumber(m.handoverCalls)} subValue={`${formatPercent((m.handoverCalls / m.voiceConvs) * 100)} of calls`} tone="risk" />
               <Metric label="Typical length" value={fmtDuration(m.medianDurSec)} subValue="median (connected)" />

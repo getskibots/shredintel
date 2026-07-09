@@ -46,6 +46,18 @@ export const VERTICALS = {
     sections: ['General Info', 'Products & Services', 'Pricing & Availability', 'Booking & Reservations', 'Account / Access', 'Refund / Cancellation Policies', 'Ecommerce / Account Management', 'Other'] },
 }
 
+// Universal intent every vertical shares: callers/guests who just want a human, with
+// NO knowledge question (e.g. "transfer me to an agent"). Voice especially — ~30% of
+// calls are pure "connect me to a person" (vs ~1% on chat). Inject it before 'Other'
+// so it's a real section across every preset instead of polluting 'Other'. It mirrors
+// the universal SPINE category 'Human / Escalation'.
+for (const v of Object.values(VERTICALS)) {
+  if (!v.sections.includes('Live Agent Request')) {
+    const i = v.sections.indexOf('Other')
+    v.sections.splice(i < 0 ? v.sections.length : i, 0, 'Live Agent Request')
+  }
+}
+
 /** Confidence gate: below this, enrichment uses the `generic` preset instead of the
  *  detected vertical (the detector self-flags novel/ambiguous bots with low scores). */
 export const MIN_CONFIDENCE = 0.6

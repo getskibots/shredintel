@@ -560,6 +560,27 @@ function overlayJHChatLive(base: PeriodFixtures, live: LiveBundle, pageStage?: s
     }
   }
 
+  // § "Needs attention" — urgency mix (High + Escalation Required = urgent now).
+  if (live.intelUrgency.length > 0) {
+    const um = new Map<string, number>()
+    for (const r of live.intelUrgency) um.set(r.key, (um.get(r.key) ?? 0) + Number(r.conversations))
+    const total = [...um.values()].reduce((s, v) => s + v, 0)
+    if (total > 0) {
+      const escalation = um.get('Escalation Required') ?? 0
+      const urgent = (um.get('High') ?? 0) + escalation
+      out.needsAttention = {
+        segments: ['Low', 'Medium', 'High', 'Escalation Required'].map((label) => {
+          const c = um.get(label) ?? 0
+          return { label, conversations: c, share: total > 0 ? c / total : 0 }
+        }),
+        total,
+        urgent,
+        urgentShare: total > 0 ? urgent / total : 0,
+        escalation,
+      }
+    }
+  }
+
   // § 3 — Guest identity split
   if (live.guestIdentitySplit.length > 0) {
     const totalConversations = sum(live.guestIdentitySplit.map((r) => r.total_conversations))

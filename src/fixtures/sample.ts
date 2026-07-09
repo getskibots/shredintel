@@ -26,6 +26,7 @@ import type {
   ConversionBlockersProps,
   GuestSentimentProps,
   HumanHandoverProps,
+  UrgencyProps,
   KpiTileData,
   LeadCaptureFunnelProps,
   OutcomeTimelineProps,
@@ -537,6 +538,7 @@ export interface PeriodFixtures {
   conversionBlockers: ConversionBlockersProps
   guestSentiment: GuestSentimentProps
   humanHandover: HumanHandoverProps
+  needsAttention: UrgencyProps
   guestIdentitySplit: GuestIdentitySplitProps
   leadCaptureFunnel: LeadCaptureFunnelProps
   frictionPages: FrictionPage[]
@@ -920,6 +922,25 @@ export function buildPeriodFixturesForDays(
     gap: Math.max(0, hvClear - hvEscalated),
   }
 
+  // ── Needs attention (urgency mix; demo ~15% High+Escalation) ────────
+  const urgHigh = Math.round(totalSub * 0.12)
+  const urgEsc = Math.round(totalSub * 0.03)
+  const urgMed = Math.round(totalSub * 0.25)
+  const urgLow = Math.max(0, totalSub - urgHigh - urgEsc - urgMed)
+  const urgUrgent = urgHigh + urgEsc
+  const needsAttention: UrgencyProps = {
+    segments: [
+      { label: 'Low', conversations: urgLow, share: totalSub > 0 ? urgLow / totalSub : 0 },
+      { label: 'Medium', conversations: urgMed, share: totalSub > 0 ? urgMed / totalSub : 0 },
+      { label: 'High', conversations: urgHigh, share: totalSub > 0 ? urgHigh / totalSub : 0 },
+      { label: 'Escalation Required', conversations: urgEsc, share: totalSub > 0 ? urgEsc / totalSub : 0 },
+    ],
+    total: totalSub,
+    urgent: urgUrgent,
+    urgentShare: totalSub > 0 ? urgUrgent / totalSub : 0,
+    escalation: urgEsc,
+  }
+
   // ── Guest identity (aggregate counts only) ─────────────────────────
   const known = Math.round(6800 * scale)
   const anon = totalConversations - known
@@ -1113,6 +1134,7 @@ export function buildPeriodFixturesForDays(
     conversionBlockers,
     guestSentiment,
     humanHandover,
+    needsAttention,
     guestIdentitySplit,
     leadCaptureFunnel,
     frictionPages,

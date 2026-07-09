@@ -254,6 +254,18 @@ export interface HumanHandoverProps {
   gap: number
 }
 
+/** Needs attention — how urgent the guest's need was (segments = Low / Medium /
+ *  High / Escalation Required, from the AI enrichment). `urgent` = High +
+ *  Escalation (the headline "needed a fast look" count); `escalation` isolates
+ *  the hardest subset. Channel-agnostic (chat + voice). */
+export interface UrgencyProps {
+  segments: { label: string; conversations: number; share: number }[]
+  total: number
+  urgent: number
+  urgentShare: number
+  escalation: number
+}
+
 // § 2 — KnowledgeSourceLeaderboard
 
 export interface KnowledgeSourceItem {

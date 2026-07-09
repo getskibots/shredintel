@@ -8,6 +8,7 @@ import { ConversionBlockers } from '../ConversionBlockers'
 import { PageFunnel } from '../PageFunnel'
 import { GuestSentiment } from '../GuestSentiment'
 import { HumanHandover } from '../HumanHandover'
+import { NeedsAttention } from '../NeedsAttention'
 import { KnowledgeSectionDemand } from '../KnowledgeSectionDemand'
 import { DemandHeatmap } from '../DemandHeatmap'
 import { DeviceExperienceMix } from '../DeviceExperienceMix'
@@ -171,7 +172,8 @@ export function BotAnalyticsPage() {
             {/* 4 — Service quality: do humans catch what the bot can't → are guests
                 happy. Handover + sentiment pair as two compact ratio views.
                 (Knowledge coverage moved up into the Knowledge card in band 3.) */}
-            <section id="service" className="scroll-mt-40">
+            <section id="service" className="scroll-mt-40 space-y-5">
+              <NeedsAttention {...f.needsAttention} botId={botId} range={askRange} />
               <div className={bentoGrid}>
                 <div className="lg:col-span-6">
                   <HumanHandover {...f.humanHandover} />

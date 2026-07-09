@@ -213,6 +213,9 @@ export interface LiveBundle {
   intelSentiment: IntelBreakdownRow[]
   /** Handover-need split (No / Possible / Clear Handover). Non-fatal. */
   intelHandover: IntelBreakdownRow[]
+  /** Urgency mix (Low / Medium / High / Escalation Required) — drives the
+   *  "Needs Attention" panel. Non-fatal (empty → no urgency card). */
+  intelUrgency: IntelBreakdownRow[]
   /** Page → ecommerce funnel stage (where questions originate) + the same
    *  intelligence breakdowns sliced by stage. Empty until the page-funnel
    *  matview is available (non-fatal, like intel_*). */
@@ -273,7 +276,7 @@ export async function fetchLiveBundle(
 
   try {
     const [outcome, conversion, knowledge, sender, identity, funnel, device, heatmap, depth,
-           iSection, iPinch, iSent, iHand, pFunnel, pSection, pPinch, pSent, gCountry, gCity, kLayer, kLayerSec, users] =
+           iSection, iPinch, iSent, iHand, iUrg, pFunnel, pSection, pPinch, pSent, gCountry, gCity, kLayer, kLayerSec, users] =
       await withTimeout(Promise.all([
         q<OutcomeRow>('outcome_timeline'),
         q<ConversionRow>('conversion_pulse'),
@@ -288,6 +291,7 @@ export async function fetchLiveBundle(
         q<IntelBreakdownRow>('intel_pinchpoint'),
         q<IntelBreakdownRow>('intel_sentiment'),
         q<IntelBreakdownRow>('intel_handover'),
+        q<IntelBreakdownRow>('intel_urgency'),
         q<PageFunnelRow>('page_funnel'),
         q<PageIntelRow>('page_section'),
         q<PageIntelRow>('page_pinchpoint'),
@@ -335,6 +339,7 @@ export async function fetchLiveBundle(
       intelPinchpoint: iPinch.error ? [] : (iPinch.data ?? []),
       intelSentiment: iSent.error ? [] : (iSent.data ?? []),
       intelHandover: iHand.error ? [] : (iHand.data ?? []),
+      intelUrgency: iUrg.error ? [] : (iUrg.data ?? []),
       // page-funnel views — newest; non-fatal (empty → no funnel card / filter)
       pageFunnel: pFunnel.error ? [] : (pFunnel.data ?? []),
       pageSection: pSection.error ? [] : (pSection.data ?? []),
@@ -481,6 +486,8 @@ export interface VoiceBundle {
   intelHandover: IntelBreakdownRow[]
   intelSection: IntelBreakdownRow[]
   intelSentiment: IntelBreakdownRow[]
+  /** Urgency mix (Low / Medium / High / Escalation Required) — "Needs Attention". */
+  intelUrgency: IntelBreakdownRow[]
 }
 
 /**
@@ -515,13 +522,14 @@ export async function fetchVoiceBundle(
       .schema('report').from('call_caller_stats')
       .select('*').eq('bot_id', botId).maybeSingle() as unknown as Promise<{ data: CallCallerStatsRow | null; error: unknown }>
 
-    const [volume, geo, hours, hand, section, sentiment, callers, stats, transfers, facts, inbound] = await withTimeout(Promise.all([
+    const [volume, geo, hours, hand, section, sentiment, urg, callers, stats, transfers, facts, inbound] = await withTimeout(Promise.all([
       q<CallVolumeRow>('call_volume'),
       q<CallGeoRow>('call_geo'),
       q<CallHoursRow>('call_hours'),
       q<IntelBreakdownRow>('intel_handover'),
       q<IntelBreakdownRow>('intel_section'),
       q<IntelBreakdownRow>('intel_sentiment'),
+      q<IntelBreakdownRow>('intel_urgency'),
       callersQ,
       statsQ,
       q<CallTransferStatsRow>('call_transfer_stats'),
@@ -548,6 +556,7 @@ export async function fetchVoiceBundle(
       intelHandover: hand.error ? [] : (hand.data ?? []),
       intelSection: section.error ? [] : (section.data ?? []),
       intelSentiment: sentiment.error ? [] : (sentiment.data ?? []),
+      intelUrgency: urg.error ? [] : (urg.data ?? []),
     }
   } catch (err) {
     // eslint-disable-next-line no-console

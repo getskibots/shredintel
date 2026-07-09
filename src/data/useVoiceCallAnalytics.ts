@@ -16,6 +16,7 @@ import { resolveSelection, type PeriodSelection } from '../lib/period'
 import { supabaseConfigured } from '../lib/supabase'
 import { fetchVoiceBundle, type VoiceBundle, type IntelBreakdownRow } from './queries'
 import type { AnalyticsState } from './useAnalytics'
+import type { UrgencyProps } from '../types/analytics'
 
 export interface VoiceGeoPoint {
   country: string | null
@@ -102,6 +103,8 @@ export interface VoiceMetrics {
   handoverMix: VoiceBreakdown[]
   sentimentMix: VoiceBreakdown[]
   sectionMix: VoiceBreakdown[]
+  /** Urgency mix as the "Needs attention" panel shape (Low→Escalation). */
+  needsAttention: UrgencyProps
 }
 
 export const EMPTY_VOICE_METRICS: VoiceMetrics = {
@@ -110,6 +113,7 @@ export const EMPTY_VOICE_METRICS: VoiceMetrics = {
   durationSource: 'mirror', aiTalkSec: null, humanTalkSec: null,
   volumeTrend: [], hours: [], geo: [], callers: null, topCallers: [], transfers: null,
   handoverMix: [], sentimentMix: [], sectionMix: [],
+  needsAttention: { segments: [], total: 0, urgent: 0, urgentShare: 0, escalation: 0 },
 }
 
 const sum = <T,>(rows: T[], f: (r: T) => number): number =>
@@ -120,6 +124,26 @@ function aggByKey(rows: IntelBreakdownRow[]): VoiceBreakdown[] {
   for (const r of rows) m.set(r.key, (m.get(r.key) ?? 0) + r.conversations)
   return Array.from(m, ([key, conversations]) => ({ key, conversations }))
     .sort((a, b) => b.conversations - a.conversations)
+}
+
+/** Fold intel_urgency rows into the "Needs attention" panel shape (Low→Escalation,
+ *  with High + Escalation as the headline urgent count). Same as the chat overlay. */
+function urgencyFrom(rows: IntelBreakdownRow[]): UrgencyProps {
+  const m = new Map<string, number>()
+  for (const r of rows) m.set(r.key, (m.get(r.key) ?? 0) + r.conversations)
+  const total = [...m.values()].reduce((s, v) => s + v, 0)
+  const escalation = m.get('Escalation Required') ?? 0
+  const urgent = (m.get('High') ?? 0) + escalation
+  return {
+    segments: ['Low', 'Medium', 'High', 'Escalation Required'].map((label) => {
+      const c = m.get(label) ?? 0
+      return { label, conversations: c, share: total > 0 ? c / total : 0 }
+    }),
+    total,
+    urgent,
+    urgentShare: total > 0 ? urgent / total : 0,
+    escalation,
+  }
 }
 
 /** Fold the daily call_* rows into the period-level shape the page renders. */
@@ -232,6 +256,7 @@ export function deriveVoiceMetrics(b: VoiceBundle): VoiceMetrics {
     handoverMix: aggByKey(b.intelHandover),
     sentimentMix: aggByKey(b.intelSentiment),
     sectionMix: aggByKey(b.intelSection),
+    needsAttention: urgencyFrom(b.intelUrgency),
   }
 }
 

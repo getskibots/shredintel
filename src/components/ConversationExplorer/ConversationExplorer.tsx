@@ -158,16 +158,18 @@ export function ConversationExplorer({
             .select('bot_id, conversation_id, topic, sentiment, day, started_local, duration_sec, page_path, city, region, country_iso, lat, lon', { count: 'exact' })
             .eq('bot_id', p.botId)
             .eq('substantive', true)
-      // shared drill dims
+      // shared drill dims — section/topic/day/urgency/handover live on BOTH
+      // report.conversation_time (chat) and report.call_base (voice).
       if (p.section) q = q.ilike('section', p.section)
       if (p.topic) q = q.ilike('topic', `%${p.topic}%`)
       if (p.day) q = q.eq('day', p.day)
+      if (p.urgency) q = q.eq('urgency', p.urgency)
+      if (p.handover) q = q.eq('handover', p.handover)
       if (isVoice) {
-        // voice: caller (user_id), city, call-hour + handover live on call_base
+        // voice: caller (user_id), city, call-hour live on call_base
         if (p.user_id) q = q.eq('user_id', Number(p.user_id))
         if (p.city) q = q.eq('from_city', p.city)
         if (p.hour_local != null && p.hour_local !== '') q = q.eq('hour_local', Number(p.hour_local))
-        if (p.handover) q = q.eq('handover', p.handover)
       } else {
         if (p.pinchpoint) q = q.ilike('pinchpoint', p.pinchpoint)
         if (p.funnel_stage) q = q.eq('funnel_stage', p.funnel_stage)
@@ -190,7 +192,7 @@ export function ConversationExplorer({
     })()
     return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [p.botId, p.section, p.pinchpoint, p.sentiment, p.funnel_stage, p.topic, p.city, p.day, p.handover, p.hour_local, p.user_id, source, from, to, sentFilter])
+  }, [p.botId, p.section, p.pinchpoint, p.sentiment, p.urgency, p.funnel_stage, p.topic, p.city, p.day, p.handover, p.hour_local, p.user_id, source, from, to, sentFilter])
 
   async function openConv(cid: number) {
     if (openCid === cid) { setOpenCid(null); setTranscript(null); return }

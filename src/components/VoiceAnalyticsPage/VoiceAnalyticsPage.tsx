@@ -23,6 +23,7 @@ import { VerticalBadge } from '../VerticalBadge/VerticalBadge'
 import { ChannelToggle } from '../ChannelToggle/ChannelToggle'
 import { omniGroupByKey } from '../../lib/omniGroups'
 import { NaDotMap } from '../NaDotMap/NaDotMap'
+import { NeedsAttention } from '../NeedsAttention'
 import { AskBar } from '../AskBar'
 import { RealtimeAgent } from '../RealtimeAgent'
 import { useShredPulse } from '../ShreddingOverlay'
@@ -334,6 +335,9 @@ export function VoiceAnalyticsPage() {
           >
             <RankedBars items={toBars(m.sectionMix, 12)} onSelect={(section) => openDrill({ section })} />
           </Panel>
+
+          {/* Needs attention — urgency mix (High + Escalation = the calls worth a fast look) */}
+          <NeedsAttention {...m.needsAttention} className="lg:col-span-12" botId={botId} range={askRange} source="voice" />
 
           {/* Sentiment — handover ground truth lives in the Voice AI band above, so this
               band is sentiment only (no duplicate handover panel). */}

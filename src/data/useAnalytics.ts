@@ -842,6 +842,7 @@ export interface BotOption {
   label: string       // bot display name (falls back to "Bot <id>")
   route: string       // canonical route to view this bot (channel-aware)
   channel?: 'chat' | 'voice' // from report.bot_channel — drives picker split + routing
+  vertical?: string          // from report.bot_vertical — auto-detected business vertical
   publicIdentifier?: string  // Botscrew UUID → derives the widget test URL
 }
 
@@ -894,6 +895,16 @@ export function useAvailableBots(): { bots: BotOption[]; isLive: boolean; isLoad
             .limit(2000)) as { data: { bot_id: number; channel: string }[] | null; error: unknown }
           if (!ch.error && ch.data) for (const r of ch.data) chMap.set(r.bot_id, r.channel === 'voice' ? 'voice' : 'chat')
         } catch { /* non-fatal */ }
+        // Vertical per bot (report.bot_vertical) → labels + groups the directory.
+        const vMap = new Map<number, string>()
+        try {
+          const vv = (await supabase
+            .schema('report')
+            .from('bot_vertical')
+            .select('bot_id, vertical')
+            .limit(2000)) as { data: { bot_id: number; vertical: string }[] | null; error: unknown }
+          if (!vv.error && vv.data) for (const r of vv.data) vMap.set(r.bot_id, r.vertical)
+        } catch { /* non-fatal */ }
         if (cancelled) return
         const bots: BotOption[] = data
           .filter((r) => r?.id != null)
@@ -903,6 +914,7 @@ export function useAvailableBots(): { bots: BotOption[]; isLive: boolean; isLoad
               botId: r.id,
               label: r.name?.trim() || `Bot ${r.id}`,
               channel,
+              vertical: vMap.get(r.id),
               route: channel === 'voice' ? `/voice/${r.id}` : `/bot/${r.id}`,
               publicIdentifier: r.public_identifier || undefined,
             }

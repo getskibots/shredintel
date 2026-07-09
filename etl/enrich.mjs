@@ -44,6 +44,9 @@ const PINCHPOINTS = [
   'Login', 'Password reset', 'Account access', 'Order lookup', 'Payment',
   'Checkout', 'Booking change', 'Confirmation', 'Waiver', 'Credit', 'Voucher', 'None',
 ]
+// Easter-egg "vibe" axis — surfaces the memorable conversations that sentiment can't
+// capture (the hilarious, the bizarre, the truly furious) for the hidden Hall of Fame.
+const FLAVORS = ['none', 'furious', 'funny', 'quirky', 'bizarre', 'wholesome', 'heartfelt', 'confused']
 
 // Vertical + its section preset are AUTO-DETECTED per bot (report.bot_vertical,
 // written by detect-vertical.mjs) from the shared registry in verticals.mjs — resolved
@@ -53,10 +56,13 @@ let V // { label, sections } for this bot's detected vertical (assigned post-con
 
 const buildSystem = (v) => `You are ShredIntel's conversation classifier for the guest-services chat assistant of a ${v.label}.
 Read the whole conversation (guest + bot turns) and classify the GUEST's need. Return ONLY minified JSON:
-{"substantive":true|false,"category":<one CATEGORY>,"section":<one SECTION>,"pinchpoint":<one PINCHPOINT>,"sentiment":"Positive"|"Neutral"|"Negative","urgency":"Low"|"Medium"|"High"|"Escalation Required","handover":"No Handover"|"Possible Handover"|"Clear Handover","topic":"<max 8 words, the specific ask, no names/emails/phones>"}
+{"substantive":true|false,"category":<one CATEGORY>,"section":<one SECTION>,"pinchpoint":<one PINCHPOINT>,"sentiment":"Positive"|"Neutral"|"Negative","urgency":"Low"|"Medium"|"High"|"Escalation Required","handover":"No Handover"|"Possible Handover"|"Clear Handover","topic":"<max 8 words, the specific ask, no names/emails/phones>","flavor":<one FLAVOR>,"spice":0|1|2|3,"highlight":"<most quotable guest line, near-verbatim, <=120 chars, no names/emails/phones>"}
 CATEGORY = the universal support bucket, exactly one of: ${SPINE.join('; ')}.
 SECTION = the ${v.label} knowledge area the question belongs to, exactly one of: ${v.sections.join('; ')}.
 PINCHPOINT = the specific e-commerce/account friction if the guest is stuck buying, accessing an account, or managing an order; otherwise "None". Exactly one of: ${PINCHPOINTS.join('; ')}.
+FLAVOR = the conversation's memorable "vibe", exactly one of: ${FLAVORS.join('; ')}. Use "none" for the ordinary majority (almost all). "furious"=enraged, abusive, or threatening; "funny"=genuinely comedic (intentional or not); "quirky"/"bizarre"=odd, surreal, or off-the-wall; "wholesome"/"heartfelt"=sweet, grateful, or touching; "confused"=endearingly lost.
+SPICE = how screenshot-worthy / Hall-of-Fame-worthy this is: 0 ordinary, 1 mildly notable, 2 very notable, 3 unforgettable. Most conversations are 0, but DO flag the gems: a guest treating the assistant as something it isn't (asking a ski resort for video-game currency, ordering food, flirting with the bot, homework help), genuinely absurd or hilarious exchanges, real rage/abuse/threats, and sweet or heartfelt moments all deserve 2-3 with the matching flavor.
+HIGHLIGHT = the single most quotable GUEST line, near-verbatim (<=120 chars), scrub any name/email/phone. Empty "" if nothing stands out.
 substantive=false ONLY for pure greetings, pleasantries, or tests with NO question or request (e.g. "hi", "hello", "thanks", "ok", "test"). A SHORT message is STILL substantive if it asks or requests anything — "how's the snow today?", "rentals phone number", "hours?", "can I talk to a real person" are all substantive=true. When in doubt, default to substantive=true.
 Do not invent. Base everything on the actual messages.`
 let SYSTEM // built once V is resolved (post-connect, below)
@@ -114,6 +120,9 @@ const norm = (d) => ({
   pinchpoint: PINCHPOINTS.includes(d.pinchpoint) ? d.pinchpoint : 'None',
   sentiment: d.sentiment || 'Neutral', urgency: d.urgency || 'Low',
   handover: d.handover || 'No Handover', topic: (d.topic || '').slice(0, 200),
+  flavor: FLAVORS.includes(d.flavor) ? d.flavor : 'none',
+  spice: Math.max(0, Math.min(3, Math.round(Number(d.spice) || 0))),
+  highlight: scrub((d.highlight || '').toString()).slice(0, 140),
 })
 
 // Fetch + assemble PII-scrubbed transcripts for a set of conversation ids.
@@ -180,7 +189,8 @@ if (DRY) {
       const { data } = await classify(lines.join('\n').slice(0, 4000))
       const d = norm(data)
       const firstU = (lines.find((l) => l.startsWith('USER:')) || '').slice(6, 64)
-      console.log(`${d.substantive ? '✓' : '·'} [${d.section}] ⟨${d.category}⟩ pinch:${d.pinchpoint}  ${d.sentiment}/${d.urgency}  "${d.topic}"\n     ⟵ ${firstU}`)
+      const spice = d.spice > 0 ? `  · 🌶️${d.spice} ${d.flavor}${d.highlight ? ` “${d.highlight}”` : ''}` : ''
+      console.log(`${d.substantive ? '✓' : '·'} [${d.section}] ⟨${d.category}⟩ pinch:${d.pinchpoint}  ${d.sentiment}/${d.urgency}  "${d.topic}"${spice}\n     ⟵ ${firstU}`)
     } catch (e) { console.log('ERR', e.message) }
   }
   await c.end()
@@ -198,10 +208,14 @@ await c.query(`
     bot_id int not null, conversation_id bigint primary key, day date,
     substantive boolean, category text, section text, pinchpoint text,
     sentiment text, urgency text, handover text, topic text,
+    flavor text, spice int, highlight text,
     model text, enriched_at timestamptz default now()
   )`)
 await c.query(`alter table report.conversation_intel add column if not exists section text`)
 await c.query(`alter table report.conversation_intel add column if not exists pinchpoint text`)
+await c.query(`alter table report.conversation_intel add column if not exists flavor text`)
+await c.query(`alter table report.conversation_intel add column if not exists spice int`)
+await c.query(`alter table report.conversation_intel add column if not exists highlight text`)
 await c.query(`create index if not exists conversation_intel_bot_day on report.conversation_intel (bot_id, day)`)
 await c.query(`grant select on report.conversation_intel to anon, authenticated`)
 
@@ -238,19 +252,20 @@ for (let s = 0; s < work.length; s += CHUNK) {
       inTok += usage.prompt_tokens; outTok += usage.completion_tokens; done++
       const d = norm(data)
       rows.push([BOT, Number(cid), dayById.get(cid) || null, d.substantive, d.category,
-        d.section, d.pinchpoint, d.sentiment, d.urgency, d.handover, d.topic, MODEL])
+        d.section, d.pinchpoint, d.sentiment, d.urgency, d.handover, d.topic, MODEL,
+        d.flavor, d.spice, d.highlight])
     } catch { failed++ }
   })
   // conversations with no extractable text: store a neutral shell so we don't re-loop them
   for (const r of chunk) if (!t.has(String(r.conversation_id)))
     rows.push([BOT, Number(r.conversation_id), r.day, false, 'Other', 'Other', 'None',
-      'Neutral', 'Low', 'No Handover', '', MODEL])
+      'Neutral', 'Low', 'No Handover', '', MODEL, 'none', 0, ''])
 
   if (rows.length) {
-    const ph = rows.map((_, i) => { const b = i * 12
-      return `($${b+1},$${b+2},$${b+3},$${b+4},$${b+5},$${b+6},$${b+7},$${b+8},$${b+9},$${b+10},$${b+11},$${b+12})` }).join(',')
+    const COLS = 15
+    const ph = rows.map((_, i) => `(${Array.from({ length: COLS }, (_, k) => '$' + (i * COLS + k + 1)).join(',')})`).join(',')
     await c.query(`insert into report.conversation_intel
-      (bot_id,conversation_id,day,substantive,category,section,pinchpoint,sentiment,urgency,handover,topic,model)
+      (bot_id,conversation_id,day,substantive,category,section,pinchpoint,sentiment,urgency,handover,topic,model,flavor,spice,highlight)
       values ${ph} on conflict (conversation_id) do nothing`, rows.flat())
   }
   const cost = inTok * PRICE_IN / 1e6 + outTok * PRICE_OUT / 1e6

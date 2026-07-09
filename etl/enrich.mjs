@@ -19,7 +19,7 @@
  */
 import 'dotenv/config'
 import pg from 'pg'
-import { VERTICALS, MIN_CONFIDENCE } from './verticals.mjs'
+import { VERTICALS, MIN_CONFIDENCE, compositeSections, verticalLabel } from './verticals.mjs'
 
 const args = process.argv.slice(2)
 const BOT = Number(args[0] || 43)
@@ -150,12 +150,17 @@ await c.connect()
 // confidence gate (< MIN_CONFIDENCE) falls back to the `generic` preset so a
 // low-confidence guess never applies the wrong section taxonomy. Missing row →
 // generic + a nudge to run detect-vertical.mjs first.
-const _bv = (await c.query('select vertical, confidence from report.bot_vertical where bot_id=$1', [BOT])).rows[0]
+const _bv = (await c.query('select vertical, confidence, also from report.bot_vertical where bot_id=$1', [BOT])).rows[0]
 const _vkey = _bv && (_bv.confidence == null || _bv.confidence >= MIN_CONFIDENCE) && VERTICALS[_bv.vertical] ? _bv.vertical : 'generic'
-V = VERTICALS[_vkey]
+// Composite: a bot can carry secondary facets (e.g. ski + water park). Union their
+// section taxonomies so questions on either side of the resort have a home.
+const _also = (_bv?.also || []).filter((k) => VERTICALS[k] && k !== _vkey)
+V = _also.length
+  ? { label: verticalLabel(_vkey, _also), sections: compositeSections(_vkey, _also), status: VERTICALS[_vkey].status }
+  : VERTICALS[_vkey]
 SYSTEM = buildSystem(V)
 if (!_bv) console.log(`  ⚠ bot ${BOT} has no report.bot_vertical row — run detect-vertical.mjs; using "${V.label}"`)
-else console.log(`  vertical: ${_vkey}${_vkey !== _bv.vertical ? ` (detected ${_bv.vertical} @ ${_bv.confidence}, below gate → generic)` : ` @ conf ${_bv.confidence}`}`)
+else console.log(`  vertical: ${V.label}${_vkey !== _bv.vertical ? ` (detected ${_bv.vertical} @ ${_bv.confidence}, below gate → generic)` : ` @ conf ${_bv.confidence}`}${_also.length ? ` [composite: +${_also.join(', ')}]` : ''}`)
 
 // ── DRY: read-only preview — sample, classify, print. No writes. ─────────────
 if (DRY) {

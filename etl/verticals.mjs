@@ -76,3 +76,32 @@ export function sectionsFor(vertical, confidence) {
   const v = confidence != null && confidence < MIN_CONFIDENCE ? 'generic' : vertical
   return (VERTICALS[v] || VERTICALS.generic).sections
 }
+
+// Shared "tail" sections every preset ends with — deduped once at the end of a
+// composite, never duplicated in the middle.
+const TAIL = ['Ecommerce / Account Management', 'Live Agent Request', 'Other']
+
+/**
+ * COMPOSITE taxonomy for a multi-facet bot (e.g. a ski resort that ALSO has a water
+ * park): union of the primary + any secondary verticals' sections, primary first,
+ * de-duped, with the universal tail (Ecommerce / Live Agent / Other) once at the end.
+ * So "lift ticket" → ski's Tickets and "cabana" → waterpark's Cabanas both have a home.
+ */
+export function compositeSections(primary, also = []) {
+  const keys = [primary, ...(also || [])].filter((k) => VERTICALS[k])
+  if (keys.length === 0) return VERTICALS.generic.sections
+  const seen = new Set(), out = []
+  for (const k of keys) {
+    for (const s of VERTICALS[k].sections) {
+      if (TAIL.includes(s) || seen.has(s)) continue
+      seen.add(s); out.push(s)
+    }
+  }
+  return [...out, ...TAIL]
+}
+
+/** A human label for a bot's (possibly composite) vertical, for prompts + badges. */
+export function verticalLabel(primary, also = []) {
+  const keys = [primary, ...(also || [])].filter((k) => VERTICALS[k])
+  return keys.map((k) => VERTICALS[k].label).join(' + ') || VERTICALS.generic.label
+}

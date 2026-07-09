@@ -17,6 +17,7 @@ import { PeriodPicker } from '../PeriodPicker'
 import { SenderMixStack } from '../SenderMixStack'
 import { RealtimeAgent } from '../RealtimeAgent'
 import { TwilioConnect } from '../TwilioConnect/TwilioConnect'
+import { VerticalBadge } from '../VerticalBadge/VerticalBadge'
 import { ChannelToggle } from '../ChannelToggle/ChannelToggle'
 import { omniGroupByKey } from '../../lib/omniGroups'
 import { ShreddingOverlay, useShredPulse } from '../ShreddingOverlay'
@@ -102,6 +103,7 @@ export function BotAnalyticsPage() {
               />
               {isLive ? 'Live' : 'Demo'}
             </span>
+            <VerticalBadge botId={botId} />
             <TwilioConnect botId={botId} />
           </div>
           <PeriodPicker value={selection} onChange={setSelection} align="end" />

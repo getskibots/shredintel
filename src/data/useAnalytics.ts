@@ -972,6 +972,32 @@ export function useBotChannel(botId: number): { channel: 'chat' | 'voice'; isLoa
   return state
 }
 
+/** The auto-detected vertical (+ any secondary facets) for a single bot, from
+ *  report.bot_vertical. `also` is the composite facets (e.g. ski + water park).
+ *  Empty/null until detected or when Supabase is unconfigured. For header badges. */
+export function useBotVertical(botId: number): { vertical: string | null; also: string[] } {
+  const [state, setState] = useState<{ vertical: string | null; also: string[] }>({ vertical: null, also: [] })
+  useEffect(() => {
+    if (!supabaseConfigured || !Number.isFinite(botId)) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const supabase = getSupabase()
+        if (!supabase) return
+        const { data } = (await supabase
+          .schema('report')
+          .from('bot_vertical')
+          .select('vertical, also')
+          .eq('bot_id', botId)
+          .maybeSingle()) as { data: { vertical: string; also: string[] | null } | null; error: unknown }
+        if (!cancelled) setState({ vertical: data?.vertical ?? null, also: data?.also ?? [] })
+      } catch { /* non-fatal */ }
+    })()
+    return () => { cancelled = true }
+  }, [botId])
+  return state
+}
+
 /**
  * Build chat fixtures for a given selection. Presets go through
  * `buildPeriodFixtures`; custom ranges go through the days-driven builder

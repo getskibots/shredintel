@@ -34,12 +34,13 @@ const pool = new pg.Pool({
 
 await pool.query(`create table if not exists report.bot_vertical (
   bot_id bigint primary key, vertical text not null, confidence real, reason text,
-  source text not null default 'auto', detected_at timestamptz not null default now())`)
+  also text[], source text not null default 'auto', detected_at timestamptz not null default now())`)
+await pool.query('alter table report.bot_vertical add column if not exists also text[]').catch(() => {})
 await pool.query('grant select on report.bot_vertical to anon, authenticated').catch(() => {})
 
 const KEYS = Object.keys(VERTICALS).filter((k) => k !== 'generic')
 const OPTIONS = KEYS.map((k) => `${k} = ${VERTICALS[k].desc}`).join('\n') + '\nother = none of the above fit'
-const SYS = `You classify a tourism / leisure / travel business into ONE vertical for analytics, from its NAME and ACTUAL customer questions. Choose exactly one key:\n${OPTIONS}\nPrefer the most specific fit; only use "other" if truly none apply. Return strict JSON: {"vertical":"<key>","confidence":0..1,"reason":"<=8 words"}`
+const SYS = `You classify a tourism / leisure / travel business into a PRIMARY vertical for analytics, from its NAME and ACTUAL customer questions. Choose exactly one primary key:\n${OPTIONS}\nAlso return "secondary": an array of ADDITIONAL vertical keys ONLY when the business clearly operates a distinct second facility (e.g. a ski resort that ALSO runs a large water park). Usually []. Do NOT add a secondary for a minor amenity the primary already covers. Prefer the most specific primary; only use "other" if truly none apply.\nReturn strict JSON: {"vertical":"<primary key>","secondary":["<key>",...],"confidence":0..1,"reason":"<=8 words"}`
 
 async function classify(name, msgs) {
   for (let i = 0; i < 4; i++) {
@@ -84,18 +85,20 @@ async function worker() {
         if (msgs.length < 5) msgs = (await cl.query(RAWQ, [b.bot_id])).rows.map((r) => (r.txt || '').replace(/\s+/g, ' ').trim()).filter(Boolean).slice(0, 20)
       } finally { cl.release() }
 
-      let vert = 'generic', conf = 0.3, reason = 'too few messages to classify'
+      let vert = 'generic', conf = 0.3, reason = 'too few messages to classify', also = null
       if (msgs.length >= 2) {
         const d = await classify(b.name, msgs)
         vert = VERTICALS[d.vertical] ? d.vertical : 'generic'
         conf = typeof d.confidence === 'number' ? d.confidence : null
         reason = String(d.reason || '').slice(0, 120)
+        const sec = Array.isArray(d.secondary) ? [...new Set(d.secondary)].filter((k) => VERTICALS[k] && k !== vert && k !== 'generic').slice(0, 3) : []
+        also = sec.length ? sec : null
       }
-      await pool.query(`insert into report.bot_vertical (bot_id, vertical, confidence, reason, source)
-        values ($1,$2,$3,$4,'auto')
+      await pool.query(`insert into report.bot_vertical (bot_id, vertical, confidence, reason, also, source)
+        values ($1,$2,$3,$4,$5,'auto')
         on conflict (bot_id) do update set vertical=excluded.vertical, confidence=excluded.confidence,
-          reason=excluded.reason, detected_at=now() where report.bot_vertical.source <> 'override'`,
-        [b.bot_id, vert, conf, reason])
+          reason=excluded.reason, also=excluded.also, detected_at=now() where report.bot_vertical.source <> 'override'`,
+        [b.bot_id, vert, conf, reason, also])
       n++
       if (n % 25 === 0) console.log(`  ${n}/${work.length}…`)
     } catch (e) { console.log(`  bot ${b.bot_id} (${(b.name || '').slice(0, 22)}) → ERR ${e.message.slice(0, 45)}`) }

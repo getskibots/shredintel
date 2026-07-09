@@ -19,6 +19,7 @@ import { useVoiceCallAnalytics, type VoiceBreakdown } from '../../data/useVoiceC
 import { useAvailableBots } from '../../data/useAnalytics'
 import { ConversationExplorer } from '../ConversationExplorer/ConversationExplorer'
 import { TwilioConnect } from '../TwilioConnect/TwilioConnect'
+import { VerticalBadge } from '../VerticalBadge/VerticalBadge'
 import { ChannelToggle } from '../ChannelToggle/ChannelToggle'
 import { omniGroupByKey } from '../../lib/omniGroups'
 import { NaDotMap } from '../NaDotMap/NaDotMap'
@@ -158,6 +159,7 @@ export function VoiceAnalyticsPage() {
               <span className={['h-1.5 w-1.5 rounded-full', isLive ? 'bg-emerald-500' : 'bg-slate-400'].join(' ')} />
               {isLive ? 'LIVE' : 'Demo'}
             </span>
+            <VerticalBadge botId={botId} />
             <TwilioConnect botId={botId} />
           </div>
           <PeriodPicker value={selection} onChange={setSelection} />

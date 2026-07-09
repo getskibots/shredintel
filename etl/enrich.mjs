@@ -24,6 +24,10 @@ import { VERTICALS, MIN_CONFIDENCE, compositeSections, verticalLabel } from './v
 const args = process.argv.slice(2)
 const BOT = Number(args[0] || 43)
 const DRY = args.includes('--dry')
+// Backfill mode: re-classify ALREADY-enriched rows to fill the NEW fields
+// (resolution / revenue / language + flavor for rows that lack it) via UPDATE,
+// preserving the existing category/section/sentiment/etc. See the work query + write below.
+const BACKFILL = args.includes('--backfill')
 const NUMS = args.slice(1).filter((a) => /^\d+$/.test(a)).map(Number)
 const MAX = NUMS.length ? NUMS[0] : (DRY ? 12 : Infinity)
 const MODEL = 'gpt-4o-mini'
@@ -47,6 +51,10 @@ const PINCHPOINTS = [
 // Easter-egg "vibe" axis — surfaces the memorable conversations that sentiment can't
 // capture (the hilarious, the bizarre, the truly furious) for the hidden Hall of Fame.
 const FLAVORS = ['none', 'furious', 'funny', 'quirky', 'bizarre', 'wholesome', 'heartfelt', 'confused']
+// "Full suite" layer: outcome (did we help?), revenue posture (are we winning/losing
+// the sale?), and the guest's language.
+const RESOLUTIONS = ['Resolved', 'Partial', 'Unresolved', 'N/A']
+const REVENUE = ['None', 'Browsing', 'Ready to Book', 'At Risk']
 
 // Vertical + its section preset are AUTO-DETECTED per bot (report.bot_vertical,
 // written by detect-vertical.mjs) from the shared registry in verticals.mjs — resolved
@@ -56,13 +64,16 @@ let V // { label, sections } for this bot's detected vertical (assigned post-con
 
 const buildSystem = (v) => `You are ShredIntel's conversation classifier for the guest-services chat assistant of a ${v.label}.
 Read the whole conversation (guest + bot turns) and classify the GUEST's need. Return ONLY minified JSON:
-{"substantive":true|false,"category":<one CATEGORY>,"section":<one SECTION>,"pinchpoint":<one PINCHPOINT>,"sentiment":"Positive"|"Neutral"|"Negative","urgency":"Low"|"Medium"|"High"|"Escalation Required","handover":"No Handover"|"Possible Handover"|"Clear Handover","topic":"<max 8 words, the specific ask, no names/emails/phones>","flavor":<one FLAVOR>,"spice":0|1|2|3,"highlight":"<most quotable guest line, near-verbatim, <=120 chars, no names/emails/phones>"}
+{"substantive":true|false,"category":<one CATEGORY>,"section":<one SECTION>,"pinchpoint":<one PINCHPOINT>,"sentiment":"Positive"|"Neutral"|"Negative","urgency":"Low"|"Medium"|"High"|"Escalation Required","handover":"No Handover"|"Possible Handover"|"Clear Handover","topic":"<max 8 words, the specific ask, no names/emails/phones>","flavor":<one FLAVOR>,"spice":0|1|2|3,"highlight":"<most quotable guest line, near-verbatim, <=120 chars, no names/emails/phones>","resolution":<one RESOLUTION>,"revenue":<one REVENUE>,"language":"<guest's language, e.g. English>"}
 CATEGORY = the universal support bucket, exactly one of: ${SPINE.join('; ')}.
 SECTION = the ${v.label} knowledge area the question belongs to, exactly one of: ${v.sections.join('; ')}.
 PINCHPOINT = the specific e-commerce/account friction if the guest is stuck buying, accessing an account, or managing an order; otherwise "None". Exactly one of: ${PINCHPOINTS.join('; ')}.
 FLAVOR = the conversation's memorable "vibe", exactly one of: ${FLAVORS.join('; ')}. Use "none" for the ordinary majority (almost all). "furious"=enraged, abusive, or threatening; "funny"=genuinely comedic (intentional or not); "quirky"/"bizarre"=odd, surreal, or off-the-wall; "wholesome"/"heartfelt"=sweet, grateful, or touching; "confused"=endearingly lost.
 SPICE = how screenshot-worthy / Hall-of-Fame-worthy this is: 0 ordinary, 1 mildly notable, 2 very notable, 3 unforgettable. Most conversations are 0, but DO flag the gems: a guest treating the assistant as something it isn't (asking a ski resort for video-game currency, ordering food, flirting with the bot, homework help), genuinely absurd or hilarious exchanges, real rage/abuse/threats, and sweet or heartfelt moments all deserve 2-3 with the matching flavor.
 HIGHLIGHT = the single most quotable GUEST line, near-verbatim (<=120 chars), scrub any name/email/phone. Empty "" if nothing stands out.
+RESOLUTION = judge the BOT'S ANSWER, NOT whether the guest confirmed or bought (you can't see that). Exactly one of: ${RESOLUTIONS.join('; ')}. "Resolved"=the bot gave a complete, correct answer to what was asked — INCLUDING when the guest simply stops replying afterward (guests routinely leave the instant they have what they need; a conversation ending after a good answer is Resolved, NOT a failure). "Partial"=the bot addressed some of the ask but clearly left a distinct part unanswered. "Unresolved"=the bot FAILED on the transcript itself: it said it couldn't help, deflected, gave visibly wrong/incomplete info, OR the guest EXPLICITLY said they were still stuck or unsatisfied. "N/A"=no real need (greeting/test). When the bot answered and nothing in the text shows a problem, default to Resolved.
+REVENUE = the guest's buying posture from what they EXPRESSED only — you CANNOT see whether they actually purchased, so never infer it. Exactly one of: ${REVENUE.join('; ')}. "None"=no purchase intent. "Browsing"=researching/comparing, not committing yet. "Ready to Book"=clear intent to buy or reserve now. "At Risk"=ONLY when the guest showed buying intent AND the transcript shows an UNRESOLVED blocker or explicit frustration (a checkout error, "too expensive", "this is confusing", "forget it"). A guest who asked a pricing/booking question and got a good answer is "Browsing" or "Ready to Book" — do NOT mark "At Risk" just because they went quiet or you can't see a purchase. Silence is not a lost sale.
+LANGUAGE = the primary language the GUEST wrote in, as a plain English name (English, Spanish, French, German, Portuguese, …). Default "English".
 substantive=false ONLY for pure greetings, pleasantries, or tests with NO question or request (e.g. "hi", "hello", "thanks", "ok", "test"). A SHORT message is STILL substantive if it asks or requests anything — "how's the snow today?", "rentals phone number", "hours?", "can I talk to a real person" are all substantive=true. When in doubt, default to substantive=true.
 Do not invent. Base everything on the actual messages.`
 let SYSTEM // built once V is resolved (post-connect, below)
@@ -123,7 +134,17 @@ const norm = (d) => ({
   flavor: FLAVORS.includes(d.flavor) ? d.flavor : 'none',
   spice: Math.max(0, Math.min(3, Math.round(Number(d.spice) || 0))),
   highlight: scrub((d.highlight || '').toString()).slice(0, 140),
+  resolution: RESOLUTIONS.includes(d.resolution) ? d.resolution : 'N/A',
+  revenue: REVENUE.includes(d.revenue) ? d.revenue : 'None',
+  language: (d.language || 'English').toString().slice(0, 24),
 })
+
+// Neutral shell for conversations with no extractable text (stored so we don't re-loop them).
+const NEUTRAL = {
+  substantive: false, category: 'Other', section: 'Other', pinchpoint: 'None',
+  sentiment: 'Neutral', urgency: 'Low', handover: 'No Handover', topic: '',
+  flavor: 'none', spice: 0, highlight: '', resolution: 'N/A', revenue: 'None', language: 'English',
+}
 
 // Fetch + assemble PII-scrubbed transcripts for a set of conversation ids.
 async function transcripts(c, ids) {
@@ -190,7 +211,7 @@ if (DRY) {
       const d = norm(data)
       const firstU = (lines.find((l) => l.startsWith('USER:')) || '').slice(6, 64)
       const spice = d.spice > 0 ? `  · 🌶️${d.spice} ${d.flavor}${d.highlight ? ` “${d.highlight}”` : ''}` : ''
-      console.log(`${d.substantive ? '✓' : '·'} [${d.section}] ⟨${d.category}⟩ pinch:${d.pinchpoint}  ${d.sentiment}/${d.urgency}  "${d.topic}"${spice}\n     ⟵ ${firstU}`)
+      console.log(`${d.substantive ? '✓' : '·'} [${d.section}] ⟨${d.category}⟩ ${d.resolution}·${d.revenue}·${d.language}  ${d.sentiment}/${d.urgency}  "${d.topic}"${spice}\n     ⟵ ${firstU}`)
     } catch (e) { console.log('ERR', e.message) }
   }
   await c.end()
@@ -209,6 +230,7 @@ await c.query(`
     substantive boolean, category text, section text, pinchpoint text,
     sentiment text, urgency text, handover text, topic text,
     flavor text, spice int, highlight text,
+    resolution text, revenue text, language text,
     model text, enriched_at timestamptz default now()
   )`)
 await c.query(`alter table report.conversation_intel add column if not exists section text`)
@@ -216,26 +238,34 @@ await c.query(`alter table report.conversation_intel add column if not exists pi
 await c.query(`alter table report.conversation_intel add column if not exists flavor text`)
 await c.query(`alter table report.conversation_intel add column if not exists spice int`)
 await c.query(`alter table report.conversation_intel add column if not exists highlight text`)
+await c.query(`alter table report.conversation_intel add column if not exists resolution text`)
+await c.query(`alter table report.conversation_intel add column if not exists revenue text`)
+await c.query(`alter table report.conversation_intel add column if not exists language text`)
 await c.query(`create index if not exists conversation_intel_bot_day on report.conversation_intel (bot_id, day)`)
 await c.query(`grant select on report.conversation_intel to anon, authenticated`)
 
-// Bot-scoped work query: this bot's engaged conversations not yet enriched, with
-// resort-local `day` (matches report._conversations_v). Indexed, ~10s/bot.
-const { rows: todo } = await c.query(`
-  select cv.id as conversation_id,
-         ((cv.started_at at time zone 'UTC') at time zone coalesce(tz.tz, 'America/Denver'))::date as day
-    from raw.admin_conversation cv
-    join raw.admin_user u on u.id = cv.user_id and u.bot_id = $1
-    left join report.bot_timezone tz on tz.bot_id = u.bot_id
-   where cv.started_at >= '2024-10-01'
-     and exists (select 1 from raw.admin_chat_history h
-        where h.conversation_id = cv.id and coalesce(h.is_message,1)=1
-          and coalesce(h.is_echo,false)=false and coalesce(h.is_from_support,0)=0
-          and coalesce(h.visible,1)=1)
-     and not exists (select 1 from report.conversation_intel ci where ci.conversation_id = cv.id)
-   order by cv.started_at desc`, [BOT])
+// Work query. NORMAL: this bot's engaged conversations NOT yet enriched (insert path).
+// BACKFILL: this bot's ALREADY-enriched rows missing the new fields (update path).
+const { rows: todo } = BACKFILL
+  ? await c.query(`
+      select conversation_id, day from report.conversation_intel
+       where bot_id = $1 and resolution is null
+       order by enriched_at desc nulls last`, [BOT])
+  : await c.query(`
+      select cv.id as conversation_id,
+             ((cv.started_at at time zone 'UTC') at time zone coalesce(tz.tz, 'America/Denver'))::date as day
+        from raw.admin_conversation cv
+        join raw.admin_user u on u.id = cv.user_id and u.bot_id = $1
+        left join report.bot_timezone tz on tz.bot_id = u.bot_id
+       where cv.started_at >= '2024-10-01'
+         and exists (select 1 from raw.admin_chat_history h
+            where h.conversation_id = cv.id and coalesce(h.is_message,1)=1
+              and coalesce(h.is_echo,false)=false and coalesce(h.is_from_support,0)=0
+              and coalesce(h.visible,1)=1)
+         and not exists (select 1 from report.conversation_intel ci where ci.conversation_id = cv.id)
+       order by cv.started_at desc`, [BOT])
 const work = todo.slice(0, MAX)
-console.log(`bot ${BOT} · vertical="${V.label}" · ${todo.length} engaged conversations to enrich${work.length < todo.length ? ` (capped ${work.length})` : ''}`)
+console.log(`bot ${BOT} · vertical="${V.label}" · ${todo.length} conversations to ${BACKFILL ? 'backfill' : 'enrich'}${work.length < todo.length ? ` (capped ${work.length})` : ''}`)
 
 let done = 0, failed = 0, inTok = 0, outTok = 0
 const t0 = Date.now()
@@ -245,28 +275,40 @@ for (let s = 0; s < work.length; s += CHUNK) {
   const dayById = new Map(chunk.map((r) => [String(r.conversation_id), r.day]))
   const t = await transcripts(c, chunk.map((r) => r.conversation_id))
 
-  const rows = []
+  const rows = [] // { cid, day, d }
   await pool([...t.entries()], CONC, async ([cid, lines]) => {
     try {
       const { data, usage } = await classify(lines.join('\n').slice(0, 4000))
       inTok += usage.prompt_tokens; outTok += usage.completion_tokens; done++
-      const d = norm(data)
-      rows.push([BOT, Number(cid), dayById.get(cid) || null, d.substantive, d.category,
-        d.section, d.pinchpoint, d.sentiment, d.urgency, d.handover, d.topic, MODEL,
-        d.flavor, d.spice, d.highlight])
+      rows.push({ cid: Number(cid), day: dayById.get(cid) || null, d: norm(data) })
     } catch { failed++ }
   })
-  // conversations with no extractable text: store a neutral shell so we don't re-loop them
+  // conversations with no extractable text: a neutral shell so we don't re-loop them
   for (const r of chunk) if (!t.has(String(r.conversation_id)))
-    rows.push([BOT, Number(r.conversation_id), r.day, false, 'Other', 'Other', 'None',
-      'Neutral', 'Low', 'No Handover', '', MODEL, 'none', 0, ''])
+    rows.push({ cid: Number(r.conversation_id), day: r.day, d: NEUTRAL })
 
-  if (rows.length) {
-    const COLS = 15
-    const ph = rows.map((_, i) => `(${Array.from({ length: COLS }, (_, k) => '$' + (i * COLS + k + 1)).join(',')})`).join(',')
+  if (rows.length && BACKFILL) {
+    // UPDATE only the NEW fields on already-enriched rows — preserve the existing
+    // category/section/sentiment/… ; coalesce flavor/spice/highlight so today's
+    // already-flavored rows aren't churned (only fill where still empty).
+    const C = 7
+    const ph = rows.map((_, i) => `($${i * C + 1}::bigint,$${i * C + 2}::text,$${i * C + 3}::text,$${i * C + 4}::text,$${i * C + 5}::text,$${i * C + 6}::int,$${i * C + 7}::text)`).join(',')
+    const flat = rows.flatMap((r) => [r.cid, r.d.resolution, r.d.revenue, r.d.language, r.d.flavor, r.d.spice, r.d.highlight])
+    await c.query(`update report.conversation_intel ci set
+        resolution = v.resolution, revenue = v.revenue, language = v.language,
+        flavor = coalesce(ci.flavor, v.flavor), spice = coalesce(ci.spice, v.spice),
+        highlight = coalesce(nullif(ci.highlight, ''), v.highlight)
+      from (values ${ph}) as v(cid,resolution,revenue,language,flavor,spice,highlight)
+      where ci.conversation_id = v.cid`, flat)
+  } else if (rows.length) {
+    const C = 18
+    const ph = rows.map((_, i) => `(${Array.from({ length: C }, (_, k) => '$' + (i * C + k + 1)).join(',')})`).join(',')
+    const flat = rows.flatMap((r) => [BOT, r.cid, r.day, r.d.substantive, r.d.category, r.d.section,
+      r.d.pinchpoint, r.d.sentiment, r.d.urgency, r.d.handover, r.d.topic, MODEL,
+      r.d.flavor, r.d.spice, r.d.highlight, r.d.resolution, r.d.revenue, r.d.language])
     await c.query(`insert into report.conversation_intel
-      (bot_id,conversation_id,day,substantive,category,section,pinchpoint,sentiment,urgency,handover,topic,model,flavor,spice,highlight)
-      values ${ph} on conflict (conversation_id) do nothing`, rows.flat())
+      (bot_id,conversation_id,day,substantive,category,section,pinchpoint,sentiment,urgency,handover,topic,model,flavor,spice,highlight,resolution,revenue,language)
+      values ${ph} on conflict (conversation_id) do nothing`, flat)
   }
   const cost = inTok * PRICE_IN / 1e6 + outTok * PRICE_OUT / 1e6
   console.log(`  ${done}/${work.length} · ${failed} failed · $${cost.toFixed(3)} · ${(done / ((Date.now() - t0) / 1000)).toFixed(1)}/s`)

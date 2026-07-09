@@ -19,6 +19,7 @@
  */
 import 'dotenv/config'
 import pg from 'pg'
+import { VERTICALS, MIN_CONFIDENCE } from './verticals.mjs'
 
 const args = process.argv.slice(2)
 const BOT = Number(args[0] || 43)
@@ -44,69 +45,21 @@ const PINCHPOINTS = [
   'Checkout', 'Booking change', 'Confirmation', 'Waiver', 'Credit', 'Voucher', 'None',
 ]
 
-// Per-vertical knowledge SECTION presets. Ski = the proven JH preset. Non-ski
-// presets are DRAFTS (Brandon to confirm the exact section lists later). Every
-// preset keeps 'General Info', 'Ecommerce / Account Management', 'Other' for
-// consistency across the portfolio.
-const SKI = [
-  'General Info', 'Tickets', 'Season Passes', 'Partner Pass Programs',
-  'Ski & Snowboard Lessons', 'Ski & Snowboard Rentals', 'Refund Policies',
-  'Winter Activities', 'Tubing', 'Summer Activities', 'Lodging', 'Dining & Après',
-  'Guest Services & Safety', 'Parking & Transit', 'Events', 'Pet & Service Animals',
-  'Packing & Gear', 'Employment', 'Ecommerce / Account Management', 'Other',
-]
-const VERTICALS = {
-  ski: { label: 'ski resort', sections: SKI },
-  pass: { label: 'season / multi-resort ski pass', sections: [
-    'General Info', 'Pass Products & Pricing', 'Partner & Member Resorts',
-    'Reservations & Blackout Dates', 'Account / Access', 'Adding & Managing Members',
-    'Renewals', 'Refund Policies', 'Payments & Billing', 'Benefits & Discounts',
-    'Ecommerce / Account Management', 'Other'] },
-  waterpark: { label: 'indoor water park', sections: [
-    'General Info', 'Day Passes & Tickets', 'Cabanas & Rentals', 'Hotel & Lodging Packages',
-    'Groups & Parties', 'Hours & Seasons', 'Height, Age & Safety Rules', 'Dining',
-    'Refund Policies', 'Parking & Directions', 'Events', 'Ecommerce / Account Management', 'Other'] },
-  indoor_ski: { label: 'indoor ski & snow park', sections: [
-    'General Info', 'Tickets & Sessions', 'Season Passes', 'Lessons', 'Rentals',
-    'Groups & Parties', 'Hours & Access', 'Dining', 'Refund Policies', 'Parking & Directions',
-    'Safety & Rules', 'Ecommerce / Account Management', 'Other'] },
-  transport: { label: 'ground-transportation / shuttle service', sections: [
-    'General Info', 'Booking a Ride', 'Schedules & Routes', 'Pickup & Dropoff Locations',
-    'Pricing & Fares', 'Airport Transfers', 'Group & Charter', 'Changes & Cancellations',
-    'Luggage & Equipment', 'Refund Policies', 'Ecommerce / Account Management', 'Other'] },
-  lodging: { label: 'resort lodging / hotel', sections: [
-    'General Info', 'Rooms & Rates', 'Availability & Booking', 'Amenities', 'Dining',
-    'Packages & Deals', 'Check-in / Check-out & Policies', 'Groups & Events', 'Parking & Transit',
-    'Refund / Cancellation Policies', 'Ecommerce / Account Management', 'Other'] },
-  travel: { label: 'travel agency', sections: [
-    'General Info', 'Trip Packages', 'Booking & Reservations', 'Pricing & Quotes',
-    'Destinations & Activities', 'Lodging & Flights', 'Changes & Cancellations',
-    'Payments & Billing', 'Groups', 'Refund Policies', 'Ecommerce / Account Management', 'Other'] },
-  event: { label: 'cycling / gravel race event', sections: [
-    'General Info', 'Registration & Entry', 'Categories & Courses', 'Pricing & Packages',
-    'Schedule & Logistics', 'Lodging & Travel', 'Rules & Requirements', 'Transfers & Refunds',
-    'Merchandise', 'Volunteering', 'Ecommerce / Account Management', 'Other'] },
-  marketplace: { label: 'multi-resort lift-ticket marketplace', sections: [
-    'General Info', 'Finding Tickets & Passes', 'Pricing & Availability', 'Booking & Checkout',
-    'Order Lookup & Changes', 'Payments & Billing', 'Resort Information', 'Refund Policies',
-    'Account / Access', 'Ecommerce / Account Management', 'Other'] },
-}
-// bot_id -> vertical key. Everything not listed = a ski resort (the majority).
-const BOT_VERTICAL = {
-  2: 'pass', 258: 'pass', 275: 'waterpark', 103: 'indoor_ski', 364: 'transport',
-  65: 'lodging', 140: 'event', 311: 'travel', 1: 'marketplace',
-  248: 'pass', // VOICE — Mountain Collective (same pass product as chat bot 2)
-}
-const V = VERTICALS[BOT_VERTICAL[BOT] || 'ski']
+// Vertical + its section preset are AUTO-DETECTED per bot (report.bot_vertical,
+// written by detect-vertical.mjs) from the shared registry in verticals.mjs — resolved
+// after the DB connects (below). Replaces the old hand-maintained BOT_VERTICAL map.
+// SPINE + PINCHPOINTS above are the universal "master" layer (same across every vertical).
+let V // { label, sections } for this bot's detected vertical (assigned post-connect)
 
-const SYSTEM = `You are ShredIntel's conversation classifier for the guest-services chat assistant of a ${V.label}.
+const buildSystem = (v) => `You are ShredIntel's conversation classifier for the guest-services chat assistant of a ${v.label}.
 Read the whole conversation (guest + bot turns) and classify the GUEST's need. Return ONLY minified JSON:
 {"substantive":true|false,"category":<one CATEGORY>,"section":<one SECTION>,"pinchpoint":<one PINCHPOINT>,"sentiment":"Positive"|"Neutral"|"Negative","urgency":"Low"|"Medium"|"High"|"Escalation Required","handover":"No Handover"|"Possible Handover"|"Clear Handover","topic":"<max 8 words, the specific ask, no names/emails/phones>"}
 CATEGORY = the universal support bucket, exactly one of: ${SPINE.join('; ')}.
-SECTION = the ${V.label} knowledge area the question belongs to, exactly one of: ${V.sections.join('; ')}.
+SECTION = the ${v.label} knowledge area the question belongs to, exactly one of: ${v.sections.join('; ')}.
 PINCHPOINT = the specific e-commerce/account friction if the guest is stuck buying, accessing an account, or managing an order; otherwise "None". Exactly one of: ${PINCHPOINTS.join('; ')}.
 substantive=false ONLY for pure greetings, pleasantries, or tests with NO question or request (e.g. "hi", "hello", "thanks", "ok", "test"). A SHORT message is STILL substantive if it asks or requests anything — "how's the snow today?", "rentals phone number", "hours?", "can I talk to a real person" are all substantive=true. When in doubt, default to substantive=true.
 Do not invent. Base everything on the actual messages.`
+let SYSTEM // built once V is resolved (post-connect, below)
 
 const scrub = (s) => (s || '')
   .replace(/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/gi, '[email]')
@@ -192,6 +145,17 @@ const c = new pg.Client({
   database: process.env.SUPABASE_DB_NAME || 'postgres', ssl: { rejectUnauthorized: false },
 })
 await c.connect()
+
+// Resolve this bot's vertical from the auto-detection (report.bot_vertical). The
+// confidence gate (< MIN_CONFIDENCE) falls back to the `generic` preset so a
+// low-confidence guess never applies the wrong section taxonomy. Missing row →
+// generic + a nudge to run detect-vertical.mjs first.
+const _bv = (await c.query('select vertical, confidence from report.bot_vertical where bot_id=$1', [BOT])).rows[0]
+const _vkey = _bv && (_bv.confidence == null || _bv.confidence >= MIN_CONFIDENCE) && VERTICALS[_bv.vertical] ? _bv.vertical : 'generic'
+V = VERTICALS[_vkey]
+SYSTEM = buildSystem(V)
+if (!_bv) console.log(`  ⚠ bot ${BOT} has no report.bot_vertical row — run detect-vertical.mjs; using "${V.label}"`)
+else console.log(`  vertical: ${_vkey}${_vkey !== _bv.vertical ? ` (detected ${_bv.vertical} @ ${_bv.confidence}, below gate → generic)` : ` @ conf ${_bv.confidence}`}`)
 
 // ── DRY: read-only preview — sample, classify, print. No writes. ─────────────
 if (DRY) {

@@ -58,6 +58,15 @@ for (const v of Object.values(VERTICALS)) {
   }
 }
 
+// Promotion status. 'active' = VALIDATED on real data (measured 2026-07-09: meaningful
+// volume + <~4% "Other"). 'draft' = no validating data yet (validate via the "Other"
+// rate when a client in that vertical comes online). 'fallback' = generic. Drives the
+// preset-library UI's ACTIVE-vs-EXAMPLE badge. Enrichment uses any of them regardless.
+const ACTIVE = new Set(['ski', 'pass', 'lodging', 'waterpark', 'transport', 'marketplace'])
+for (const [k, v] of Object.entries(VERTICALS)) {
+  v.status = k === 'generic' ? 'fallback' : (ACTIVE.has(k) ? 'active' : 'draft')
+}
+
 /** Confidence gate: below this, enrichment uses the `generic` preset instead of the
  *  detected vertical (the detector self-flags novel/ambiguous bots with low scores). */
 export const MIN_CONFIDENCE = 0.6

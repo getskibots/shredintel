@@ -22,7 +22,7 @@ import { VerticalBadge } from '../VerticalBadge/VerticalBadge'
 import { ChannelToggle } from '../ChannelToggle/ChannelToggle'
 import { omniGroupByKey } from '../../lib/omniGroups'
 import { ShreddingOverlay, useShredPulse } from '../ShreddingOverlay'
-import { useBotAnalytics } from '../../data/useAnalytics'
+import { useBotAnalytics, useAvailableBots } from '../../data/useAnalytics'
 import {
   resolveSelection,
   selectionFromSearchParams,
@@ -47,6 +47,8 @@ export function BotAnalyticsPage() {
     setSearchParams(params, { replace: true })
   }
   const { data: f, funnel, isLive, isLoading } = useBotAnalytics(botId, selection)
+  const { bots } = useAvailableBots()
+  const botName = bots.find((b) => b.botId === botId)?.label
   // Scope the AI (ask + voice) to the same window the dashboard is showing.
   const resolved = resolveSelection(selection)
   const askRange = { from: resolved.from, to: resolved.to, label: resolved.label }
@@ -75,7 +77,7 @@ export function BotAnalyticsPage() {
   if (isLoading || !f) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <p className="text-sm text-slate-500">Loading analytics for bot {botId}…</p>
+        <p className="text-sm text-slate-500">Loading {botName ?? `bot ${botId}`}…</p>
       </div>
     )
   }

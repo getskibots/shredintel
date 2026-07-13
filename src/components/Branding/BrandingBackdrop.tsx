@@ -19,7 +19,7 @@ export function BrandingBackdrop({ url, overlay }: { url?: string; overlay: numb
   // brighter/busier, so its scrim is a touch stronger + overlay-tunable.
   const scrim = url
     ? `linear-gradient(180deg, rgba(16,24,40,${s(0.40, 0.30)}) 0%, rgba(16,24,40,${s(0.26, 0.24)}) 46%, rgba(16,24,40,${s(0.20, 0.24)}) 100%)`
-    : 'linear-gradient(180deg, rgba(18,27,44,0.52) 0%, rgba(18,27,44,0.22) 44%, rgba(18,27,44,0.12) 100%)'
+    : 'linear-gradient(180deg, rgba(22,40,64,0.32) 0%, rgba(22,40,64,0.08) 50%, rgba(22,40,64,0) 100%)'
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
       {/* the image, or the on-brand mountain default */}

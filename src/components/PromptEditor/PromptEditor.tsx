@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Settings2, X, Loader2, Globe, Building2 } from 'lucide-react'
 import { fetchPrompts, savePrompt, PROMPT_MAX, type PromptScope } from '../../lib/aiPrompt'
 
@@ -56,8 +57,8 @@ export function PromptEditor({ botId }: { botId: number }) {
         <span className="hidden sm:inline">AI instructions</span>
       </button>
 
-      {open && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-slate-900/40 p-4 sm:p-8" onClick={() => setOpen(false)}>
+      {open && createPortal(
+        <div className="fixed inset-0 z-[60] flex items-start justify-center bg-slate-900/40 p-4 sm:p-8" onClick={() => setOpen(false)}>
           <div className="flex max-h-[86vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3.5">
               <div>
@@ -137,7 +138,8 @@ export function PromptEditor({ botId }: { botId: number }) {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   )

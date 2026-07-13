@@ -3,7 +3,7 @@ import { CalendarDays, X } from 'lucide-react'
 import {
   formatRangeHuman,
   resolveSelection,
-  todayISO,
+  yesterdayISO,
   addDays,
   type PeriodSelection,
   type PresetKey,
@@ -49,8 +49,12 @@ export function PeriodPicker({
   const [popoverOpen, setPopoverOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement | null>(null)
 
-  const today = maxDate ?? todayISO()
-  const earliest = minDate ?? addDays(today, -730)
+  // Cap the calendar at the latest day the nightly ETL has loaded — UTC
+  // "yesterday" (today's rollup isn't in yet). This keeps the picker in lockstep
+  // with the presets + data fetch, which also resolve their upper bound to
+  // yesterdayISO(); otherwise the calendar alone would offer an empty "tomorrow".
+  const latestSelectable = maxDate ?? yesterdayISO()
+  const earliest = minDate ?? addDays(latestSelectable, -730)
 
   // Close popover on outside click
   useEffect(() => {
@@ -151,7 +155,7 @@ export function PeriodPicker({
             initialFrom={value.kind === 'custom' ? value.from : resolveSelection(value).from}
             initialTo={value.kind === 'custom' ? value.to : resolveSelection(value).to}
             minDate={earliest}
-            maxDate={today}
+            maxDate={latestSelectable}
             onApply={(from, to) => {
               onChange({ kind: 'custom', from, to })
               setPopoverOpen(false)

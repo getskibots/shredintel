@@ -19,7 +19,6 @@ import { useVoiceCallAnalytics, type VoiceBreakdown } from '../../data/useVoiceC
 import { useAvailableBots } from '../../data/useAnalytics'
 import { ConversationExplorer } from '../ConversationExplorer/ConversationExplorer'
 import { TwilioConnect } from '../TwilioConnect/TwilioConnect'
-import { VerticalBadge } from '../VerticalBadge/VerticalBadge'
 import { ChannelToggle } from '../ChannelToggle/ChannelToggle'
 import { omniGroupByKey } from '../../lib/omniGroups'
 import { NaDotMap } from '../NaDotMap/NaDotMap'
@@ -107,7 +106,7 @@ export function VoiceAnalyticsPage() {
   const [params] = useSearchParams()
   const omniGroup = omniGroupByKey(params.get('omni'))
   const [selection, setSelection] = useState<PeriodSelection>(DEFAULT_PERIOD)
-  const { data, isLoading, isLive } = useVoiceCallAnalytics(botId, selection)
+  const { data, isLoading } = useVoiceCallAnalytics(botId, selection)
   const { bots } = useAvailableBots()
   const [drill, setDrill] = useState<DrillPayload | null>(null)
 
@@ -151,16 +150,6 @@ export function VoiceAnalyticsPage() {
             {omniGroup && <ChannelToggle group={omniGroup} active="voice" />}
             <h1 className="text-lg font-semibold tracking-tight text-slate-900">Voice Analytics</h1>
             {!omniGroup && <span className="rounded-md bg-white px-2 py-0.5 text-xs font-medium text-slate-600 shadow-sm">{botLabel}</span>}
-            <span
-              className={[
-                'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold',
-                isLive ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500',
-              ].join(' ')}
-            >
-              <span className={['h-1.5 w-1.5 rounded-full', isLive ? 'bg-emerald-500' : 'bg-slate-400'].join(' ')} />
-              {isLive ? 'LIVE' : 'Demo'}
-            </span>
-            <VerticalBadge botId={botId} />
             <TwilioConnect botId={botId} />
           </div>
           <PeriodPicker value={selection} onChange={setSelection} />

@@ -18,8 +18,6 @@ import { GuestIdentitySplit } from '../GuestIdentitySplit'
 import { PeriodPicker } from '../PeriodPicker'
 import { SenderMixStack } from '../SenderMixStack'
 import { RealtimeAgent } from '../RealtimeAgent'
-import { TwilioConnect } from '../TwilioConnect/TwilioConnect'
-import { VerticalBadge } from '../VerticalBadge/VerticalBadge'
 import { ChannelToggle } from '../ChannelToggle/ChannelToggle'
 import { omniGroupByKey } from '../../lib/omniGroups'
 import { ShreddingOverlay, useShredPulse } from '../ShreddingOverlay'
@@ -47,7 +45,7 @@ export function BotAnalyticsPage() {
     const params = writeSelectionToSearchParams(new URLSearchParams(searchParams), next)
     setSearchParams(params, { replace: true })
   }
-  const { data: f, funnel, isLive, isLoading, isEmpty } = useBotAnalytics(botId, selection)
+  const { data: f, funnel, isLoading, isEmpty } = useBotAnalytics(botId, selection)
   const { bots } = useAvailableBots()
   const botName = bots.find((b) => b.botId === botId)?.label
   // Scope the AI (ask + voice) to the same window the dashboard is showing.
@@ -93,22 +91,6 @@ export function BotAnalyticsPage() {
               Analytics
             </h1>
             {!omniGroup && <BotSelector />}
-            <span
-              className={
-                isLive
-                  ? 'inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-700'
-                  : 'inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500'
-              }
-              title={isLive ? 'Reading live from Supabase' : 'Using bundled fixtures'}
-            >
-              <span
-                aria-hidden
-                className={isLive ? 'h-1.5 w-1.5 rounded-full bg-emerald-500' : 'h-1.5 w-1.5 rounded-full bg-slate-400'}
-              />
-              {isLive ? 'Live' : 'Demo'}
-            </span>
-            <VerticalBadge botId={botId} />
-            <TwilioConnect botId={botId} />
           </div>
           <PeriodPicker value={selection} onChange={setSelection} align="end" />
         </div>

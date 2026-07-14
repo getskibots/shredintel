@@ -30,7 +30,7 @@ import { useShredPulse } from '../ShreddingOverlay'
 import { type DrillPayload } from '../../lib/drill'
 import { Panel, Metric, EmptyState } from '../shared'
 import { formatNumber, formatPercent } from '../../lib/formatters'
-import { brand, chart, sentimentColors } from '../../lib/chartTheme'
+import { brand, chart, dateAxisProps, dateFull, sentimentColors } from '../../lib/chartTheme'
 
 function fmtDuration(sec: number | null): string {
   if (sec == null) return '—'
@@ -239,9 +239,9 @@ export function VoiceAnalyticsPage() {
                       </linearGradient>
                     </defs>
                     <CartesianGrid {...chart.grid} />
-                    <XAxis dataKey="date" {...chart.xAxis} minTickGap={24} />
+                    <XAxis dataKey="date" {...chart.xAxis} {...dateAxisProps(m.volumeTrend.map((d) => d.date))} />
                     <YAxis {...chart.yAxis} />
-                    <Tooltip {...chart.tooltip} />
+                    <Tooltip {...chart.tooltip} labelFormatter={(l) => dateFull(String(l))} />
                     <Area type="monotone" dataKey="voiceConvs" name="Calls" stroke={brand.blue} strokeWidth={2} fill="url(#voiceVol)" isAnimationActive={false} />
                     {m.volumeSource === 'twilio' && <Area type="monotone" dataKey="connectedCalls" name="Connected" stroke={brand.gold} strokeWidth={2} fill="none" isAnimationActive={false} />}
                   </AreaChart>

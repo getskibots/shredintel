@@ -122,3 +122,39 @@ export const chart = {
   /** Pie/donut legend beneath, circular swatches (the live page pattern). */
   pieLegend: { verticalAlign: 'bottom' as const, iconType: 'circle' as const },
 } as const
+
+// ── Date axis helpers (shared by every time-series chart) ──────────────────
+const TICK_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+/** Axis tick: "2026-07-06" → "Jul 6" (short window) or "Jul '26" (wide span), so a
+ *  long timeline reads as clean month markers instead of full ISO dates. */
+export function dateTick(iso: string, wide: boolean): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso)
+  if (!m) return iso
+  return wide ? `${TICK_MONTHS[+m[2] - 1]} '${m[1].slice(2)}` : `${TICK_MONTHS[+m[2] - 1]} ${+m[3]}`
+}
+
+/** Tooltip header: the unambiguous full date, "Jul 6, 2026". */
+export function dateFull(iso: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso)
+  return m ? `${TICK_MONTHS[+m[2] - 1]} ${+m[3]}, ${m[1]}` : iso
+}
+
+/**
+ * Ready-to-spread <XAxis> props for a date series: readable, thinned tick labels
+ * that adapt to the span (day labels for short windows, month-year once it goes
+ * past ~4 months). Pass the series' date strings.
+ *   <XAxis dataKey="date" {...chart.xAxis} {...dateAxisProps(rows.map(r => r.date))} />
+ */
+export function dateAxisProps(dates: (string | null | undefined)[]) {
+  const times = dates
+    .map((d) => (d ? Date.parse(d) : NaN))
+    .filter((n) => !Number.isNaN(n))
+  const span = times.length >= 2 ? (Math.max(...times) - Math.min(...times)) / 86_400_000 : 0
+  const wide = span > 120
+  return {
+    tickFormatter: (v: string) => dateTick(v, wide),
+    minTickGap: wide ? 48 : 28,
+    interval: 'preserveStartEnd' as const,
+  }
+}

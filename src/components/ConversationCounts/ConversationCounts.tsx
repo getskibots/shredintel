@@ -9,7 +9,7 @@ import {
 } from 'recharts'
 import { EmptyState, Metric, Panel } from '../shared'
 import type { MetricProps } from '../shared/Metric'
-import { brand, chart } from '../../lib/chartTheme'
+import { brand, chart, dateAxisProps, dateFull } from '../../lib/chartTheme'
 import { formatNumber, formatPercent } from '../../lib/formatters'
 import type { ConversationCountsProps } from '../../types/analytics'
 
@@ -21,20 +21,6 @@ function formatDuration(sec: number | null): string {
   const m = Math.floor(sec / 60)
   const s = Math.round(sec % 60)
   return `${m}m ${s}s`
-}
-
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-// Axis tick: "2026-07-06" → "Jul 6" for short windows, "Jul '26" once the span is
-// wide (all-time), so a long timeline reads as clean month markers left-to-right.
-function tickShort(iso: string, wide: boolean): string {
-  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso)
-  if (!m) return iso
-  return wide ? `${MONTHS[+m[2] - 1]} '${m[1].slice(2)}` : `${MONTHS[+m[2] - 1]} ${+m[3]}`
-}
-// Tooltip header carries the unambiguous full date.
-function dateFull(iso: string): string {
-  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso)
-  return m ? `${MONTHS[+m[2] - 1]} ${+m[3]}, ${m[1]}` : iso
 }
 
 /**
@@ -57,12 +43,6 @@ export function ConversationCounts({
   trend,
 }: ConversationCountsProps) {
   const empty = sessions === 0 && messages === 0
-  // Wide spans (all-time) get month-year ticks + a bigger gap; short windows get
-  // day ticks. Trend arrives chronological (the query orders by day).
-  const spanDays = trend.length >= 2
-    ? Math.abs(Date.parse(trend[trend.length - 1].date) - Date.parse(trend[0].date)) / 86_400_000
-    : 0
-  const wideSpan = spanDays > 120
   const engagedShare = sessions > 0 ? engagedSessions / sessions : 0
   const substantiveShareOfEngaged = engagedSessions > 0 && substantive != null ? substantive / engagedSessions : 0
   const convosPerUser = users && users > 0 ? sessions / users : 0
@@ -145,13 +125,7 @@ export function ConversationCounts({
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={trend} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                   <CartesianGrid {...chart.grid} />
-                  <XAxis
-                    dataKey="date"
-                    {...chart.xAxis}
-                    tickFormatter={(v: string) => tickShort(v, wideSpan)}
-                    minTickGap={wideSpan ? 48 : 28}
-                    interval="preserveStartEnd"
-                  />
+                  <XAxis dataKey="date" {...chart.xAxis} {...dateAxisProps(trend.map((d) => d.date))} />
                   <YAxis {...chart.yAxis} />
                   <Tooltip
                     {...chart.tooltip}

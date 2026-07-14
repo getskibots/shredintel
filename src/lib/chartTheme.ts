@@ -146,15 +146,35 @@ export function dateFull(iso: string): string {
  * past ~4 months). Pass the series' date strings.
  *   <XAxis dataKey="date" {...chart.xAxis} {...dateAxisProps(rows.map(r => r.date))} />
  */
+/** One representative date (the first present) per calendar month, in input order. */
+function monthlyTicks(dates: string[]): string[] {
+  const seen = new Set<string>()
+  const out: string[] = []
+  for (const d of dates) {
+    const ym = d.slice(0, 7) // "2026-07"
+    if (/^\d{4}-\d{2}$/.test(ym) && !seen.has(ym)) {
+      seen.add(ym)
+      out.push(d)
+    }
+  }
+  return out
+}
+
 export function dateAxisProps(dates: (string | null | undefined)[]) {
-  const times = dates
-    .map((d) => (d ? Date.parse(d) : NaN))
-    .filter((n) => !Number.isNaN(n))
+  const clean = dates.filter((d): d is string => !!d)
+  const times = clean.map((d) => Date.parse(d)).filter((n) => !Number.isNaN(n))
   const span = times.length >= 2 ? (Math.max(...times) - Math.min(...times)) / 86_400_000 : 0
-  const wide = span > 120
+  if (span > 120) {
+    // Wide span (all-time): label exactly one date per month, so it reads "Jun '25,
+    // Jul '25, …" with no repeats (adjacent day-ticks in the same month showed the
+    // month twice). Every other month once there are a lot, so labels never crowd.
+    const months = monthlyTicks(clean)
+    const ticks = months.length > 16 ? months.filter((_, i) => i % 2 === 0) : months
+    return { tickFormatter: (v: string) => dateTick(v, true), ticks, interval: 0 as const }
+  }
   return {
-    tickFormatter: (v: string) => dateTick(v, wide),
-    minTickGap: wide ? 48 : 28,
+    tickFormatter: (v: string) => dateTick(v, false),
+    minTickGap: 28,
     interval: 'preserveStartEnd' as const,
   }
 }

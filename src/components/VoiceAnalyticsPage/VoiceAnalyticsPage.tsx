@@ -143,7 +143,7 @@ export function VoiceAnalyticsPage() {
   )
 
   return (
-    <div className="mx-auto max-w-[1400px] px-4 pb-16 pt-4 sm:px-6">
+    <div className="px-4 pb-16 pt-4 sm:px-6">
       {/* Header */}
       <div className="sticky top-0 z-20 -mx-4 mb-5 border-b border-slate-200 bg-botscrew-50/80 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">
         <div className="flex flex-wrap items-center justify-between gap-3">

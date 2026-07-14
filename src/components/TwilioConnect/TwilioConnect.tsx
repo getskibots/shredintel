@@ -9,7 +9,7 @@
  * The Account SID is semi-public; the auth token stays in server env.
  */
 import { useEffect, useRef, useState } from 'react'
-import { Phone, Check, X, Loader2 } from 'lucide-react'
+import { Phone, Check, X, Loader2, RefreshCw } from 'lucide-react'
 import { isEmbedMode } from '../../lib/embed'
 
 interface Mapping {
@@ -30,6 +30,8 @@ export function TwilioConnect({ botId }: { botId: number }) {
   const [label, setLabel] = useState('')
   const [token, setToken] = useState('')
   const [saving, setSaving] = useState(false)
+  const [syncing, setSyncing] = useState(false)
+  const [syncResult, setSyncResult] = useState('')
   const [err, setErr] = useState('')
   const popRef = useRef<HTMLDivElement>(null)
 
@@ -90,6 +92,22 @@ export function TwilioConnect({ botId }: { botId: number }) {
       setToken('')
       setOpen(false)
     } catch { setErr('Network error.') } finally { setSaving(false) }
+  }
+
+  // Pull this bot's inbound calls from Twilio and rebuild the connect-rate rollup —
+  // the self-serve step that used to be an ETL script. Needs a saved token.
+  const syncNow = async () => {
+    setSyncing(true); setErr(''); setSyncResult('')
+    try {
+      const r = await fetch('/api/twilio-sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ botId }),
+      })
+      const d = await r.json().catch(() => ({}))
+      if (!r.ok) { setErr(d.error || 'Sync failed.'); return }
+      setSyncResult(`${Number(d.inbound).toLocaleString()} calls · ${d.connectPct}% connect. Refresh to update the charts.`)
+    } catch { setErr('Network error.') } finally { setSyncing(false) }
   }
 
   return (
@@ -159,6 +177,21 @@ export function TwilioConnect({ botId }: { botId: number }) {
               {saving ? 'Saving…' : 'Save'}
             </button>
           </div>
+
+          {mapping?.has_token && (
+            <div className="mt-2 flex items-center justify-between gap-2 border-t border-slate-100 pt-2">
+              <span className="text-[10px] text-slate-400">
+                {syncResult || 'Pull live calls from Twilio.'}
+              </span>
+              <button
+                type="button" onClick={syncNow} disabled={syncing}
+                className="inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-botscrew-700 ring-1 ring-botscrew-200 transition hover:bg-botscrew-50 disabled:opacity-50"
+              >
+                {syncing ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+                {syncing ? 'Syncing…' : 'Sync now'}
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

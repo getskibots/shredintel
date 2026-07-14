@@ -9,6 +9,7 @@ import { PageFunnel } from '../PageFunnel'
 import { GuestSentiment } from '../GuestSentiment'
 import { HumanHandover } from '../HumanHandover'
 import { NeedsAttention } from '../NeedsAttention'
+import { EmptyRange } from '../EmptyRange/EmptyRange'
 import { KnowledgeSectionDemand } from '../KnowledgeSectionDemand'
 import { DemandHeatmap } from '../DemandHeatmap'
 import { DeviceExperienceMix } from '../DeviceExperienceMix'
@@ -46,7 +47,7 @@ export function BotAnalyticsPage() {
     const params = writeSelectionToSearchParams(new URLSearchParams(searchParams), next)
     setSearchParams(params, { replace: true })
   }
-  const { data: f, funnel, isLive, isLoading } = useBotAnalytics(botId, selection)
+  const { data: f, funnel, isLive, isLoading, isEmpty } = useBotAnalytics(botId, selection)
   const { bots } = useAvailableBots()
   const botName = bots.find((b) => b.botId === botId)?.label
   // Scope the AI (ask + voice) to the same window the dashboard is showing.
@@ -128,6 +129,13 @@ export function BotAnalyticsPage() {
         {/* Data sections — the scan sweeps + dims these on any date-range change */}
         <div className="relative">
           <ShreddingOverlay active={shredding} />
+          {isEmpty ? (
+            <EmptyRange
+              botName={botName ?? `Bot ${botId}`}
+              periodLabel={askRange.label}
+              onViewAll={() => setSelection({ kind: 'preset', preset: 'all' })}
+            />
+          ) : (
           <div className={`space-y-12 transition-opacity duration-300 ${shredding ? 'opacity-60' : 'opacity-100'}`}>
             {/* 1 — Overview: how busy the assistant is + whether guests engage.
                 (ResolutionHero / KpiStrip / OutcomeTimeline stay benched until the
@@ -211,6 +219,7 @@ export function BotAnalyticsPage() {
               <SenderMixStack {...f.senderMixStack} />
             </section>
           </div>
+          )}
         </div>
       </div>
 

@@ -1048,6 +1048,9 @@ function selectionKey(sel: PeriodSelection): string {
 export interface BotAnalyticsState extends AnalyticsState<PeriodFixtures> {
   /** Where questions originate (ecommerce funnel). null unless live + populated. */
   funnel: PageFunnelSummary | null
+  /** True when the live query succeeded but this bot has no data in the window
+   *  (so the page can show one clean empty banner instead of a stack of empties). */
+  isEmpty: boolean
 }
 
 /**
@@ -1106,7 +1109,10 @@ export function useBotAnalytics(
   )
   const funnel = useMemo(() => (raw.bundle ? summarizeFunnel(raw.bundle.pageFunnel) : null), [raw.bundle])
 
-  return { data, funnel, isLoading: raw.isLoading, isLive: raw.isLive, error: raw.error }
+  // Live query returned, but this bot has no rows in the window (bundle stayed null
+  // while isLive is true). Lets the page show one clean banner, not a wall of empties.
+  const isEmpty = raw.isLive && !raw.bundle
+  return { data, funnel, isLoading: raw.isLoading, isLive: raw.isLive, error: raw.error, isEmpty }
 }
 
 export function useJHChatAnalytics(selection: PeriodSelection): AnalyticsState<PeriodFixtures> {

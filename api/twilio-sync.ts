@@ -106,22 +106,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    // Rebuild the anon rollup — identical to etl/build-call-inbound.mjs so the
-    // dashboard reads the same shape (per bot / resort-local day).
-    await pool.query('drop materialized view if exists report.call_inbound_stats cascade')
-    await pool.query(`create materialized view report.call_inbound_stats as
-      select ci.bot_id,
-        (ci.started_at at time zone coalesce(tz.tz, 'America/Denver'))::date as day,
-        count(*)::int inbound,
-        count(*) filter (where ci.status = 'completed')::int completed,
-        count(*) filter (where ci.status <> 'completed')::int not_connected
-      from report.call_inbound ci
-      left join report.bot_timezone tz on tz.bot_id = ci.bot_id
-      where ci.started_at is not null
-      group by ci.bot_id, 2`)
-    await pool.query('create unique index call_inbound_stats_pk on report.call_inbound_stats (bot_id, day)')
-    await pool.query('grant select on report.call_inbound_stats to anon, authenticated')
-    await pool.query(`notify pgrst, 'reload schema'`)
+    // Refresh the anon rollup (shape identical to etl/build-call-inbound.mjs). When it
+    // already exists, REFRESH CONCURRENTLY avoids any downtime window — the button can be
+    // clicked while a partner is viewing the dashboard. Otherwise create it the first time.
+    const exists = (await pool.query(`select to_regclass('report.call_inbound_stats') as rel`)).rows[0]?.rel
+    if (exists) {
+      await pool.query('refresh materialized view concurrently report.call_inbound_stats')
+    } else {
+      await pool.query(`create materialized view report.call_inbound_stats as
+        select ci.bot_id,
+          (ci.started_at at time zone coalesce(tz.tz, 'America/Denver'))::date as day,
+          count(*)::int inbound,
+          count(*) filter (where ci.status = 'completed')::int completed,
+          count(*) filter (where ci.status <> 'completed')::int not_connected
+        from report.call_inbound ci
+        left join report.bot_timezone tz on tz.bot_id = ci.bot_id
+        where ci.started_at is not null
+        group by ci.bot_id, 2`)
+      await pool.query('create unique index call_inbound_stats_pk on report.call_inbound_stats (bot_id, day)')
+      await pool.query('grant select on report.call_inbound_stats to anon, authenticated')
+      await pool.query(`notify pgrst, 'reload schema'`)
+    }
 
     const s = (await pool.query(
       `select coalesce(sum(inbound),0)::int inbound, coalesce(sum(completed),0)::int completed

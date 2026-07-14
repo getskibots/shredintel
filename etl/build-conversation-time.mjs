@@ -35,6 +35,7 @@ await c.query(`
   with src as (
     select ci.bot_id, ci.conversation_id, ci.day, ci.substantive,
            ci.section, ci.pinchpoint, ci.sentiment, ci.urgency, ci.handover, ci.topic,
+           ci.category, ci.resolution, ci.revenue, ci.language, ci.flavor,
            cp.funnel_stage, cp.page_path,
            g.country_iso, g.country_name, g.region, g.city, g.lat, g.lon,
            cv.started_at, cv.last_message_date_time as ended_at,
@@ -47,6 +48,7 @@ await c.query(`
       left join report.ip_geo g on g.ip = u.ip_address
   )
   select bot_id, conversation_id, day, substantive, section, pinchpoint, sentiment, urgency, handover, topic,
+         category, resolution, revenue, language, flavor,
          funnel_stage, page_path, country_iso, country_name, region, city, lat, lon,
          started_at, ended_at, started_local,
          started_local::date                         as day_local,

@@ -14,7 +14,6 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import logoUrl from '../../assets/logo.png'
-import { BotSelector } from '../BotSelector'
 import { isEmbedMode } from '../../lib/embed'
 
 /**
@@ -77,7 +76,6 @@ const NAV: NavItem[] = [
 ]
 
 export function DashboardShell({
-  botLabel = '',
   userName = 'Brandon Quinn',
   activeChannel = 'chat',
   children,
@@ -178,9 +176,9 @@ export function DashboardShell({
               Home
             </Link>
           </div>
-          <BotSelector />
-          {/* botLabel is now surfaced via BotSelector — hide the static label */}
-          {false && botLabel}
+          {/* No bot switcher — a resort can never toggle to another resort's data. The
+              resort name shows in the page header; "Home" (top-left) returns to the GSB
+              bot directory. */}
           <div className="flex items-center gap-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-300 text-[11px] font-semibold text-slate-700">
               {userName

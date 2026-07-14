@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { AskBar } from '../AskBar'
-import { BotSelector } from '../BotSelector'
 import { ChatFaqAudit } from '../ChatFaqAudit'
 import { ConversationCounts } from '../ConversationCounts'
 import { ConversionBlockers } from '../ConversionBlockers'
@@ -88,9 +87,13 @@ export function BotAnalyticsPage() {
           <div className="flex flex-wrap items-center gap-2">
             {omniGroup && <ChannelToggle group={omniGroup} active="chat" />}
             <h1 className="text-lg font-semibold tracking-tight text-slate-900 md:text-xl">
-              Analytics
+              Advanced Analytics
             </h1>
-            {!omniGroup && <BotSelector />}
+            {!omniGroup && (
+              <span className="rounded-md bg-white px-2 py-0.5 text-xs font-medium text-slate-600 shadow-sm">
+                {botName ?? `Bot ${botId}`}
+              </span>
+            )}
           </div>
           <PeriodPicker value={selection} onChange={setSelection} align="end" />
         </div>

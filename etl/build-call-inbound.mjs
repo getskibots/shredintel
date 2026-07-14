@@ -26,9 +26,16 @@ const FLOOR = '2024-10-01'
 
 function tokenFor(accountSid) {
   const map = (process.env.TWILIO_ACCOUNTS || '').trim()
-  if (map) { try { const j = JSON.parse(map); if (j[accountSid]) return j[accountSid] } catch { /* bad json */ } }
-  if (!map) return (process.env.TWILIO_AUTH_TOKEN || '').trim() || null
-  return null
+  if (map) {
+    try { const j = JSON.parse(map); if (j[accountSid]) return j[accountSid] } catch { /* bad json */ }
+    // The single TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN pair counts as one implicit
+    // entry, so adding TWILIO_ACCOUNTS for a NEW account (e.g. Sipapu) doesn't require
+    // re-listing the default account's token.
+    const sid = (process.env.TWILIO_ACCOUNT_SID || '').trim()
+    if (sid && sid === accountSid) return (process.env.TWILIO_AUTH_TOKEN || '').trim() || null
+    return null
+  }
+  return (process.env.TWILIO_AUTH_TOKEN || '').trim() || null
 }
 const iso = (s) => { if (!s) return null; const d = new Date(s); return isNaN(d) ? null : d.toISOString() }
 

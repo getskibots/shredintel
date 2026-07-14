@@ -194,31 +194,27 @@ export function VoiceAnalyticsPage() {
             className="lg:col-span-12"
             eyebrow="Overview"
             title="Call volume & connection"
-            description="How many calls came in, how many the AI answered, and how long they run."
+            description={
+              m.volumeSource === 'twilio'
+                ? 'How many calls came in, how many the AI answered, and how long they run.'
+                : 'How many calls came in, how many got past hello, and how long they run.'
+            }
             action={
               m.volumeSource === 'twilio' ? (
                 <div
                   className="rounded-2xl border border-emerald-200 bg-emerald-50/70 px-4 py-2 text-right"
-                  title="Share of real inbound calls the AI answered (Twilio) — only the rest got no-answer/busy"
+                  title="Share of real inbound calls the AI answered (Twilio); only the rest got no-answer/busy"
                 >
                   <div className="text-[10px] font-semibold uppercase tracking-wider text-emerald-700">Connect rate</div>
                   <div className="mt-0.5 font-display text-2xl font-semibold tabular-nums text-emerald-700">{formatPercent(100 - m.abandonPct)}</div>
                 </div>
-              ) : (
-                <div
-                  className="rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-2 text-right"
-                  title="Share of callers who hung up before the AI answered — their choice, not a dropped call"
-                >
-                  <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Hung up early</div>
-                  <div className="mt-0.5 font-display text-2xl font-semibold tabular-nums text-slate-700">{formatPercent(m.abandonPct)}</div>
-                </div>
-              )
+              ) : undefined
             }
           >
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
               <Metric label="Voice calls" value={formatNumber(m.voiceConvs)} subValue={m.volumeSource === 'twilio' ? 'inbound calls · Twilio' : 'total sessions'} tone="accent" />
-              <Metric label="Connected" value={formatNumber(m.connectedCalls)} subValue={`${formatPercent((m.connectedCalls / m.voiceConvs) * 100)} of calls`} tone={m.volumeSource === 'twilio' ? 'good' : undefined} />
-              <Metric label="Didn't connect" value={formatNumber(m.unconnected)} subValue={m.volumeSource === 'twilio' ? `${formatPercent(m.abandonPct)} no-answer/busy` : `${formatPercent(m.abandonPct)} hung up`} />
+              {m.volumeSource === 'twilio' && <Metric label="Connected" value={formatNumber(m.connectedCalls)} subValue={`${formatPercent((m.connectedCalls / m.voiceConvs) * 100)} of calls`} tone="good" />}
+              {m.volumeSource === 'twilio' && <Metric label="Didn't connect" value={formatNumber(m.unconnected)} subValue={`${formatPercent(m.abandonPct)} no-answer/busy`} />}
               {m.volumeSource !== 'twilio' && <Metric label="Engaged" value={formatNumber(m.engagedCalls)} subValue="got past hello" tone="good" />}
               {m.volumeSource !== 'twilio' && <Metric label="Handover-flagged" value={formatNumber(m.handoverCalls)} subValue={`${formatPercent((m.handoverCalls / m.voiceConvs) * 100)} of calls`} tone="risk" />}
               <Metric label="Typical length" value={fmtDuration(m.medianDurSec)} subValue={m.durationSource === 'twilio' ? 'median · Twilio' : 'median (est.)'} />
@@ -247,10 +243,17 @@ export function VoiceAnalyticsPage() {
                     <YAxis {...chart.yAxis} />
                     <Tooltip {...chart.tooltip} />
                     <Area type="monotone" dataKey="voiceConvs" name="Calls" stroke={brand.blue} strokeWidth={2} fill="url(#voiceVol)" isAnimationActive={false} />
-                    <Area type="monotone" dataKey="connectedCalls" name="Connected" stroke={brand.gold} strokeWidth={2} fill="none" isAnimationActive={false} />
+                    {m.volumeSource === 'twilio' && <Area type="monotone" dataKey="connectedCalls" name="Connected" stroke={brand.gold} strokeWidth={2} fill="none" isAnimationActive={false} />}
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
+            )}
+
+            {m.volumeSource !== 'twilio' && (
+              <p className="mt-4 text-[11px] text-slate-400">
+                Volume and engagement here read from the conversation record. Connect rate and
+                missed-call detail light up once this line&apos;s phone-system call logs are ingested.
+              </p>
             )}
           </Panel>
 

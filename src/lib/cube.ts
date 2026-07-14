@@ -98,3 +98,20 @@ export const measureByKey = (key: string): Measure | undefined => MEASURE_BY_KEY
 /** Faces + measures that are live right now (fact-table extension not yet applied). */
 export const liveDimensions = (): Dimension[] => DIMENSIONS.filter((d) => !d.pending)
 export const liveMeasures = (): Measure[] => MEASURES.filter((m) => !m.pending)
+
+/**
+ * Compact catalog listing for the slice-picking prompt. The AI reads this and
+ * returns catalog KEYS (never SQL), so its whole vocabulary is exactly this.
+ */
+export function cubeGrounding(): string {
+  const dimLine = (d: Dimension) =>
+    `  ${d.key} — ${d.desc}${d.order ? ` [values: ${d.order.join(', ')}]` : ''}`
+  const measLine = (m: Measure) => `  ${m.key} — ${m.desc}`
+  return [
+    'DIMENSIONS (the faces — put 1 or 2 keys in `dims`; any key may also be a filter):',
+    ...DIMENSIONS.map(dimLine),
+    '',
+    'MEASURES (pick exactly one key for `measure`):',
+    ...MEASURES.map(measLine),
+  ].join('\n')
+}

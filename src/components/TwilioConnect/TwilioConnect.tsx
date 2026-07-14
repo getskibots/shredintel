@@ -39,6 +39,10 @@ export function TwilioConnect({ botId }: { botId: number }) {
 
   // Load this bot's current mapping.
   useEffect(() => {
+    // The popover lives in a component that is REUSED across bots (the route param
+    // changes without a remount), so clear all per-bot state first — otherwise the
+    // previous bot's sync result / token field bleeds onto the next bot.
+    setMapping(null); setSid(''); setPhone(''); setLabel(''); setToken(''); setSyncResult(''); setErr('')
     if (isEmbedMode() || !botId) return
     let cancelled = false
     ;(async () => {

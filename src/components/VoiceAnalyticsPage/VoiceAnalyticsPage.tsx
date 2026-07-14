@@ -258,7 +258,10 @@ export function VoiceAnalyticsPage() {
           </Panel>
 
           {/* AI vs human — the headline Voice-AI story, standalone. Ground truth from
-              Twilio transfers (call-level) + call_facts durations (talk-time). */}
+              Twilio transfers (call-level) + call_facts durations (talk-time). Hidden
+              entirely when this bot has no transfer data yet, so a partner never sees
+              an empty "run the ingest" box. */}
+          {m.transfers && (
           <Panel
             className="lg:col-span-12"
             eyebrow="Voice AI"
@@ -324,10 +327,9 @@ export function VoiceAnalyticsPage() {
                   </p>
                 </>
               )
-            })() : (
-              <EmptyState title="No transfer data yet" message="Run the Twilio transfer ingest for this bot to light up the AI-vs-human split." />
-            )}
+            })() : null}
           </Panel>
+          )}
 
           {/* What callers ask about (topics) — mirrors chat's Knowledge band */}
           <Panel

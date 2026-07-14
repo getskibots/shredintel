@@ -258,17 +258,17 @@ export function VoiceAnalyticsPage() {
           </Panel>
 
           {/* AI vs human — the headline Voice-AI story, standalone. Ground truth from
-              Twilio transfers (call-level) + call_facts durations (talk-time). Hidden
-              entirely when this bot has no transfer data yet, so a partner never sees
-              an empty "run the ingest" box. */}
-          {m.transfers && (
+              Twilio transfers (call-level) + call_facts durations (talk-time). We show the
+              split only when there are REAL escalations; with 0 transfers we show a neutral
+              note instead. 0 transfers is ambiguous (no live-agent line vs AI resolved
+              everything), so we deliberately don't claim "100% AI-resolved". */}
           <Panel
             className="lg:col-span-12"
             eyebrow="Voice AI"
             title="AI resolution vs human escalation"
             description="How often ShredIntel handles the call itself versus escalating to your team — ground truth from Twilio."
           >
-            {m.transfers ? (() => {
+            {m.transfers && m.transfers.transferred > 0 ? (() => {
               const tr = m.transfers
               const escalated = tr.transferred
               const aiResolved = Math.max(0, tr.checked - tr.transferred)
@@ -327,9 +327,12 @@ export function VoiceAnalyticsPage() {
                   </p>
                 </>
               )
-            })() : null}
+            })() : (
+              <p className="py-8 text-center text-sm text-slate-400">
+                Live-agent handoff is not currently configured for this bot.
+              </p>
+            )}
           </Panel>
-          )}
 
           {/* What callers ask about (topics) — mirrors chat's Knowledge band */}
           <Panel

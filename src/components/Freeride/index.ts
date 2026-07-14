@@ -1,1 +1,0 @@
-export { Freeride } from './Freeride'

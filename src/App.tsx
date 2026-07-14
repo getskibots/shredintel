@@ -3,7 +3,6 @@ import { AhhhFaqItTool } from './components/AhhhFaqItTool'
 import { BotAnalyticsPage } from './components/BotAnalyticsPage'
 import { BotIndexPage } from './components/BotIndexPage'
 import { DashboardShell } from './components/DashboardShell'
-import { Freeride } from './components/Freeride'
 import { PasswordGate } from './components/PasswordGate'
 import { VoiceReportGrid } from './components/VoiceReportGrid'
 import { VoiceAnalyticsPage } from './components/VoiceAnalyticsPage/VoiceAnalyticsPage'
@@ -74,8 +73,6 @@ function ChannelShell() {
         <Route path="/voice" element={<VoiceReportGrid />} />
         <Route path="/voice/:botId" element={<VoiceAnalyticsPage />} />
         <Route path="/bot/:botId" element={<BotRoute />} />
-        {/* Freeride — the conversational spinnable cube explorer (Phase 1) */}
-        <Route path="/freeride/:botId" element={<Freeride />} />
         {/* Omni-channel prototype — enter a group, land on its default channel + toggle */}
         <Route path="/omni/:key" element={<OmniEntry />} />
         <Route path="*" element={<Navigate to="/" replace />} />

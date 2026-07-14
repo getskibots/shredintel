@@ -1083,7 +1083,10 @@ export function useBotAnalytics(
       const bundle = await fetchLiveBundle(botId, from, to)
       if (cancelled) return
       if (!bundleHasData(bundle)) {
-        setRaw({ bundle: null, isLoading: false, isLive: false, error: null })
+        // Live query succeeded, but this bot has no data in the window. Show honest
+        // zeros / per-panel empty states — NOT the demo fixtures (Jackson Hole sample
+        // data), which would misrepresent this bot on short/sparse windows.
+        setRaw({ bundle: null, isLoading: false, isLive: true, error: null })
         return
       }
       setRaw({ bundle, isLoading: false, isLive: true, error: null })
@@ -1093,8 +1096,13 @@ export function useBotAnalytics(
   }, [botId, selKey])
 
   const data = useMemo(
-    () => (raw.bundle ? overlayJHChatLive(blankData(fixtureFallback), raw.bundle, pageStage) : fixtureFallback),
-    [raw.bundle, fixtureFallback, pageStage],
+    () =>
+      raw.bundle
+        ? overlayJHChatLive(blankData(fixtureFallback), raw.bundle, pageStage)
+        : raw.isLive
+          ? blankData(fixtureFallback) // live query, no data in this window → honest zeros
+          : fixtureFallback, // Supabase not configured (local dev) → demo fixtures
+    [raw.bundle, raw.isLive, fixtureFallback, pageStage],
   )
   const funnel = useMemo(() => (raw.bundle ? summarizeFunnel(raw.bundle.pageFunnel) : null), [raw.bundle])
 

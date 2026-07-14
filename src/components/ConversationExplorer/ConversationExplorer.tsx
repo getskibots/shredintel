@@ -130,7 +130,6 @@ export function ConversationExplorer({
 
   const [rows, setRows] = useState<ConvRow[] | null>(null)
   const [count, setCount] = useState<number | null>(null)
-  const [sentFilter, setSentFilter] = useState<'all' | 'Positive' | 'Neutral' | 'Negative'>('all')
   const [openCid, setOpenCid] = useState<number | null>(null)
   // Each conversation row keyed by id so expanding one can scroll its top into view.
   const rowRefs = useRef<Map<number, HTMLLIElement>>(new Map())
@@ -176,9 +175,9 @@ export function ConversationExplorer({
         if (p.city) q = q.eq('city', p.city)
       }
       if (from && to) q = q.gte('day', from).lte('day', to)
-      // Sentiment: a locked sentiment (drill target) wins; otherwise the toggle.
+      // Each drill is a single pure category — when the drill target is a sentiment,
+      // lock the list to it. (No cross-filter toggle; a drill opens to exactly one thing.)
       if (lockedSentiment) q = q.eq('sentiment', lockedSentiment)
-      else if (sentFilter !== 'all') q = q.eq('sentiment', sentFilter)
 
       // voice orders by the resort-local call time; chat by its exact UTC ts.
       const ordered = isVoice
@@ -192,7 +191,7 @@ export function ConversationExplorer({
     })()
     return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [p.botId, p.section, p.pinchpoint, p.sentiment, p.urgency, p.funnel_stage, p.topic, p.city, p.day, p.handover, p.hour_local, p.user_id, source, from, to, sentFilter])
+  }, [p.botId, p.section, p.pinchpoint, p.sentiment, p.urgency, p.funnel_stage, p.topic, p.city, p.day, p.handover, p.hour_local, p.user_id, source, from, to])
 
   async function openConv(cid: number) {
     if (openCid === cid) { setOpenCid(null); setTranscript(null); return }
@@ -236,27 +235,6 @@ export function ConversationExplorer({
             <X className="h-5 w-5" />
           </button>
         </div>
-
-        {!lockedSentiment && (
-          <div className="flex items-center gap-1.5 border-b border-slate-100 px-5 py-2">
-            <span className="mr-1 text-[11px] font-medium uppercase tracking-wider text-slate-400">Sentiment</span>
-            {(['all', 'Positive', 'Neutral', 'Negative'] as const).map((s) => {
-              const active = sentFilter === s
-              const color = s === 'all' ? '#475569' : sentColor(s)
-              return (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => setSentFilter(s)}
-                  className="rounded-full px-2.5 py-1 text-xs font-medium transition"
-                  style={active ? { backgroundColor: `${color}1f`, color } : { color: '#64748B' }}
-                >
-                  {s === 'all' ? 'All' : s}
-                </button>
-              )
-            })}
-          </div>
-        )}
 
         <div className="overflow-y-auto p-4">
           {rows === null ? (

@@ -18,6 +18,8 @@ interface Mapping {
   account_sid: string | null
   phone_number: string | null
   label: string | null
+  /** True when an encrypted auth token is stored server-side (never the token itself). */
+  has_token?: boolean
 }
 
 export function TwilioConnect({ botId }: { botId: number }) {
@@ -26,6 +28,7 @@ export function TwilioConnect({ botId }: { botId: number }) {
   const [sid, setSid] = useState('')
   const [phone, setPhone] = useState('')
   const [label, setLabel] = useState('')
+  const [token, setToken] = useState('')
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState('')
   const popRef = useRef<HTMLDivElement>(null)
@@ -67,16 +70,24 @@ export function TwilioConnect({ botId }: { botId: number }) {
   const save = async () => {
     setSaving(true); setErr('')
     try {
+      const payload: Record<string, unknown> = {
+        bot_id: botId, account_sid: sid.trim(), phone_number: phone.trim(), label: label.trim(),
+      }
+      // Only send the token when the user typed one — blank leaves the stored token as is.
+      const t = token.trim()
+      if (t) payload.auth_token = t
       const r = await fetch('/api/bot-twilio', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bot_id: botId, account_sid: sid.trim(), phone_number: phone.trim(), label: label.trim() }),
+        body: JSON.stringify(payload),
       })
       if (!r.ok) { const d = await r.json().catch(() => ({})); setErr(d.error || 'Save failed.'); return }
       setMapping((m) => ({
         bot_id: botId, name: m?.name ?? null,
         account_sid: sid.trim() || null, phone_number: phone.trim() || null, label: label.trim() || null,
+        has_token: (m?.has_token ?? false) || !!t,
       }))
+      setToken('')
       setOpen(false)
     } catch { setErr('Network error.') } finally { setSaving(false) }
   }
@@ -123,10 +134,23 @@ export function TwilioConnect({ botId }: { botId: number }) {
             className="mt-1 w-full rounded-md border border-slate-200 px-2 py-1.5 text-xs outline-none focus:border-botscrew-400"
           />
 
+          <label className="mt-2 block text-[11px] font-medium text-slate-500">
+            Auth token{' '}
+            {mapping?.has_token
+              ? <span className="text-emerald-600">· saved</span>
+              : <span className="text-slate-300">(needed to read data)</span>}
+          </label>
+          <input
+            type="password" value={token} onChange={(e) => setToken(e.target.value)}
+            autoComplete="off" spellCheck={false}
+            placeholder={mapping?.has_token ? 'Paste to replace' : 'Paste Twilio Auth Token'}
+            className="mt-1 w-full rounded-md border border-slate-200 px-2 py-1.5 font-mono text-xs outline-none focus:border-botscrew-400"
+          />
+
           {err && <p className="mt-2 text-[11px] text-rose-600">{err}</p>}
 
           <div className="mt-3 flex items-center justify-between">
-            <span className="text-[10px] text-slate-400">Token stays in server env.</span>
+            <span className="text-[10px] text-slate-400">Token is encrypted on the server.</span>
             <button
               type="button" onClick={save} disabled={saving || !sid.trim()}
               className="inline-flex items-center gap-1 rounded-md bg-botscrew-500 px-3 py-1 text-xs font-semibold text-white transition hover:bg-botscrew-600 disabled:opacity-50"

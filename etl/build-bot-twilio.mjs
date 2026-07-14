@@ -36,6 +36,9 @@ await c.query(`create table if not exists report.bot_twilio (
   label text,               -- human label for the account/project
   updated_at timestamptz not null default now()
 )`)
+// Encrypted auth token (dashboard-entered, AES-256-GCM; see etl/twilio-token.mjs).
+// Ciphertext only — the key lives in env, never in this table.
+await c.query('alter table report.bot_twilio add column if not exists auth_token_enc text')
 // GSB-internal config — never expose to the anon key.
 await c.query('revoke all on report.bot_twilio from anon').catch(() => {})
 

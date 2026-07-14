@@ -14,6 +14,7 @@
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { getPool } from './_lib/db.js'
+import { encryptToken, tokenCryptoReady } from './_lib/tokenCrypto.js'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // --- Optional gate (disabled). To re-enable, set GSB_ADMIN_KEY in env + uncomment:
@@ -28,6 +29,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     await pool.query(`create table if not exists report.bot_twilio (
       bot_id bigint primary key, account_sid text not null, phone_number text, label text,
       updated_at timestamptz not null default now())`)
+    // Encrypted auth token (dashboard-entered, AES-256-GCM). Server-only column.
+    await pool.query('alter table report.bot_twilio add column if not exists auth_token_enc text')
 
     if (req.method === 'GET') {
       const botId = Number(req.query.botId)
@@ -37,7 +40,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // does NOT depend on bot_channel classification.
         const { rows } = await pool.query(
           `select b.id as bot_id, b.name,
-                  bt.account_sid, bt.phone_number, bt.label
+                  bt.account_sid, bt.phone_number, bt.label,
+                  (bt.auth_token_enc is not null) as has_token
            from public.bots b
            left join report.bot_twilio bt on bt.bot_id = b.id
            where b.id = $1
@@ -48,7 +52,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
       const { rows } = await pool.query(`
         select bc.bot_id, b.name, bc.voice_convs,
-               bt.account_sid, bt.phone_number, bt.label
+               bt.account_sid, bt.phone_number, bt.label,
+               (bt.auth_token_enc is not null) as has_token
         from report.bot_channel bc
         left join public.bots b on b.id = bc.bot_id
         left join report.bot_twilio bt on bt.bot_id = bc.bot_id
@@ -72,6 +77,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
            label = excluded.label, updated_at = now()`,
         [botId, accountSid, phone, label],
       )
+      // Optional auth token: encrypt server-side, store ciphertext, never echo it back.
+      // Absent/empty leaves any existing token untouched (so re-saving SID/number is safe).
+      const rawToken = typeof body.auth_token === 'string' ? body.auth_token.trim() : ''
+      if (rawToken) {
+        if (!tokenCryptoReady()) {
+          return res.status(503).json({ error: 'token storage is not configured on the server (set TWILIO_TOKEN_ENC_KEY); SID and number were saved' })
+        }
+        await pool.query(
+          'update report.bot_twilio set auth_token_enc = $2, updated_at = now() where bot_id = $1',
+          [botId, encryptToken(rawToken)],
+        )
+      }
       return res.status(200).json({ ok: true })
     }
 

@@ -266,7 +266,11 @@ export async function fetchLiveBundle(
       .select('*')
       .eq('bot_id', botId)
       .gte('day', from)
-      .lte('day', to) as unknown as Promise<{ data: T[] | null; error: unknown }>
+      .lte('day', to)
+      // Chronological: matviews return physical order, so every daily series (the
+      // activity trend, conversion pulse, etc.) must be sorted by day or the charts
+      // connect points out of order.
+      .order('day', { ascending: true }) as unknown as Promise<{ data: T[] | null; error: unknown }>
 
   // Distinct users in the window — window-level distinct can't be summed from
   // daily rows, so it's a small read-only RPC (report.active_users).
@@ -510,7 +514,11 @@ export async function fetchVoiceBundle(
       .select('*')
       .eq('bot_id', botId)
       .gte('day', from)
-      .lte('day', to) as unknown as Promise<{ data: T[] | null; error: unknown }>
+      .lte('day', to)
+      // Chronological: matviews return physical order, so every daily series (the
+      // activity trend, conversion pulse, etc.) must be sorted by day or the charts
+      // connect points out of order.
+      .order('day', { ascending: true }) as unknown as Promise<{ data: T[] | null; error: unknown }>
 
   try {
     // call_callers / call_caller_stats have no `day` column → bot-only queries.

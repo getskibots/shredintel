@@ -52,7 +52,7 @@ export function ConversationCounts({
   const responseLabel =
     medianFirstResponseSec != null ? 'median' : avgFirstResponseSec != null ? 'avg' : 'coming soon'
 
-  type Tile = { label: string; value: string; sub: string; tone: MetricProps['tone']; title?: string }
+  type Tile = { label: string; value: string; sub: string; tone: MetricProps['tone']; title?: string; span?: boolean }
   const tiles: Tile[] = []
   // Chats opened leads (the volume); Users follows as the de-dup behind it — so it
   // reads "105k chats from 69k visitors", not the backwards "fewer users than chats".
@@ -87,6 +87,16 @@ export function ConversationCounts({
     sub: engagementBenchmark != null ? `typical resort: ${formatPercent(engagementBenchmark)}` : 'of chats opened',
     tone: engagementBenchmark != null && engagedShare >= engagementBenchmark ? 'good' : 'accent',
     title: 'Share of chats where the guest actually engaged (engaged conversations ÷ chats opened), vs the median across our chat-bot fleet.',
+    span: true,
+  })
+  // Depth headline for the messages cluster: how substantive the average real
+  // conversation is. Leads the Bot/Guest breakdown that follows and explains it.
+  tiles.push({
+    label: 'Messages per conversation',
+    value: messagesPerEngaged.toFixed(1),
+    sub: 'back-and-forth depth',
+    tone: 'neutral',
+    title: 'Average messages exchanged per engaged conversation, counting bot, guest, and any live-agent replies together. Only engaged chats are included, so one-and-done bounces do not drag it down.',
   })
   // Bot vs guest as their own tiles (live-agent stays in the Human handover card).
   // Fall back to a single "Messages" total when the sender split isn't available
@@ -140,7 +150,15 @@ export function ConversationCounts({
         <>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             {tiles.map((t) => (
-              <Metric key={t.label} label={t.label} value={t.value} subValue={t.sub} tone={t.tone} title={t.title} />
+              <Metric
+                key={t.label}
+                label={t.label}
+                value={t.value}
+                subValue={t.sub}
+                tone={t.tone}
+                title={t.title}
+                className={t.span ? 'sm:col-span-2 lg:col-span-2' : undefined}
+              />
             ))}
           </div>
 
@@ -176,12 +194,11 @@ export function ConversationCounts({
             {users != null && (
               <>
                 <span className="font-semibold text-slate-700">{formatNumber(users)}</span> visitors opened{' '}
-                <span className="font-semibold text-slate-700">{formatNumber(sessions)}</span> chats —{' '}
+                <span className="font-semibold text-slate-700">{formatNumber(sessions)}</span> chats, and{' '}
               </>
             )}
             <span className="font-semibold text-slate-700">{formatPercent(engagedShare)}</span> engaged.{' '}
-            {messagesPerEngaged.toFixed(1)} messages per engaged conversation; {formatPercent(singleMsgShareOfEngaged)} were
-            one-and-done.
+            {formatPercent(singleMsgShareOfEngaged)} of those were one-and-done.
           </p>
         </>
       )}

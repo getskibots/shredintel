@@ -5,6 +5,8 @@ export interface MetricProps {
   value: ReactNode
   subValue?: ReactNode
   tone?: 'default' | 'good' | 'risk' | 'neutral' | 'accent' | 'warn'
+  /** Plain-language definition shown on hover (native tooltip). */
+  title?: string
 }
 
 const toneRing: Record<NonNullable<MetricProps['tone']>, string> = {
@@ -25,9 +27,9 @@ const toneText: Record<NonNullable<MetricProps['tone']>, string> = {
   warn: 'text-amber-700',
 }
 
-export function Metric({ label, value, subValue, tone = 'default' }: MetricProps) {
+export function Metric({ label, value, subValue, tone = 'default', title }: MetricProps) {
   return (
-    <div className={['rounded-2xl border p-4', toneRing[tone]].join(' ')}>
+    <div className={['rounded-2xl border p-4', toneRing[tone], title ? 'cursor-help' : ''].join(' ')} title={title}>
       <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
         {label}
       </div>

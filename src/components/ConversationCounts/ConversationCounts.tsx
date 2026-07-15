@@ -52,22 +52,32 @@ export function ConversationCounts({
   const responseLabel =
     medianFirstResponseSec != null ? 'median' : avgFirstResponseSec != null ? 'avg' : 'coming soon'
 
-  type Tile = { label: string; value: string; sub: string; tone: MetricProps['tone'] }
+  type Tile = { label: string; value: string; sub: string; tone: MetricProps['tone']; title?: string }
   const tiles: Tile[] = []
-  if (users != null) {
-    tiles.push({ label: 'Users', value: formatNumber(users), sub: 'unique visitors', tone: 'accent' })
-  }
+  // Chats opened leads (the volume); Users follows as the de-dup behind it — so it
+  // reads "105k chats from 69k visitors", not the backwards "fewer users than chats".
   tiles.push({
     label: 'Chats opened',
     value: formatNumber(sessions),
-    sub: convosPerUser ? `${convosPerUser.toFixed(1)} per user` : 'chats started',
-    tone: users != null ? 'neutral' : 'accent',
+    sub: convosPerUser ? `${convosPerUser.toFixed(1)} per visitor` : 'chat sessions',
+    tone: 'accent',
+    title: 'Chat sessions started this period (one conversation thread each). A single visitor can open several — hence the per-visitor figure. Counts every session, whether or not the guest replied.',
   })
+  if (users != null) {
+    tiles.push({
+      label: 'Users',
+      value: formatNumber(users),
+      sub: 'unique visitors who chatted',
+      tone: 'neutral',
+      title: 'Distinct people who opened the chat this period — the same Active-users count as your admin. NOT all website visitors, only those who chatted.',
+    })
+  }
   tiles.push({
     label: 'Engaged conversations',
     value: formatNumber(engagedSessions),
     sub: `guest replied · ${formatPercent(engagedShare)}`,
     tone: 'good',
+    title: 'Chats where the guest sent at least one real message (not just opened the widget). This is the base ShredIntel analyzes.',
   })
   // Bot vs guest as their own tiles (live-agent stays in the Human handover card).
   // Fall back to a single "Messages" total when the sender split isn't available
@@ -100,6 +110,7 @@ export function ConversationCounts({
     value: formatPercent(engagedShare),
     sub: engagementBenchmark != null ? `typical resort: ${formatPercent(engagementBenchmark)}` : 'of chats opened',
     tone: engagementBenchmark != null && engagedShare >= engagementBenchmark ? 'good' : 'accent',
+    title: 'Share of chats where the guest actually engaged (engaged conversations ÷ chats opened), vs the median across our chat-bot fleet.',
   })
 
   // Only show First response once we actually have the number — no "coming
@@ -118,7 +129,7 @@ export function ConversationCounts({
     <Panel
       eyebrow="Overview"
       title="Activity & engagement"
-      description="How many visitors turn into real conversations: visitors → chats opened → engaged conversations (guest replied) → messages. “Users” matches the Active-users count in your admin."
+      description="How visitors turn into real conversations: chats opened → engaged conversations → messages. Chats = sessions started (one visitor can open several); Users = the distinct visitors behind them, matching your admin’s Active-users count."
     >
       {empty ? (
         <EmptyState
@@ -129,7 +140,7 @@ export function ConversationCounts({
         <>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             {tiles.map((t) => (
-              <Metric key={t.label} label={t.label} value={t.value} subValue={t.sub} tone={t.tone} />
+              <Metric key={t.label} label={t.label} value={t.value} subValue={t.sub} tone={t.tone} title={t.title} />
             ))}
           </div>
 

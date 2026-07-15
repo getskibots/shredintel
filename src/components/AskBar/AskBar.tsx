@@ -195,11 +195,6 @@ export function AskBar({ botId, range, onVoice }: { botId: number; range?: { fro
         <h1 className={`font-semibold tracking-tight text-white/95 [text-shadow:0_1px_12px_rgba(0,0,0,0.4)] ${embed ? 'text-base sm:text-lg' : 'text-lg sm:text-2xl'}`}>
           Carve through your conversations. Get instant insights.
         </h1>
-        {!embed && !hasActivity && (
-          <p className="mt-2 max-w-xl text-sm text-white/80 drop-shadow">
-            Type or talk to ShredIntel. Charted on the spot.
-          </p>
-        )}
 
         {/* Ask bar — the focal element */}
         <form onSubmit={onSubmit} className={`relative mx-auto w-full max-w-xl ${hasActivity ? 'mt-5' : 'mt-7'}`}>

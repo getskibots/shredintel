@@ -379,6 +379,9 @@ function overlayJHChatLive(base: PeriodFixtures, live: LiveBundle, pageStage?: s
       sessions,
       messages,
       userMessages,
+      // Bot (AI) messages only — from sender_mix_stack, so it excludes live-agent
+      // messages (which live in the Human handover card, not here).
+      botMessages: sum(live.senderMixStack.map((r) => Number(r.bot_messages))),
       engagedSessions,
       singleUserMsgSessions,
       singleMsgShareOfEngaged: engagedSessions > 0 ? singleUserMsgSessions / engagedSessions : 0,

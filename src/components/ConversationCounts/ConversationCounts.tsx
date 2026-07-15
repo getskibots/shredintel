@@ -31,10 +31,10 @@ function formatDuration(sec: number | null): string {
  */
 export function ConversationCounts({
   users,
-  substantive,
   sessions,
   messages,
   userMessages,
+  botMessages,
   engagedSessions,
   singleMsgShareOfEngaged,
   messagesPerSession,
@@ -44,7 +44,6 @@ export function ConversationCounts({
 }: ConversationCountsProps) {
   const empty = sessions === 0 && messages === 0
   const engagedShare = sessions > 0 ? engagedSessions / sessions : 0
-  const substantiveShareOfEngaged = engagedSessions > 0 && substantive != null ? substantive / engagedSessions : 0
   const convosPerUser = users && users > 0 ? sessions / users : 0
   const responseSec = medianFirstResponseSec ?? avgFirstResponseSec
   const responseLabel =
@@ -62,23 +61,17 @@ export function ConversationCounts({
     tone: users != null ? 'neutral' : 'accent',
   })
   tiles.push({
-    label: 'Engaged',
+    label: 'Engaged conversations',
     value: formatNumber(engagedSessions),
     sub: `guest replied · ${formatPercent(engagedShare)}`,
     tone: 'good',
   })
-  if (substantive != null) {
-    tiles.push({
-      label: 'Real questions',
-      value: formatNumber(substantive),
-      sub: `${formatPercent(substantiveShareOfEngaged)} of engaged · what ShredIntel analyzes`,
-      tone: 'good',
-    })
-  }
   tiles.push({
     label: 'Messages',
     value: formatNumber(messages),
-    sub: `${formatNumber(userMessages)} from guests`,
+    sub: botMessages != null
+      ? `${formatNumber(botMessages)} bot · ${formatNumber(userMessages)} guest`
+      : `${formatNumber(userMessages)} from guests`,
     tone: 'neutral',
   })
   // Only show First response once we actually have the number — no "coming
@@ -97,7 +90,7 @@ export function ConversationCounts({
     <Panel
       eyebrow="Overview"
       title="Activity & engagement"
-      description="How many visitors turn into real conversations: visitors → chats opened → engaged (guest replied) → real questions. “Users” matches the Active-users count in your admin."
+      description="How many visitors turn into real conversations: visitors → chats opened → engaged conversations (guest replied) → messages. “Users” matches the Active-users count in your admin."
     >
       {empty ? (
         <EmptyState
@@ -147,14 +140,8 @@ export function ConversationCounts({
                 <span className="font-semibold text-slate-700">{formatNumber(sessions)}</span> chats —{' '}
               </>
             )}
-            <span className="font-semibold text-slate-700">{formatPercent(engagedShare)}</span> engaged
-            {substantive != null && (
-              <>
-                {' '}and <span className="font-semibold text-slate-700">{formatNumber(substantive)}</span> asked a real
-                question (ShredIntel’s analysis base)
-              </>
-            )}
-            . {messagesPerSession.toFixed(1)} messages per chat; {formatPercent(singleMsgShareOfEngaged)} were
+            <span className="font-semibold text-slate-700">{formatPercent(engagedShare)}</span> engaged.{' '}
+            {messagesPerSession.toFixed(1)} messages per chat; {formatPercent(singleMsgShareOfEngaged)} were
             one-and-done.
           </p>
         </>

@@ -187,6 +187,9 @@ export interface ConversationCountsProps {
   /** Total messages (real, visible) in the period */
   messages: number
   userMessages: number
+  /** Bot (AI) messages in the period — from sender_mix_stack, so it excludes
+   *  live-agent messages. Optional (absent in fixtures). */
+  botMessages?: number
   /** Sessions with ≥1 real user message */
   engagedSessions: number
   /** Sessions where the user sent exactly one message (bounce) */

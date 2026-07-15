@@ -1,11 +1,12 @@
 import type { ReactNode } from 'react'
+import { InfoTip } from './InfoTip'
 
 export interface MetricProps {
   label: string
   value: ReactNode
   subValue?: ReactNode
   tone?: 'default' | 'good' | 'risk' | 'neutral' | 'accent' | 'warn'
-  /** Plain-language definition shown on hover (native tooltip). */
+  /** Plain-language definition shown via an ⓘ hover tooltip next to the label. */
   title?: string
 }
 
@@ -29,9 +30,10 @@ const toneText: Record<NonNullable<MetricProps['tone']>, string> = {
 
 export function Metric({ label, value, subValue, tone = 'default', title }: MetricProps) {
   return (
-    <div className={['rounded-2xl border p-4', toneRing[tone], title ? 'cursor-help' : ''].join(' ')} title={title}>
-      <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+    <div className={['rounded-2xl border p-4', toneRing[tone]].join(' ')}>
+      <div className="flex items-center gap-1 text-[11px] font-medium uppercase tracking-wider text-slate-500">
         {label}
+        {title && <InfoTip text={title} />}
       </div>
       <div
         className={[

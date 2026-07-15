@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { AskBar } from '../AskBar'
-import { ChatFaqAudit } from '../ChatFaqAudit'
 import { ConversationCounts } from '../ConversationCounts'
 import { ConversionBlockers } from '../ConversionBlockers'
 import { PageFunnel } from '../PageFunnel'
@@ -52,7 +51,6 @@ export function BotAnalyticsPage() {
   // "Shredding the data" pulse — fires on any date-range change (both surfaces).
   const shredding = useShredPulse(`${askRange.from}|${askRange.to}`)
   const [voiceActive, setVoiceActive] = useState(false)
-  const [auditOpen, setAuditOpen] = useState(false)
 
   // Bento: single column below lg, 12-col grid at lg+. Cards declare a span
   // (col-span-6 = paired, col-span-12 = full row). items-start keeps each card
@@ -202,21 +200,6 @@ export function BotAnalyticsPage() {
         </div>
       </div>
 
-      {/* Discreet corner entry point — faint, all-caps, bottom-right. There when
-          you want it, invisible to a partner scanning the page. */}
-      <button
-        onClick={() => setAuditOpen(true)}
-        className="fixed bottom-3 right-4 z-30 text-[10px] font-medium uppercase tracking-wider text-slate-300 transition hover:text-slate-500"
-        title="Pepper this bot with test questions"
-      >
-        Ahhh FAQ It
-      </button>
-
-      <ChatFaqAudit
-        open={auditOpen}
-        onClose={() => setAuditOpen(false)}
-        botLabel={botId === 43 ? 'Jackson Hole' : `Bot ${botId}`}
-      />
     </div>
   )
 }

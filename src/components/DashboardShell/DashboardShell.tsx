@@ -30,8 +30,6 @@ import { isEmbedMode } from '../../lib/embed'
 export interface DashboardShellProps {
   /** Bot label shown in the center of the top bar */
   botLabel?: string
-  /** User name shown top-right */
-  userName?: string
   /** Active channel — drives sidebar highlight */
   activeChannel?: 'chat' | 'voice'
   /** Page content */
@@ -76,7 +74,6 @@ const NAV: NavItem[] = [
 ]
 
 export function DashboardShell({
-  userName = 'Brandon Quinn',
   activeChannel = 'chat',
   children,
 }: DashboardShellProps) {
@@ -178,17 +175,7 @@ export function DashboardShell({
           </div>
           {/* No bot switcher — a resort can never toggle to another resort's data. The
               resort name shows in the page header; "Home" (top-left) returns to the GSB
-              bot directory. */}
-          <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-300 text-[11px] font-semibold text-slate-700">
-              {userName
-                .split(' ')
-                .map((w) => w[0])
-                .join('')
-                .slice(0, 2)}
-            </div>
-            <span className="hidden text-sm text-slate-700 sm:inline">{userName}</span>
-          </div>
+              bot directory. No user chip: this is a partner-facing embed surface. */}
         </header>
 
         <main className="min-w-0 flex-1">{children}</main>

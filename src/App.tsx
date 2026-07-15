@@ -58,7 +58,6 @@ function ChannelShell() {
   return (
     <DashboardShell
       botLabel={botLabel}
-      userName="Brandon Quinn"
       activeChannel={channel}
     >
       <Routes>

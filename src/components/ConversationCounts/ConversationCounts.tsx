@@ -148,7 +148,7 @@ export function ConversationCounts({
         />
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-7">
             {tiles.map((t) => (
               <Metric
                 key={t.label}
@@ -157,7 +157,7 @@ export function ConversationCounts({
                 subValue={t.sub}
                 tone={t.tone}
                 title={t.title}
-                className={t.span ? 'sm:col-span-2 lg:col-span-2' : undefined}
+                className={t.span ? 'sm:col-span-2 lg:col-span-1' : undefined}
               />
             ))}
           </div>

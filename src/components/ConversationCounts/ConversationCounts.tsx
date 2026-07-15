@@ -79,6 +79,15 @@ export function ConversationCounts({
     tone: 'good',
     title: 'Chats where the guest sent at least one real message (not just opened the widget). This is the base ShredIntel analyzes.',
   })
+  // Engagement-rate hero, paired with its count above — chats that became real
+  // conversations, benchmarked against the fleet median. Color pops above typical.
+  tiles.push({
+    label: 'Engagement rate',
+    value: formatPercent(engagedShare),
+    sub: engagementBenchmark != null ? `typical resort: ${formatPercent(engagementBenchmark)}` : 'of chats opened',
+    tone: engagementBenchmark != null && engagedShare >= engagementBenchmark ? 'good' : 'accent',
+    title: 'Share of chats where the guest actually engaged (engaged conversations ÷ chats opened), vs the median across our chat-bot fleet.',
+  })
   // Bot vs guest as their own tiles (live-agent stays in the Human handover card).
   // Fall back to a single "Messages" total when the sender split isn't available
   // (fixtures/demo).
@@ -103,15 +112,6 @@ export function ConversationCounts({
       tone: 'neutral',
     })
   }
-  // Engagement-rate hero: the panel's "is this good?" — chats that became real
-  // conversations, benchmarked against the fleet median. Color pops above typical.
-  tiles.push({
-    label: 'Engagement rate',
-    value: formatPercent(engagedShare),
-    sub: engagementBenchmark != null ? `typical resort: ${formatPercent(engagementBenchmark)}` : 'of chats opened',
-    tone: engagementBenchmark != null && engagedShare >= engagementBenchmark ? 'good' : 'accent',
-    title: 'Share of chats where the guest actually engaged (engaged conversations ÷ chats opened), vs the median across our chat-bot fleet.',
-  })
 
   // Only show First response once we actually have the number — no "coming
   // soon" placeholder. Reappears automatically when the response-time

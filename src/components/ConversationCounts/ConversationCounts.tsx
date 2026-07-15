@@ -37,13 +37,15 @@ export function ConversationCounts({
   botMessages,
   engagedSessions,
   singleMsgShareOfEngaged,
-  messagesPerSession,
   avgFirstResponseSec,
   medianFirstResponseSec,
   trend,
 }: ConversationCountsProps) {
   const empty = sessions === 0 && messages === 0
   const engagedShare = sessions > 0 ? engagedSessions / sessions : 0
+  // Depth of REAL conversations — excludes bounces, so it's more honest than
+  // messages-per-chat (which is diluted by chats where the guest never replied).
+  const messagesPerEngaged = engagedSessions > 0 ? messages / engagedSessions : 0
   const convosPerUser = users && users > 0 ? sessions / users : 0
   const responseSec = medianFirstResponseSec ?? avgFirstResponseSec
   const responseLabel =
@@ -157,7 +159,7 @@ export function ConversationCounts({
               </>
             )}
             <span className="font-semibold text-slate-700">{formatPercent(engagedShare)}</span> engaged.{' '}
-            {messagesPerSession.toFixed(1)} messages per chat; {formatPercent(singleMsgShareOfEngaged)} were
+            {messagesPerEngaged.toFixed(1)} messages per engaged conversation; {formatPercent(singleMsgShareOfEngaged)} were
             one-and-done.
           </p>
         </>

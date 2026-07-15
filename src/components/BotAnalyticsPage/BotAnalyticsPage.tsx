@@ -15,7 +15,6 @@ import { DeviceExperienceMix } from '../DeviceExperienceMix'
 import { GuestLocations } from '../GuestLocations'
 import { GuestIdentitySplit } from '../GuestIdentitySplit'
 import { PeriodPicker } from '../PeriodPicker'
-import { SenderMixStack } from '../SenderMixStack'
 import { RealtimeAgent } from '../RealtimeAgent'
 import { ChannelToggle } from '../ChannelToggle/ChannelToggle'
 import { omniGroupByKey } from '../../lib/omniGroups'
@@ -197,11 +196,6 @@ export function BotAnalyticsPage() {
                   <DemandHeatmap {...f.demandHeatmap} />
                 </div>
               </div>
-            </section>
-
-            {/* 6 — Under the hood: message mechanics */}
-            <section id="detail" className="scroll-mt-40 space-y-5">
-              <SenderMixStack {...f.senderMixStack} />
             </section>
           </div>
           )}

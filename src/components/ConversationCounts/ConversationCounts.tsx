@@ -66,14 +66,30 @@ export function ConversationCounts({
     sub: `guest replied · ${formatPercent(engagedShare)}`,
     tone: 'good',
   })
-  tiles.push({
-    label: 'Messages',
-    value: formatNumber(messages),
-    sub: botMessages != null
-      ? `${formatNumber(botMessages)} bot · ${formatNumber(userMessages)} guest`
-      : `${formatNumber(userMessages)} from guests`,
-    tone: 'neutral',
-  })
+  // Bot vs guest as their own tiles (live-agent stays in the Human handover card).
+  // Fall back to a single "Messages" total when the sender split isn't available
+  // (fixtures/demo).
+  if (botMessages != null) {
+    tiles.push({
+      label: 'Bot messages',
+      value: formatNumber(botMessages),
+      sub: 'sent by the AI',
+      tone: 'neutral',
+    })
+    tiles.push({
+      label: 'Guest messages',
+      value: formatNumber(userMessages),
+      sub: 'sent by guests',
+      tone: 'neutral',
+    })
+  } else {
+    tiles.push({
+      label: 'Messages',
+      value: formatNumber(messages),
+      sub: `${formatNumber(userMessages)} from guests`,
+      tone: 'neutral',
+    })
+  }
   // Only show First response once we actually have the number — no "coming
   // soon" placeholder. Reappears automatically when the response-time
   // enrichment lands.

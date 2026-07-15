@@ -23,10 +23,6 @@ function formatDuration(sec: number | null): string {
   return `${m}m ${s}s`
 }
 
-// Fleet benchmark: median engagement rate across 35 chat bots (>=500 chats),
-// measured 2026-07-14 (middle half 27–37%). Static snapshot — refresh periodically.
-const FLEET_ENGAGEMENT_MEDIAN = 0.30
-
 /**
  * § 1 — Conversation funnel. The volume story as a reconciling funnel:
  * Users (matches the Botscrew admin "Active users") → Conversations → Engaged →
@@ -39,6 +35,7 @@ export function ConversationCounts({
   messages,
   userMessages,
   botMessages,
+  engagementBenchmark,
   engagedSessions,
   singleMsgShareOfEngaged,
   avgFirstResponseSec,
@@ -101,8 +98,8 @@ export function ConversationCounts({
   tiles.push({
     label: 'Engagement rate',
     value: formatPercent(engagedShare),
-    sub: `typical resort: ${formatPercent(FLEET_ENGAGEMENT_MEDIAN)}`,
-    tone: engagedShare >= FLEET_ENGAGEMENT_MEDIAN ? 'good' : 'accent',
+    sub: engagementBenchmark != null ? `typical resort: ${formatPercent(engagementBenchmark)}` : 'of chats opened',
+    tone: engagementBenchmark != null && engagedShare >= engagementBenchmark ? 'good' : 'accent',
   })
 
   // Only show First response once we actually have the number — no "coming

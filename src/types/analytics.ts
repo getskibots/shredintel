@@ -190,6 +190,9 @@ export interface ConversationCountsProps {
   /** Bot (AI) messages in the period — from sender_mix_stack, so it excludes
    *  live-agent messages. Optional (absent in fixtures). */
   botMessages?: number
+  /** Fleet median engagement rate (0-1) — the "vs typical resort" benchmark.
+   *  Optional; absent → no benchmark shown on the hero. */
+  engagementBenchmark?: number
   /** Sessions with ≥1 real user message */
   engagedSessions: number
   /** Sessions where the user sent exactly one message (bounce) */

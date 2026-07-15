@@ -208,6 +208,9 @@ export interface LiveBundle {
   deviceExperienceMix: DeviceExperienceRow[]
   demandHeatmap: DemandHeatmapRow[]
   conversationDepth: ConversationDepthRow[]
+  /** Fleet-wide median engagement rate (report.fleet_benchmarks); null/absent when
+   *  unavailable. Bot/period-independent — the "vs typical resort" benchmark. */
+  fleetEngagementMedian?: number | null
   intelSection: IntelBreakdownRow[]
   intelPinchpoint: IntelBreakdownRow[]
   intelSentiment: IntelBreakdownRow[]
@@ -278,9 +281,16 @@ export async function fetchLiveBundle(
     .schema('report')
     .rpc('active_users', { p_bot_id: botId, p_from: from, p_to: to }) as unknown as Promise<{ data: number | string | null; error: unknown }>
 
+  // Fleet benchmark — one anon row, bot/period-independent (report.fleet_benchmarks).
+  const benchmarkQ = supabase
+    .schema('report')
+    .from('fleet_benchmarks')
+    .select('engagement_median')
+    .limit(1) as unknown as Promise<{ data: { engagement_median: number }[] | null; error: unknown }>
+
   try {
     const [outcome, conversion, knowledge, sender, identity, funnel, device, heatmap, depth,
-           iSection, iPinch, iSent, iHand, iUrg, pFunnel, pSection, pPinch, pSent, gCountry, gCity, kLayer, kLayerSec, users] =
+           iSection, iPinch, iSent, iHand, iUrg, pFunnel, pSection, pPinch, pSent, gCountry, gCity, kLayer, kLayerSec, users, benchmark] =
       await withTimeout(Promise.all([
         q<OutcomeRow>('outcome_timeline'),
         q<ConversionRow>('conversion_pulse'),
@@ -305,6 +315,7 @@ export async function fetchLiveBundle(
         q<KnowledgeLayerRow>('knowledge_layer_mix'),
         q<KnowledgeLayerSectionRow>('knowledge_layer_by_section'),
         usersRpc,
+        benchmarkQ,
       ]))
 
     // Any of the 8 ORIGINAL views erroring = "schema unreachable" → bail to fixtures.
@@ -354,6 +365,11 @@ export async function fetchLiveBundle(
       geoCity: gCity.error ? [] : (gCity.data ?? []),
       // active_users RPC — non-fatal; null falls back to no Users tile
       activeUsers: users.error || users.data == null ? null : Number(users.data),
+      // fleet benchmark — non-fatal; null hides the "vs typical resort" comparison
+      fleetEngagementMedian:
+        benchmark.error || benchmark.data?.[0]?.engagement_median == null
+          ? null
+          : Number(benchmark.data[0].engagement_median),
     }
   } catch (err) {
     // eslint-disable-next-line no-console

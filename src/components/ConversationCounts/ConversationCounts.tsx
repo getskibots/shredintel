@@ -92,7 +92,7 @@ export function ConversationCounts({
   // Depth headline for the messages cluster: how substantive the average real
   // conversation is. Leads the Bot/Guest breakdown that follows and explains it.
   tiles.push({
-    label: 'Messages per conversation',
+    label: 'Messages per chat',
     value: messagesPerEngaged.toFixed(1),
     sub: 'back-and-forth depth',
     tone: 'neutral',

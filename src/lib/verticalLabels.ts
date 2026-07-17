@@ -21,6 +21,9 @@ export const VERTICAL_META: Record<string, VerticalMeta> = {
   travel_agency:   { label: 'Travel Agency',         emoji: '✈️', order: 13 },
   event:           { label: 'Events',                emoji: '🎫', order: 14 },
   marketplace:     { label: 'Ticket Marketplace',    emoji: '🛒', order: 15 },
+  retailer:        { label: 'Gear Shop & Rentals',   emoji: '🎿', order: 16 },
+  travel_insurance:{ label: 'Travel Insurance',      emoji: '🛡️', order: 17 },
+  ski_tech:        { label: 'Ski Tech & Platforms',  emoji: '🧰', order: 18 },
   generic:         { label: 'Other / Unclassified',  emoji: '•',  order: 99 },
 }
 

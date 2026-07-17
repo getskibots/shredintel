@@ -3,6 +3,7 @@ import { AhhhFaqItTool } from './components/AhhhFaqItTool'
 import { BotAnalyticsPage } from './components/BotAnalyticsPage'
 import { BotIndexPage } from './components/BotIndexPage'
 import { DashboardShell } from './components/DashboardShell'
+import { FleetPage } from './components/FleetPage'
 import { PasswordGate } from './components/PasswordGate'
 import { VoiceReportGrid } from './components/VoiceReportGrid'
 import { VoiceAnalyticsPage } from './components/VoiceAnalyticsPage/VoiceAnalyticsPage'
@@ -66,6 +67,8 @@ function ChannelShell() {
             Voice stays separate because its data model differs (no page URLs,
             call summaries live in raw.admin_call). */}
         <Route path="/" element={<BotIndexPage />} />
+        {/* Master dashboard — every bot's usage on one page (GSB-internal) */}
+        <Route path="/fleet" element={<FleetPage />} />
         <Route path="/chat" element={<Navigate to="/" replace />} />
         <Route path="/chat/jh" element={<Navigate to="/bot/43" replace />} />
         <Route path="/chat/mc" element={<Navigate to="/bot/2" replace />} />

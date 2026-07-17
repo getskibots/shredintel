@@ -16,6 +16,7 @@ const PRESETS: Array<{ key: PresetKey; label: string; shortLabel: string }> = [
   { key: '7d',  label: 'Last 7 days',  shortLabel: '7d'  },
   { key: '30d', label: 'Last 30 days', shortLabel: '30d' },
   { key: '90d', label: 'Last 90 days', shortLabel: '90d' },
+  { key: '365d', label: 'Last 12 months', shortLabel: '12mo' },
   { key: 'all', label: 'All time',     shortLabel: 'All' },
 ]
 

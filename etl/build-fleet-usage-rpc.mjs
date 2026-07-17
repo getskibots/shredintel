@@ -26,6 +26,8 @@ const c = new pg.Client({
 })
 await c.connect()
 
+// return-type changes (new OUT columns) require a drop first
+await c.query('drop function if exists report.fleet_usage(date, date)')
 await c.query(`
 create or replace function report.fleet_usage(p_from date, p_to date)
 returns table (
@@ -38,7 +40,8 @@ returns table (
   spark              jsonb,
   voice_calls        bigint,
   voice_minutes      numeric,
-  voice_cost_usd     numeric
+  voice_cost_usd     numeric,
+  ai_cost_usd        numeric
 )
 language sql stable security definer
 set search_path = report, public
@@ -87,6 +90,12 @@ as $fn$
       from report.voice_cost_daily v
      where v.day between p_from and p_to
      group by v.bot_id
+  ),
+  ai as (
+    select o.bot_id, sum(o.cost_usd) as cost_usd
+      from report.openai_cost_daily o
+     where o.day between p_from and p_to
+     group by o.bot_id
   )
   select b.id                         as bot_id,
          coalesce(cur.conv, 0)::bigint  as conversations,
@@ -97,12 +106,14 @@ as $fn$
          spark.sp                       as spark,
          coalesce(vc.calls, 0)::bigint  as voice_calls,
          coalesce(vc.minutes, 0)        as voice_minutes,
-         coalesce(vc.cost_usd, 0)       as voice_cost_usd
+         coalesce(vc.cost_usd, 0)       as voice_cost_usd,
+         coalesce(ai.cost_usd, 0)       as ai_cost_usd
     from public.bots b
     left join cur   on cur.bot_id   = b.id
     left join prev  on prev.bot_id  = b.id
     left join spark on spark.bot_id = b.id
     left join vc    on vc.bot_id    = b.id
+    left join ai    on ai.bot_id    = b.id
 $fn$`)
 
 await c.query('grant execute on function report.fleet_usage(date, date) to anon, authenticated')
@@ -114,8 +125,8 @@ const { rows: [x] } = await c.query(`
          (select sum(conv_30d) from report.fleet_overview) mv`)
 console.log(`✓ report.fleet_usage created + granted · 30d cross-check rpc=${x.rpc} vs matview=${x.mv} ${String(x.rpc) === String(x.mv) ? '✓ match' : '⚠ differs (windows may differ by a day)'}`)
 const { rows: top } = await c.query(`
-  select bot_id, conversations, prev_conversations, voice_calls, voice_cost_usd
+  select bot_id, conversations, prev_conversations, voice_cost_usd, ai_cost_usd
     from report.fleet_usage(current_date - 30, current_date - 1)
-   order by conversations desc limit 3`)
-for (const r of top) console.log(`  bot ${r.bot_id}: ${r.conversations} conv (prev ${r.prev_conversations}) · voice ${r.voice_calls} calls $${r.voice_cost_usd}`)
+   order by ai_cost_usd desc limit 4`)
+for (const r of top) console.log(`  bot ${r.bot_id}: ${r.conversations} conv · voice $${r.voice_cost_usd} · AI $${r.ai_cost_usd}`)
 await c.end()

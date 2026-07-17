@@ -39,6 +39,7 @@ export interface FleetBotRow {
   voice_calls: number
   voice_minutes: number
   voice_cost_usd: number
+  ai_cost_usd: number
 }
 
 interface IdentityRow {
@@ -61,6 +62,7 @@ interface UsageRow {
   voice_calls: number
   voice_minutes: number
   voice_cost_usd: number
+  ai_cost_usd: number
 }
 
 export function useFleetOverview(range: ResolvedPeriod): {
@@ -165,6 +167,7 @@ export function useFleetOverview(range: ResolvedPeriod): {
       voice_calls: u?.voice_calls ?? 0,
       voice_minutes: u?.voice_minutes ?? 0,
       voice_cost_usd: Number(u?.voice_cost_usd ?? 0),
+      ai_cost_usd: Number(u?.ai_cost_usd ?? 0),
     }
   })
   return { rows, bill, isLive: true, isLoading: false }

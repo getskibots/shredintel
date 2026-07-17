@@ -153,18 +153,9 @@ for (let round = 1; round <= 3; round++) {
   if (inh.rowCount === 0) break
 }
 
-// ── anon-safe daily rollup (auto-refreshed nightly with the other matviews) ──
-await c.query('drop materialized view if exists report.voice_cost_daily')
-await c.query(`create materialized view report.voice_cost_daily as
-  select bot_id, day,
-         count(*)::int                                   as calls,
-         round(sum(coalesce(duration_sec, 0)) / 60.0, 1) as minutes,
-         round(sum(coalesce(price, 0)), 4)               as cost_usd
-    from report.twilio_call_cost
-   where bot_id is not null
-   group by bot_id, day`)
-await c.query('create unique index voice_cost_daily_pk on report.voice_cost_daily (bot_id, day)')
-await c.query('grant select on report.voice_cost_daily to anon, authenticated')
+// NOTE: the anon per-bot rollup report.voice_cost_daily is built by
+// build-voice-cost.mjs (usage from here + line rental from sync-twilio-usage.mjs).
+// Run that AFTER this + the usage sync. This script owns only twilio_call_cost.
 await c.query(`notify pgrst, 'reload schema'`)
 
 const { rows: [t] } = await c.query(`

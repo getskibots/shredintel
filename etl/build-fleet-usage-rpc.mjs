@@ -41,6 +41,7 @@ returns table (
   voice_calls        bigint,
   voice_minutes      numeric,
   voice_cost_usd     numeric,
+  voice_rental_usd   numeric,
   ai_cost_usd        numeric
 )
 language sql stable security definer
@@ -85,8 +86,9 @@ as $fn$
   vc as (
     select v.bot_id,
            sum(v.calls)::bigint  as calls,
-           sum(v.minutes)  as minutes,
-           sum(v.cost_usd) as cost_usd
+           sum(v.minutes)    as minutes,
+           sum(v.cost_usd)   as cost_usd,
+           sum(v.rental_usd) as rental_usd
       from report.voice_cost_daily v
      where v.day between p_from and p_to
      group by v.bot_id
@@ -107,6 +109,7 @@ as $fn$
          coalesce(vc.calls, 0)::bigint  as voice_calls,
          coalesce(vc.minutes, 0)        as voice_minutes,
          coalesce(vc.cost_usd, 0)       as voice_cost_usd,
+         coalesce(vc.rental_usd, 0)     as voice_rental_usd,
          coalesce(ai.cost_usd, 0)       as ai_cost_usd
     from public.bots b
     left join cur   on cur.bot_id   = b.id

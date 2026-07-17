@@ -163,7 +163,7 @@ export function FleetPage() {
     { key: 'delta', label: 'Δ', title: 'vs the equal-length window before this one' },
     { key: 'engaged', label: 'Engaged', title: 'Conversations with at least one real guest message' },
     { key: 'messages', label: 'Msgs', title: 'All messages, both directions' },
-    ...(hasVoiceCost ? [{ key: 'voice_cost_usd' as SortKey, label: 'Voice $', title: 'Twilio per-call price for this window (calls on this bot’s line)' }] : []),
+    ...(hasVoiceCost ? [{ key: 'voice_cost_usd' as SortKey, label: 'Voice $', title: 'Twilio voice cost = call usage + monthly line rental, this window' }] : []),
     ...(hasAiCost ? [{ key: 'ai_cost_usd' as SortKey, label: 'AI $', title: 'OpenAI spend for this bot’s project (true per-bot cost)' }] : []),
     { key: 'conv_all', label: 'All time' },
     { key: 'last_active', label: 'Active' },
@@ -217,7 +217,7 @@ export function FleetPage() {
               {hasVoiceCost && (
                 <td className="px-3 py-2 text-right tabular-nums text-slate-600">
                   {r.voice_cost_usd > 0 ? (
-                    <span title={`${fmt(r.voice_calls)} calls · ${fmt(Math.round(r.voice_minutes))} min`}>{usd(r.voice_cost_usd)}</span>
+                    <span title={`${fmt(r.voice_calls)} calls · ${fmt(Math.round(r.voice_minutes))} min · usage ${usd(r.voice_cost_usd - r.voice_rental_usd)} + rental ${usd(r.voice_rental_usd)}`}>{usd(r.voice_cost_usd)}</span>
                   ) : (
                     <span className="text-slate-300">—</span>
                   )}

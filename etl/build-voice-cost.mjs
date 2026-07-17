@@ -48,6 +48,14 @@ await c.query(`create materialized view report.voice_cost_daily as
      where u.category = 'phonenumbers' and coalesce(u.price, 0) > 0
      group by ab.bot_id, u.day
   ),
+  recording as (   -- same allocation for recording + storage charges
+    select ab.bot_id, u.day, sum(u.price / an.n) as recording_usd
+      from report.twilio_usage_daily u
+      join acct_bots ab on ab.account_sid = u.account_sid
+      join acct_n   an on an.account_sid = u.account_sid
+     where u.category in ('recordings', 'recordingstorage') and coalesce(u.price, 0) > 0
+     group by ab.bot_id, u.day
+  ),
   usage as (    -- per-call price, already attributed to a bot
     select bot_id, day,
            count(*)::int                            as calls,
@@ -56,24 +64,32 @@ await c.query(`create materialized view report.voice_cost_daily as
       from report.twilio_call_cost
      where bot_id is not null
      group by bot_id, day
+  ),
+  keys as (
+    select bot_id, day from usage
+    union select bot_id, day from rental
+    union select bot_id, day from recording
   )
-  select coalesce(u.bot_id, r.bot_id)               as bot_id,
-         coalesce(u.day, r.day)                     as day,
-         coalesce(u.calls, 0)                       as calls,
-         round(coalesce(u.minutes, 0), 1)           as minutes,
-         round(coalesce(u.usage_usd, 0), 4)         as usage_usd,
-         round(coalesce(r.rental_usd, 0), 4)        as rental_usd,
+  select k.bot_id, k.day,
+         coalesce(u.calls, 0)                        as calls,
+         round(coalesce(u.minutes, 0), 1)            as minutes,
+         round(coalesce(u.usage_usd, 0), 4)          as usage_usd,
+         round(coalesce(r.rental_usd, 0), 4)         as rental_usd,
+         round(coalesce(rec.recording_usd, 0), 4)    as recording_usd,
          round(coalesce(u.usage_usd, 0) + coalesce(r.rental_usd, 0), 4) as cost_usd
-    from usage u
-    full outer join rental r on r.bot_id = u.bot_id and r.day = u.day`)
+    from keys k
+    left join usage     u   on u.bot_id = k.bot_id and u.day = k.day
+    left join rental    r   on r.bot_id = k.bot_id and r.day = k.day
+    left join recording rec on rec.bot_id = k.bot_id and rec.day = k.day`)
 await c.query('create unique index voice_cost_daily_pk on report.voice_cost_daily (bot_id, day)')
 await c.query('grant select on report.voice_cost_daily to anon, authenticated')
 await c.query(`notify pgrst, 'reload schema'`)
 
 const { rows: [t] } = await c.query(`
-  select round(sum(usage_usd),2) usage, round(sum(rental_usd),2) rental, round(sum(cost_usd),2) total
+  select round(sum(usage_usd),2) usage, round(sum(rental_usd),2) rental,
+         round(sum(recording_usd),2) recording, round(sum(cost_usd),2) telephony
     from report.voice_cost_daily where day >= current_date - 30`)
-console.log(`✓ report.voice_cost_daily rebuilt (usage + rental) · 30d fleet: usage $${t.usage} + rental $${t.rental} = $${t.total}`)
+console.log(`✓ report.voice_cost_daily rebuilt · 30d fleet: telephony $${t.telephony} (usage $${t.usage} + rental $${t.rental}) · recording $${t.recording}`)
 const { rows: top } = await c.query(`
   select v.bot_id, coalesce(b.name,'?') name,
          round(sum(v.usage_usd),2) usage, round(sum(v.rental_usd),2) rental, round(sum(v.cost_usd),2) total

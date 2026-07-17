@@ -42,7 +42,9 @@ returns table (
   voice_minutes      numeric,
   voice_cost_usd     numeric,
   voice_rental_usd   numeric,
-  ai_cost_usd        numeric
+  voice_recording_usd numeric,
+  ai_cost_usd        numeric,
+  botscrew_usd       numeric
 )
 language sql stable security definer
 set search_path = report, public
@@ -86,9 +88,10 @@ as $fn$
   vc as (
     select v.bot_id,
            sum(v.calls)::bigint  as calls,
-           sum(v.minutes)    as minutes,
-           sum(v.cost_usd)   as cost_usd,
-           sum(v.rental_usd) as rental_usd
+           sum(v.minutes)       as minutes,
+           sum(v.cost_usd)      as cost_usd,
+           sum(v.rental_usd)    as rental_usd,
+           sum(v.recording_usd) as recording_usd
       from report.voice_cost_daily v
      where v.day between p_from and p_to
      group by v.bot_id
@@ -110,7 +113,14 @@ as $fn$
          coalesce(vc.minutes, 0)        as voice_minutes,
          coalesce(vc.cost_usd, 0)       as voice_cost_usd,
          coalesce(vc.rental_usd, 0)     as voice_rental_usd,
-         coalesce(ai.cost_usd, 0)       as ai_cost_usd
+         coalesce(vc.recording_usd, 0)  as voice_recording_usd,
+         coalesce(ai.cost_usd, 0)       as ai_cost_usd,
+         -- Botscrew platform fee: $40/mo per live-production bot ("ACTIVE" in name),
+         -- prorated to the window at $40 per 30 days (so "Last 30 days" = $40).
+         -- Assumes the bot was live the whole window — best for recent windows.
+         case when b.name ilike '%active%'
+              then round(40.0 * (p_to - p_from + 1) / 30.0, 2)
+              else 0 end                as botscrew_usd
     from public.bots b
     left join cur   on cur.bot_id   = b.id
     left join prev  on prev.bot_id  = b.id
@@ -128,8 +138,9 @@ const { rows: [x] } = await c.query(`
          (select sum(conv_30d) from report.fleet_overview) mv`)
 console.log(`✓ report.fleet_usage created + granted · 30d cross-check rpc=${x.rpc} vs matview=${x.mv} ${String(x.rpc) === String(x.mv) ? '✓ match' : '⚠ differs (windows may differ by a day)'}`)
 const { rows: top } = await c.query(`
-  select bot_id, conversations, prev_conversations, voice_cost_usd, ai_cost_usd
+  select bot_id, voice_cost_usd, voice_recording_usd, ai_cost_usd, botscrew_usd,
+         round(voice_cost_usd + voice_recording_usd + ai_cost_usd + botscrew_usd, 2) as total
     from report.fleet_usage(current_date - 30, current_date - 1)
-   order by ai_cost_usd desc limit 4`)
-for (const r of top) console.log(`  bot ${r.bot_id}: ${r.conversations} conv · voice $${r.voice_cost_usd} · AI $${r.ai_cost_usd}`)
+   order by total desc limit 5`)
+for (const r of top) console.log(`  bot ${r.bot_id}: voice $${r.voice_cost_usd} + rec $${r.voice_recording_usd} + AI $${r.ai_cost_usd} + botscrew $${r.botscrew_usd} = $${r.total}`)
 await c.end()

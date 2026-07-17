@@ -21,7 +21,7 @@ import {
  * (report.voice_cost_daily). Each row links to that bot's dashboard.
  */
 
-type SortKey = 'conversations' | 'delta' | 'engaged' | 'messages' | 'voice_cost_usd' | 'ai_cost_usd' | 'conv_all' | 'last_active'
+type SortKey = 'conversations' | 'delta' | 'engaged' | 'messages' | 'voice_cost_usd' | 'voice_recording_usd' | 'ai_cost_usd' | 'total_cost_usd' | 'conv_all' | 'last_active'
 
 const fmt = (n: number) => n.toLocaleString('en-US')
 const usd = (n: number) => `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -137,11 +137,16 @@ export function FleetPage() {
     const voiceCalls = rows.reduce((s, r) => s + r.voice_calls, 0)
     const voiceMinutes = rows.reduce((s, r) => s + r.voice_minutes, 0)
     const aiCost = rows.reduce((s, r) => s + r.ai_cost_usd, 0)
-    return { conv, prev, engaged, msgs, active, voiceCost, voiceCalls, voiceMinutes, aiCost }
+    const recCost = rows.reduce((s, r) => s + r.voice_recording_usd, 0)
+    const botscrewCost = rows.reduce((s, r) => s + r.botscrew_usd, 0)
+    const totalCost = rows.reduce((s, r) => s + r.total_cost_usd, 0)
+    return { conv, prev, engaged, msgs, active, voiceCost, voiceCalls, voiceMinutes, aiCost, recCost, botscrewCost, totalCost }
   }, [rows])
   const heroDelta = hero.prev > 0 ? (hero.conv - hero.prev) / hero.prev : null
   const hasVoiceCost = hero.voiceCost > 0
+  const hasRecCost = hero.recCost > 0
   const hasAiCost = hero.aiCost > 0
+  const hasTotalCost = hero.totalCost > 0
   // Prefer the true Twilio bill (Usage Records) for the hero; fall back to the
   // summed per-call price when the bill layer isn't populated for this window.
   const billTotal = bill?.total_usd ?? hero.voiceCost
@@ -163,8 +168,10 @@ export function FleetPage() {
     { key: 'delta', label: 'Δ', title: 'vs the equal-length window before this one' },
     { key: 'engaged', label: 'Engaged', title: 'Conversations with at least one real guest message' },
     { key: 'messages', label: 'Msgs', title: 'All messages, both directions' },
-    ...(hasVoiceCost ? [{ key: 'voice_cost_usd' as SortKey, label: 'Voice $', title: 'Twilio voice cost = call usage + monthly line rental, this window' }] : []),
+    ...(hasVoiceCost ? [{ key: 'voice_cost_usd' as SortKey, label: 'Voice $', title: 'Twilio voice = call usage + monthly line rental, this window' }] : []),
+    ...(hasRecCost ? [{ key: 'voice_recording_usd' as SortKey, label: 'Rec $', title: 'Twilio call-recording + storage, allocated to this bot' }] : []),
     ...(hasAiCost ? [{ key: 'ai_cost_usd' as SortKey, label: 'AI $', title: 'OpenAI spend for this bot’s project (true per-bot cost)' }] : []),
+    ...(hasTotalCost ? [{ key: 'total_cost_usd' as SortKey, label: 'Total $', title: 'All-in cost: voice + recording + OpenAI + $40/mo Botscrew platform fee' }] : []),
     { key: 'conv_all', label: 'All time' },
     { key: 'last_active', label: 'Active' },
   ]
@@ -223,9 +230,23 @@ export function FleetPage() {
                   )}
                 </td>
               )}
+              {hasRecCost && (
+                <td className="px-3 py-2 text-right tabular-nums text-slate-600">
+                  {r.voice_recording_usd > 0 ? usd(r.voice_recording_usd) : <span className="text-slate-300">—</span>}
+                </td>
+              )}
               {hasAiCost && (
                 <td className="px-3 py-2 text-right tabular-nums text-slate-600">
                   {r.ai_cost_usd > 0 ? usd(r.ai_cost_usd) : <span className="text-slate-300">—</span>}
+                </td>
+              )}
+              {hasTotalCost && (
+                <td className="px-3 py-2 text-right tabular-nums font-semibold text-slate-800">
+                  {r.total_cost_usd > 0 ? (
+                    <span title={`voice ${usd(r.voice_cost_usd)} + recording ${usd(r.voice_recording_usd)} + AI ${usd(r.ai_cost_usd)} + Botscrew ${usd(r.botscrew_usd)}`}>{usd(r.total_cost_usd)}</span>
+                  ) : (
+                    <span className="text-slate-300">—</span>
+                  )}
                 </td>
               )}
               <td className="px-3 py-2 text-right tabular-nums text-slate-400">{fmt(r.conv_all)}</td>
@@ -274,8 +295,8 @@ export function FleetPage() {
         </div>
       </div>
 
-      {/* Fleet-wide usage for the selected window */}
-      <div className={['mb-8 grid grid-cols-2 gap-3 sm:grid-cols-3', { 4: 'lg:grid-cols-4', 5: 'lg:grid-cols-5', 6: 'lg:grid-cols-6' }[4 + (hasBill ? 1 : 0) + (hasAiCost ? 1 : 0)]].join(' ')}>
+      {/* Fleet-wide usage + cost for the selected window */}
+      <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         <Metric
           label="Conversations"
           value={fmt(hero.conv)}
@@ -313,6 +334,15 @@ export function FleetPage() {
             value={usd(hero.aiCost)}
             subValue="LLM spend, all bots"
             title="True per-bot OpenAI spend for this window, from OpenAI's Costs API (each bot = its own OpenAI project). Excludes GSB-internal projects like enrichment."
+          />
+        )}
+        {hasTotalCost && (
+          <Metric
+            label="Total cost"
+            value={usd(hero.totalCost)}
+            tone="accent"
+            subValue={`incl. ${usd(hero.botscrewCost)} Botscrew platform`}
+            title={`All-in fleet cost for this window: Twilio ${usd(hero.voiceCost + hero.recCost)} + OpenAI ${usd(hero.aiCost)} + Botscrew platform ${usd(hero.botscrewCost)} ($40/mo per live-production bot).`}
           />
         )}
       </div>

@@ -115,18 +115,20 @@ as $fn$
          coalesce(vc.rental_usd, 0)     as voice_rental_usd,
          coalesce(vc.recording_usd, 0)  as voice_recording_usd,
          coalesce(ai.cost_usd, 0)       as ai_cost_usd,
-         -- Botscrew platform fee: $40/mo per live-production bot ("ACTIVE" in name),
-         -- prorated to the window at $40 per 30 days (so "Last 30 days" = $40).
-         -- Assumes the bot was live the whole window — best for recent windows.
-         case when b.name ilike '%active%'
-              then round(40.0 * (p_to - p_from + 1) / 30.0, 2)
-              else 0 end                as botscrew_usd
+         -- Botscrew platform fee: $40/mo, only for billable bots (report.bot_go_live),
+         -- prorated to the overlap of the window with [live_since, window_end] at
+         -- $40 per 30 days — so a bot launched mid-window is charged only from its
+         -- go-live date (0 if it launches after the window ends).
+         case when gl.bot_id is null then 0
+              else round(40.0 * greatest(0, p_to - greatest(p_from, gl.live_since) + 1) / 30.0, 2)
+         end                            as botscrew_usd
     from public.bots b
     left join cur   on cur.bot_id   = b.id
     left join prev  on prev.bot_id  = b.id
     left join spark on spark.bot_id = b.id
     left join vc    on vc.bot_id    = b.id
     left join ai    on ai.bot_id    = b.id
+    left join report.bot_go_live gl on gl.bot_id = b.id
 $fn$`)
 
 await c.query('grant execute on function report.fleet_usage(date, date) to anon, authenticated')

@@ -302,7 +302,7 @@ export function FleetPage() {
             }
             title={
               bill
-                ? `True Twilio bill for this window — calls ${usd(bill.calls_usd)} + numbers ${usd(bill.numbers_usd)} + recordings ${usd(bill.recordings_usd)} + fees. Source: Twilio Usage Records.`
+                ? `True Twilio bill for this window — calls ${usd(bill.calls_usd)} + numbers ${usd(bill.numbers_usd)} + recordings ${usd(bill.recordings_usd)} + media streams ${usd(bill.media_streams_usd)} + fees. Source: Twilio Usage Records.`
                 : 'Summed per-call price across voice bots (number rental + recording storage not included). The full bill layer isn’t populated for this window yet.'
             }
           />

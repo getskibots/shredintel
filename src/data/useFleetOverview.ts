@@ -22,6 +22,7 @@ export interface FleetBill {
   calls_usd: number
   numbers_usd: number
   recordings_usd: number
+  media_streams_usd: number
 }
 export interface FleetBotRow {
   bot_id: number
@@ -138,17 +139,17 @@ export function useFleetOverview(range: ResolvedPeriod): {
         const { data, error } = (await supabase
           .schema('report')
           .from('twilio_bill_daily')
-          .select('total_usd, calls_usd, numbers_usd, recordings_usd')
+          .select('total_usd, calls_usd, numbers_usd, recordings_usd, media_streams_usd')
           .gte('day', range.from)
           .lte('day', range.to)
           .limit(2000)) as {
-          data: { total_usd: number | null; calls_usd: number | null; numbers_usd: number | null; recordings_usd: number | null }[] | null
+          data: { total_usd: number | null; calls_usd: number | null; numbers_usd: number | null; recordings_usd: number | null; media_streams_usd: number | null }[] | null
           error: unknown
         }
         if (cancelled || error || !data || data.length === 0) return
-        const sum = (k: 'total_usd' | 'calls_usd' | 'numbers_usd' | 'recordings_usd') =>
+        const sum = (k: 'total_usd' | 'calls_usd' | 'numbers_usd' | 'recordings_usd' | 'media_streams_usd') =>
           data.reduce((s, r) => s + Number(r[k] ?? 0), 0)
-        setBill({ total_usd: sum('total_usd'), calls_usd: sum('calls_usd'), numbers_usd: sum('numbers_usd'), recordings_usd: sum('recordings_usd') })
+        setBill({ total_usd: sum('total_usd'), calls_usd: sum('calls_usd'), numbers_usd: sum('numbers_usd'), recordings_usd: sum('recordings_usd'), media_streams_usd: sum('media_streams_usd') })
       } catch { /* non-fatal */ }
     })()
     return () => { cancelled = true }

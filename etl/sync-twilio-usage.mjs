@@ -98,6 +98,7 @@ await c.query(`create materialized view report.twilio_bill_daily as
          round(sum(price) filter (where category = 'calls'), 4)                               as calls_usd,
          round(sum(price) filter (where category = 'phonenumbers'), 4)                        as numbers_usd,
          round(sum(price) filter (where category in ('recordings','recordingstorage')), 4)    as recordings_usd,
+         round(sum(price) filter (where category = 'calls-media-stream-minutes'), 4)          as media_streams_usd,
          round(sum(price) filter (where category = 'transcriptions'), 4)                      as transcriptions_usd,
          round(sum(price) filter (where category like 'sms%'), 4)                             as sms_usd
     from report.twilio_usage_daily

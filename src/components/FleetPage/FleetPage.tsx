@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useLocation, useSearchParams } from 'react-router-dom'
-import { ArrowDown, ArrowUp, Headphones, LayoutGrid, List, Search, TrendingUp } from 'lucide-react'
+import { ArrowDown, ArrowUp, Filter, Headphones, LayoutGrid, List, Search, TrendingUp } from 'lucide-react'
 import { useFleetOverview, type FleetBotRow } from '../../data/useFleetOverview'
 import { verticalMeta } from '../../lib/verticalLabels'
 import { Metric } from '../shared/Metric'
@@ -25,6 +25,12 @@ type SortKey = 'conversations' | 'delta' | 'engaged' | 'messages' | 'voice_cost_
 
 const fmt = (n: number) => n.toLocaleString('en-US')
 const usd = (n: number) => `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+
+/** Active = any bot with "active" in its name (GSB live-production convention);
+ *  everything else is a demo/test/template/clone bot. */
+const isActiveBot = (name: string) => /active/i.test(name)
+
+type BotFilter = 'all' | 'active' | 'demo'
 
 function deltaPct(r: FleetBotRow): number | null {
   if (r.prev_conversations === 0) return r.conversations > 0 ? null : 0 // null = "new" (no baseline)
@@ -95,13 +101,26 @@ export function FleetPage() {
   const { rows, bill, isLive, isLoading } = useFleetOverview(range)
   const [query, setQuery] = useState('')
   const [grouped, setGrouped] = useState(true)
+  const [botFilter, setBotFilter] = useState<BotFilter>('all')
   const [sortKey, setSortKey] = useState<SortKey>('conversations')
   const [sortDesc, setSortDesc] = useState(true)
   const q = query.trim().toLowerCase()
 
-  // Bots with any recorded traffic; the rest collapse into one count line.
-  const traffic = useMemo(() => rows.filter((r) => r.conv_all > 0), [rows])
-  const silent = rows.length - traffic.length
+  // Active vs Demo split (name-based), over every deployed bot.
+  const activeCount = useMemo(() => rows.filter((r) => isActiveBot(r.name)).length, [rows])
+  const demoCount = rows.length - activeCount
+
+  // Apply the Active/Demo filter, then keep bots with recorded traffic; the rest
+  // collapse into one count line.
+  const classified = useMemo(
+    () =>
+      botFilter === 'all'
+        ? rows
+        : rows.filter((r) => (botFilter === 'active' ? isActiveBot(r.name) : !isActiveBot(r.name))),
+    [rows, botFilter],
+  )
+  const traffic = useMemo(() => classified.filter((r) => r.conv_all > 0), [classified])
+  const silent = classified.length - traffic.length
 
   const filtered = useMemo(
     () => (!q ? traffic : traffic.filter((r) => r.name.toLowerCase().includes(q) || String(r.bot_id).includes(q))),
@@ -184,6 +203,10 @@ export function FleetPage() {
       setSortDesc(true)
     }
   }
+
+  // Active-bots card cycles the table filter: all → active → demo → all.
+  const cycleBotFilter = () =>
+    setBotFilter((f) => (f === 'all' ? 'active' : f === 'active' ? 'demo' : 'all'))
 
   const rowLink = (r: FleetBotRow) =>
     `${r.channel === 'voice' ? `/voice/${r.bot_id}` : `/bot/${r.bot_id}`}${location.search}`
@@ -293,7 +316,7 @@ export function FleetPage() {
           <p className="mt-0.5 text-sm text-slate-500">
             {isLoading
               ? 'Loading fleet…'
-              : `${rows.length} bots · ${hero.active} active in this window`}
+              : `${rows.length} bots · ${hero.active} with traffic in this window`}
             {isLive ? ' · live' : ''}
           </p>
         </div>
@@ -316,7 +339,31 @@ export function FleetPage() {
           title="Conversations with at least one real guest message"
         />
         <Metric label="Messages" value={fmt(hero.msgs)} subValue="both directions" />
-        <Metric label="Active bots" value={fmt(hero.active)} subValue={`of ${rows.length} deployed`} />
+        {/* Active vs Demo — click to filter the table (all → active → demo → all) */}
+        <button
+          type="button"
+          onClick={cycleBotFilter}
+          title="Active = any bot with “active” in its name; the rest are demos. Click to filter the table."
+          className={[
+            'rounded-2xl border p-4 text-left transition',
+            botFilter === 'all'
+              ? 'border-slate-200 hover:border-botscrew-300'
+              : 'border-botscrew-300 bg-botscrew-50/50 ring-1 ring-botscrew-200',
+          ].join(' ')}
+        >
+          <div className="flex items-center justify-between text-[11px] font-medium uppercase tracking-wider text-slate-500">
+            {botFilter === 'demo' ? 'Demo bots' : 'Active bots'}
+            <Filter className={['h-3.5 w-3.5', botFilter === 'all' ? 'text-slate-300' : 'text-botscrew-500'].join(' ')} strokeWidth={2} />
+          </div>
+          <div className="mt-1 font-display text-2xl font-semibold tabular-nums tracking-tight text-slate-900">
+            {fmt(botFilter === 'demo' ? demoCount : activeCount)}
+          </div>
+          <div className="mt-0.5 text-xs text-slate-500">
+            {botFilter === 'all' && `${fmt(activeCount)} active · ${fmt(demoCount)} demo · tap to filter`}
+            {botFilter === 'active' && <span className="font-medium text-botscrew-700">showing active · tap for demo</span>}
+            {botFilter === 'demo' && <span className="font-medium text-botscrew-700">showing demo · tap to clear</span>}
+          </div>
+        </button>
       </div>
       {(hasBill || hasAiCost || hasTotalCost) && (
         <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -488,7 +535,8 @@ export function FleetPage() {
 
       {!isLoading && silent > 0 && !q && (
         <p className="mt-6 text-center text-xs text-slate-400">
-          + {silent} deployed bot{silent === 1 ? '' : 's'} with no recorded traffic
+          + {silent} {botFilter === 'active' ? 'active ' : botFilter === 'demo' ? 'demo ' : 'deployed '}
+          bot{silent === 1 ? '' : 's'} with no recorded traffic
         </p>
       )}
     </div>

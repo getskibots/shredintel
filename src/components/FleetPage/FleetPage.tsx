@@ -102,6 +102,7 @@ export function FleetPage() {
   const [query, setQuery] = useState('')
   const [grouped, setGrouped] = useState(true)
   const [botFilter, setBotFilter] = useState<BotFilter>('all')
+  const [channelFilter, setChannelFilter] = useState<'all' | 'chat' | 'voice'>('all')
   const [sortKey, setSortKey] = useState<SortKey>('conversations')
   const [sortDesc, setSortDesc] = useState(true)
   const q = query.trim().toLowerCase()
@@ -112,13 +113,12 @@ export function FleetPage() {
 
   // Apply the Active/Demo filter, then keep bots with recorded traffic; the rest
   // collapse into one count line.
-  const classified = useMemo(
-    () =>
-      botFilter === 'all'
-        ? rows
-        : rows.filter((r) => (botFilter === 'active' ? isActiveBot(r.name) : !isActiveBot(r.name))),
-    [rows, botFilter],
-  )
+  const classified = useMemo(() => {
+    let out = rows
+    if (botFilter !== 'all') out = out.filter((r) => (botFilter === 'active' ? isActiveBot(r.name) : !isActiveBot(r.name)))
+    if (channelFilter !== 'all') out = out.filter((r) => r.channel === channelFilter)
+    return out
+  }, [rows, botFilter, channelFilter])
   const traffic = useMemo(() => classified.filter((r) => r.conv_all > 0), [classified])
   const silent = classified.length - traffic.length
 
@@ -457,21 +457,37 @@ export function FleetPage() {
             })}
           </div>
           <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-            <div className="rounded-xl border border-botscrew-100 bg-botscrew-50/50 p-3">
+            <button
+              type="button"
+              onClick={() => setChannelFilter((f) => (f === 'chat' ? 'all' : 'chat'))}
+              title="Filter the table to chat bots"
+              className={[
+                'rounded-xl border bg-botscrew-50/50 p-3 text-left transition',
+                channelFilter === 'chat' ? 'border-botscrew-400 ring-2 ring-botscrew-200' : 'border-botscrew-100 hover:border-botscrew-300',
+              ].join(' ')}
+            >
               <div className="text-[11px] font-medium uppercase tracking-wider text-botscrew-700">Chat · cost / conversation</div>
               <div className="mt-0.5 font-display text-xl font-semibold tabular-nums text-slate-900">${chatCPC.toFixed(3)}</div>
               <div className="text-xs text-slate-500">{fmt(hero.chatConv)} conversations · {usd(hero.chatCost)}</div>
-            </div>
-            <div className="rounded-xl border border-amber-100 bg-amber-50/50 p-3">
+            </button>
+            <button
+              type="button"
+              onClick={() => setChannelFilter((f) => (f === 'voice' ? 'all' : 'voice'))}
+              title="Filter the table to voice bots"
+              className={[
+                'rounded-xl border bg-amber-50/50 p-3 text-left transition',
+                channelFilter === 'voice' ? 'border-amber-400 ring-2 ring-amber-200' : 'border-amber-100 hover:border-amber-300',
+              ].join(' ')}
+            >
               <div className="flex items-baseline justify-between">
                 <div className="text-[11px] font-medium uppercase tracking-wider text-amber-700">Voice · cost / conversation</div>
                 {voiceCPM > 0 && (
-                  <div
+                  <span
                     className="text-[11px] font-medium tabular-nums text-amber-700"
-                    title="Marginal cost per talk minute — Twilio call charge + recording + OpenAI realtime audio, over voice minutes. Excludes the fixed $40 seat + line rental (they don't scale with time)."
+                    title="Marginal cost per talk minute — Twilio call charge + recording + OpenAI realtime audio, over voice minutes. Excludes fixed line rental (doesn't scale with time)."
                   >
                     ${voiceCPM.toFixed(3)} / min
-                  </div>
+                  </span>
                 )}
               </div>
               <div className="mt-0.5 font-display text-xl font-semibold tabular-nums text-slate-900">${voiceCPC.toFixed(2)}</div>
@@ -479,7 +495,7 @@ export function FleetPage() {
                 {fmt(hero.voiceConv)} conversations · {usd(hero.voiceChannelCost)}
                 {hero.voiceMinutes > 0 && <> · {fmt(Math.round(hero.voiceMinutes))} min</>}
               </div>
-            </div>
+            </button>
           </div>
         </div>
       )}
@@ -495,6 +511,22 @@ export function FleetPage() {
             placeholder="Search by name or id…"
             className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-700 outline-none placeholder:text-slate-400 focus:border-botscrew-400 focus:ring-2 focus:ring-botscrew-100"
           />
+        </div>
+        {/* Channel filter — All / Chat / Voice */}
+        <div className="inline-flex shrink-0 items-center rounded-lg border border-slate-200 bg-white p-0.5 text-sm">
+          {(['all', 'chat', 'voice'] as const).map((ch) => (
+            <button
+              key={ch}
+              type="button"
+              onClick={() => setChannelFilter(ch)}
+              className={[
+                'rounded-md px-2.5 py-1.5 capitalize transition',
+                channelFilter === ch ? 'bg-botscrew-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800',
+              ].join(' ')}
+            >
+              {ch}
+            </button>
+          ))}
         </div>
         <button
           type="button"

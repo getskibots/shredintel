@@ -42,6 +42,11 @@ export interface FleetBotRow {
   voice_cost_usd: number
   voice_rental_usd: number
   voice_recording_usd: number
+  voice_inbound_usd: number
+  voice_inbound_min: number
+  voice_outbound_usd: number
+  voice_outbound_min: number
+  voice_outbound_calls: number
   ai_cost_usd: number
   total_cost_usd: number
 }
@@ -68,6 +73,11 @@ interface UsageRow {
   voice_cost_usd: number
   voice_rental_usd: number
   voice_recording_usd: number
+  voice_inbound_usd: number
+  voice_inbound_min: number
+  voice_outbound_usd: number
+  voice_outbound_min: number
+  voice_outbound_calls: number
   ai_cost_usd: number
 }
 
@@ -175,6 +185,11 @@ export function useFleetOverview(range: ResolvedPeriod): {
       voice_cost_usd: Number(u?.voice_cost_usd ?? 0),
       voice_rental_usd: Number(u?.voice_rental_usd ?? 0),
       voice_recording_usd: Number(u?.voice_recording_usd ?? 0),
+      voice_inbound_usd: Number(u?.voice_inbound_usd ?? 0),
+      voice_inbound_min: Number(u?.voice_inbound_min ?? 0),
+      voice_outbound_usd: Number(u?.voice_outbound_usd ?? 0),
+      voice_outbound_min: Number(u?.voice_outbound_min ?? 0),
+      voice_outbound_calls: u?.voice_outbound_calls ?? 0,
       ai_cost_usd: Number(u?.ai_cost_usd ?? 0),
       // Run cost = Twilio (voice + recording) + OpenAI. No synthetic platform fee.
       total_cost_usd:

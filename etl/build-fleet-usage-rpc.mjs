@@ -43,6 +43,11 @@ returns table (
   voice_cost_usd     numeric,
   voice_rental_usd   numeric,
   voice_recording_usd numeric,
+  voice_inbound_usd  numeric,
+  voice_inbound_min  numeric,
+  voice_outbound_usd numeric,
+  voice_outbound_min numeric,
+  voice_outbound_calls bigint,
   ai_cost_usd        numeric,
   botscrew_usd       numeric
 )
@@ -91,7 +96,12 @@ as $fn$
            sum(v.minutes)       as minutes,
            sum(v.cost_usd)      as cost_usd,
            sum(v.rental_usd)    as rental_usd,
-           sum(v.recording_usd) as recording_usd
+           sum(v.recording_usd) as recording_usd,
+           sum(v.inbound_usd)   as inbound_usd,
+           sum(v.inbound_min)   as inbound_min,
+           sum(v.outbound_usd)  as outbound_usd,
+           sum(v.outbound_min)  as outbound_min,
+           sum(v.outbound_calls)::bigint as outbound_calls
       from report.voice_cost_daily v
      where v.day between p_from and p_to
      group by v.bot_id
@@ -114,6 +124,11 @@ as $fn$
          coalesce(vc.cost_usd, 0)       as voice_cost_usd,
          coalesce(vc.rental_usd, 0)     as voice_rental_usd,
          coalesce(vc.recording_usd, 0)  as voice_recording_usd,
+         coalesce(vc.inbound_usd, 0)    as voice_inbound_usd,
+         coalesce(vc.inbound_min, 0)    as voice_inbound_min,
+         coalesce(vc.outbound_usd, 0)   as voice_outbound_usd,
+         coalesce(vc.outbound_min, 0)   as voice_outbound_min,
+         coalesce(vc.outbound_calls, 0)::bigint as voice_outbound_calls,
          coalesce(ai.cost_usd, 0)       as ai_cost_usd,
          -- Botscrew platform fee: $40/mo, only for billable bots (report.bot_go_live),
          -- prorated to the overlap of the window with [live_since, window_end] at

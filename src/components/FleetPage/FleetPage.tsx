@@ -158,6 +158,12 @@ export function FleetPage() {
     const aiCost = rows.reduce((s, r) => s + r.ai_cost_usd, 0)
     const recCost = rows.reduce((s, r) => s + r.voice_recording_usd, 0)
     const totalCost = rows.reduce((s, r) => s + r.total_cost_usd, 0)
+    // Inbound (guest→AI) vs outbound (bot→human handover) telephony split.
+    const inboundUsd = rows.reduce((s, r) => s + r.voice_inbound_usd, 0)
+    const inboundMin = rows.reduce((s, r) => s + r.voice_inbound_min, 0)
+    const outboundUsd = rows.reduce((s, r) => s + r.voice_outbound_usd, 0)
+    const outboundMin = rows.reduce((s, r) => s + r.voice_outbound_min, 0)
+    const outboundCalls = rows.reduce((s, r) => s + r.voice_outbound_calls, 0)
     // Chat vs Voice split — the marquee insight (volume vs cost by channel).
     let chatConv = 0, voiceConv = 0, chatCost = 0, voiceCost2 = 0
     // Voice marginal cost/minute = telephony usage (excl fixed rental) + recording
@@ -173,6 +179,7 @@ export function FleetPage() {
     return {
       conv, prev, engaged, msgs, active, voiceCost, voiceCalls, voiceMinutes, aiCost, recCost, totalCost,
       chatConv, voiceConv, chatCost, voiceChannelCost: voiceCost2, voiceVarCost,
+      inboundUsd, inboundMin, outboundUsd, outboundMin, outboundCalls,
     }
   }, [rows])
   const heroDelta = hero.prev > 0 ? (hero.conv - hero.prev) / hero.prev : null
@@ -198,6 +205,11 @@ export function FleetPage() {
   const cpcRatio = chatCPC > 0 ? voiceCPC / chatCPC : 0
   const voiceCPM = hero.voiceMinutes > 0 ? hero.voiceVarCost / hero.voiceMinutes : 0
   const hasChannelSplit = hero.voiceConv > 0 && hero.chatConv > 0
+  // Voice telephony: inbound (guest→AI) vs outbound (bot→human handover).
+  const telephonyUsd = hero.inboundUsd + hero.outboundUsd
+  const outboundCostShare = telephonyUsd > 0 ? hero.outboundUsd / telephonyUsd : 0
+  const transferRate = hero.voiceCalls > 0 ? hero.outboundCalls / hero.voiceCalls : 0
+  const hasTelephonySplit = hero.outboundUsd > 0 && hero.inboundUsd > 0
 
   const onSort = (key: SortKey) => {
     if (key === sortKey) setSortDesc((d) => !d)
@@ -496,6 +508,46 @@ export function FleetPage() {
                 {hero.voiceMinutes > 0 && <> · {fmt(Math.round(hero.voiceMinutes))} min</>}
               </div>
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Insight: Voice telephony — inbound (AI) vs outbound (human handover) ── */}
+      {hasTelephonySplit && (
+        <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+            <h2 className="text-sm font-semibold text-slate-700">Voice: AI-handled vs human handover</h2>
+            <span className="text-xs text-slate-400">Twilio call charges this window</span>
+          </div>
+          <p className="mb-4 text-sm text-slate-600">
+            <span className="font-semibold text-slate-800">{(transferRate * 100).toFixed(0)}%</span> of voice calls
+            transfer to a live person — those handover legs are{' '}
+            <span className="font-semibold text-rose-600">{(outboundCostShare * 100).toFixed(0)}%</span> of telephony spend
+            ({usd(hero.outboundUsd)} of {usd(telephonyUsd)}).
+          </p>
+          <div className="mb-1 flex items-center justify-between text-xs text-slate-500">
+            <span className="font-medium uppercase tracking-wider">Call charges</span>
+            <span className="tabular-nums">
+              <span className="text-emerald-600">inbound (AI) {usd(hero.inboundUsd)}</span>
+              <span className="mx-1.5 text-slate-300">|</span>
+              <span className="text-rose-600">handover {usd(hero.outboundUsd)}</span>
+            </span>
+          </div>
+          <div className="flex h-2.5 overflow-hidden rounded-full bg-slate-100">
+            <div className="bg-emerald-400" style={{ width: `${100 - outboundCostShare * 100}%` }} />
+            <div className="bg-rose-400" style={{ width: `${outboundCostShare * 100}%` }} />
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+            <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-3">
+              <div className="text-[11px] font-medium uppercase tracking-wider text-emerald-700">Inbound · AI-handled</div>
+              <div className="mt-0.5 font-display text-xl font-semibold tabular-nums text-slate-900">{usd(hero.inboundUsd)}</div>
+              <div className="text-xs text-slate-500">{fmt(Math.round(hero.inboundMin))} min</div>
+            </div>
+            <div className="rounded-xl border border-rose-100 bg-rose-50/50 p-3">
+              <div className="text-[11px] font-medium uppercase tracking-wider text-rose-700">Outbound · human handover</div>
+              <div className="mt-0.5 font-display text-xl font-semibold tabular-nums text-slate-900">{usd(hero.outboundUsd)}</div>
+              <div className="text-xs text-slate-500">{fmt(hero.outboundCalls)} transfers · {fmt(Math.round(hero.outboundMin))} min</div>
+            </div>
           </div>
         </div>
       )}

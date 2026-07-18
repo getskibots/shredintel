@@ -56,11 +56,18 @@ await c.query(`create materialized view report.voice_cost_daily as
      where u.category in ('recordings', 'recordingstorage') and coalesce(u.price, 0) > 0
      group by ab.bot_id, u.day
   ),
-  usage as (    -- per-call price, already attributed to a bot
+  usage as (    -- per-call price + minutes, split by direction (inbound = guest→AI;
+                -- outbound = bot→human transfer/handover leg)
     select bot_id, day,
            count(*)::int                            as calls,
            sum(coalesce(duration_sec, 0)) / 60.0    as minutes,
-           sum(coalesce(price, 0))                  as usage_usd
+           sum(coalesce(price, 0))                  as usage_usd,
+           count(*) filter (where direction like 'inbound%')::int                    as inbound_calls,
+           sum(coalesce(duration_sec, 0)) filter (where direction like 'inbound%') / 60.0  as inbound_min,
+           sum(coalesce(price, 0)) filter (where direction like 'inbound%')          as inbound_usd,
+           count(*) filter (where direction like 'outbound%')::int                   as outbound_calls,
+           sum(coalesce(duration_sec, 0)) filter (where direction like 'outbound%') / 60.0 as outbound_min,
+           sum(coalesce(price, 0)) filter (where direction like 'outbound%')         as outbound_usd
       from report.twilio_call_cost
      where bot_id is not null
      group by bot_id, day
@@ -76,7 +83,13 @@ await c.query(`create materialized view report.voice_cost_daily as
          round(coalesce(u.usage_usd, 0), 4)          as usage_usd,
          round(coalesce(r.rental_usd, 0), 4)         as rental_usd,
          round(coalesce(rec.recording_usd, 0), 4)    as recording_usd,
-         round(coalesce(u.usage_usd, 0) + coalesce(r.rental_usd, 0), 4) as cost_usd
+         round(coalesce(u.usage_usd, 0) + coalesce(r.rental_usd, 0), 4) as cost_usd,
+         coalesce(u.inbound_calls, 0)                as inbound_calls,
+         round(coalesce(u.inbound_min, 0), 1)        as inbound_min,
+         round(coalesce(u.inbound_usd, 0), 4)        as inbound_usd,
+         coalesce(u.outbound_calls, 0)               as outbound_calls,
+         round(coalesce(u.outbound_min, 0), 1)       as outbound_min,
+         round(coalesce(u.outbound_usd, 0), 4)       as outbound_usd
     from keys k
     left join usage     u   on u.bot_id = k.bot_id and u.day = k.day
     left join rental    r   on r.bot_id = k.bot_id and r.day = k.day

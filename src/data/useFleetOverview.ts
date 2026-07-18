@@ -43,7 +43,6 @@ export interface FleetBotRow {
   voice_rental_usd: number
   voice_recording_usd: number
   ai_cost_usd: number
-  botscrew_usd: number
   total_cost_usd: number
 }
 
@@ -70,7 +69,6 @@ interface UsageRow {
   voice_rental_usd: number
   voice_recording_usd: number
   ai_cost_usd: number
-  botscrew_usd: number
 }
 
 export function useFleetOverview(range: ResolvedPeriod): {
@@ -178,12 +176,11 @@ export function useFleetOverview(range: ResolvedPeriod): {
       voice_rental_usd: Number(u?.voice_rental_usd ?? 0),
       voice_recording_usd: Number(u?.voice_recording_usd ?? 0),
       ai_cost_usd: Number(u?.ai_cost_usd ?? 0),
-      botscrew_usd: Number(u?.botscrew_usd ?? 0),
+      // Run cost = Twilio (voice + recording) + OpenAI. No synthetic platform fee.
       total_cost_usd:
         Number(u?.voice_cost_usd ?? 0) +
         Number(u?.voice_recording_usd ?? 0) +
-        Number(u?.ai_cost_usd ?? 0) +
-        Number(u?.botscrew_usd ?? 0),
+        Number(u?.ai_cost_usd ?? 0),
     }
   })
   return { rows, bill, isLive: true, isLoading: false }

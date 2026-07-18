@@ -157,7 +157,6 @@ export function FleetPage() {
     const voiceMinutes = rows.reduce((s, r) => s + r.voice_minutes, 0)
     const aiCost = rows.reduce((s, r) => s + r.ai_cost_usd, 0)
     const recCost = rows.reduce((s, r) => s + r.voice_recording_usd, 0)
-    const botscrewCost = rows.reduce((s, r) => s + r.botscrew_usd, 0)
     const totalCost = rows.reduce((s, r) => s + r.total_cost_usd, 0)
     // Chat vs Voice split — the marquee insight (volume vs cost by channel).
     let chatConv = 0, voiceConv = 0, chatCost = 0, voiceCost2 = 0
@@ -172,7 +171,7 @@ export function FleetPage() {
       } else { chatConv += r.conversations; chatCost += r.total_cost_usd }
     }
     return {
-      conv, prev, engaged, msgs, active, voiceCost, voiceCalls, voiceMinutes, aiCost, recCost, botscrewCost, totalCost,
+      conv, prev, engaged, msgs, active, voiceCost, voiceCalls, voiceMinutes, aiCost, recCost, totalCost,
       chatConv, voiceConv, chatCost, voiceChannelCost: voiceCost2, voiceVarCost,
     }
   }, [rows])
@@ -186,8 +185,12 @@ export function FleetPage() {
   const billTotal = bill?.total_usd ?? hero.voiceCost
   const hasBill = billTotal > 0
 
+  // Total run cost = true Twilio bill + OpenAI (so it equals the two tiles above
+  // it). No Botscrew platform fee — that's a synthetic estimate we keep off here.
+  const runCost = billTotal + hero.aiCost
+
   // ── Insights derived from the channel split ──────────────────────────────
-  const costPerConv = hero.conv > 0 ? hero.totalCost / hero.conv : 0
+  const costPerConv = hero.conv > 0 ? runCost / hero.conv : 0
   const chatCPC = hero.chatConv > 0 ? hero.chatCost / hero.chatConv : 0
   const voiceCPC = hero.voiceConv > 0 ? hero.voiceChannelCost / hero.voiceConv : 0
   const voiceConvShare = hero.conv > 0 ? hero.voiceConv / hero.conv : 0
@@ -219,7 +222,7 @@ export function FleetPage() {
     ...(hasVoiceCost ? [{ key: 'voice_cost_usd' as SortKey, label: 'Voice $', title: 'Twilio voice = call usage + monthly line rental, this window' }] : []),
     ...(hasRecCost ? [{ key: 'voice_recording_usd' as SortKey, label: 'Rec $', title: 'Twilio call-recording + storage, allocated to this bot' }] : []),
     ...(hasAiCost ? [{ key: 'ai_cost_usd' as SortKey, label: 'AI $', title: 'OpenAI spend for this bot’s project (true per-bot cost)' }] : []),
-    ...(hasTotalCost ? [{ key: 'total_cost_usd' as SortKey, label: 'Total $', title: 'All-in cost: voice + recording + OpenAI + $40/mo Botscrew platform fee' }] : []),
+    ...(hasTotalCost ? [{ key: 'total_cost_usd' as SortKey, label: 'Total $', title: 'Run cost: voice + recording + OpenAI (real billed spend)' }] : []),
     { key: 'conv_all', label: 'All time' },
     { key: 'last_active', label: 'Active' },
   ]
@@ -291,7 +294,7 @@ export function FleetPage() {
               {hasTotalCost && (
                 <td className="px-3 py-2 text-right tabular-nums font-semibold text-slate-800">
                   {r.total_cost_usd > 0 ? (
-                    <span title={`voice ${usd(r.voice_cost_usd)} + recording ${usd(r.voice_recording_usd)} + AI ${usd(r.ai_cost_usd)} + Botscrew ${usd(r.botscrew_usd)}`}>{usd(r.total_cost_usd)}</span>
+                    <span title={`voice ${usd(r.voice_cost_usd)} + recording ${usd(r.voice_recording_usd)} + AI ${usd(r.ai_cost_usd)}`}>{usd(r.total_cost_usd)}</span>
                   ) : (
                     <span className="text-slate-300">—</span>
                   )}
@@ -394,10 +397,10 @@ export function FleetPage() {
           {hasTotalCost && (
             <Metric
               label="Total cost"
-              value={usd(hero.totalCost)}
+              value={usd(runCost)}
               tone="accent"
-              subValue={`incl. ${usd(hero.botscrewCost)} Botscrew platform`}
-              title={`All-in fleet cost for this window: Twilio ${usd(hero.voiceCost + hero.recCost)} + OpenAI ${usd(hero.aiCost)} + Botscrew platform ${usd(hero.botscrewCost)} ($40/mo per live-production bot).`}
+              subValue="Twilio + OpenAI"
+              title={`All-in run cost for this window: Twilio ${usd(billTotal)} + OpenAI ${usd(hero.aiCost)}. Real, billed spend — no synthetic platform fee.`}
             />
           )}
           {hasTotalCost && hero.conv > 0 && (
@@ -405,7 +408,7 @@ export function FleetPage() {
               label="Cost / conversation"
               value={`$${costPerConv.toFixed(3)}`}
               subValue={hasChannelSplit ? `chat $${chatCPC.toFixed(3)} · voice $${voiceCPC.toFixed(2)}` : 'all-in per conversation'}
-              title="All-in cost (Twilio + OpenAI + Botscrew) divided by conversations. Includes the fixed $40/mo platform fee, so low-volume bots read as pricey per conversation."
+              title="Run cost (Twilio + OpenAI) divided by conversations — real billed spend per conversation."
             />
           )}
         </div>

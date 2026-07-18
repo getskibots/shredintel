@@ -140,7 +140,16 @@ export function FleetPage() {
     const recCost = rows.reduce((s, r) => s + r.voice_recording_usd, 0)
     const botscrewCost = rows.reduce((s, r) => s + r.botscrew_usd, 0)
     const totalCost = rows.reduce((s, r) => s + r.total_cost_usd, 0)
-    return { conv, prev, engaged, msgs, active, voiceCost, voiceCalls, voiceMinutes, aiCost, recCost, botscrewCost, totalCost }
+    // Chat vs Voice split — the marquee insight (volume vs cost by channel).
+    let chatConv = 0, voiceConv = 0, chatCost = 0, voiceCost2 = 0
+    for (const r of rows) {
+      if (r.channel === 'voice') { voiceConv += r.conversations; voiceCost2 += r.total_cost_usd }
+      else { chatConv += r.conversations; chatCost += r.total_cost_usd }
+    }
+    return {
+      conv, prev, engaged, msgs, active, voiceCost, voiceCalls, voiceMinutes, aiCost, recCost, botscrewCost, totalCost,
+      chatConv, voiceConv, chatCost, voiceChannelCost: voiceCost2,
+    }
   }, [rows])
   const heroDelta = hero.prev > 0 ? (hero.conv - hero.prev) / hero.prev : null
   const hasVoiceCost = hero.voiceCost > 0
@@ -151,6 +160,15 @@ export function FleetPage() {
   // summed per-call price when the bill layer isn't populated for this window.
   const billTotal = bill?.total_usd ?? hero.voiceCost
   const hasBill = billTotal > 0
+
+  // ── Insights derived from the channel split ──────────────────────────────
+  const costPerConv = hero.conv > 0 ? hero.totalCost / hero.conv : 0
+  const chatCPC = hero.chatConv > 0 ? hero.chatCost / hero.chatConv : 0
+  const voiceCPC = hero.voiceConv > 0 ? hero.voiceChannelCost / hero.voiceConv : 0
+  const voiceConvShare = hero.conv > 0 ? hero.voiceConv / hero.conv : 0
+  const voiceCostShare = hero.totalCost > 0 ? hero.voiceChannelCost / hero.totalCost : 0
+  const cpcRatio = chatCPC > 0 ? voiceCPC / chatCPC : 0
+  const hasChannelSplit = hero.voiceConv > 0 && hero.chatConv > 0
 
   const onSort = (key: SortKey) => {
     if (key === sortKey) setSortDesc((d) => !d)
@@ -294,7 +312,7 @@ export function FleetPage() {
         <Metric label="Active bots" value={fmt(hero.active)} subValue={`of ${rows.length} deployed`} />
       </div>
       {(hasBill || hasAiCost || hasTotalCost) && (
-        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {hasBill && (
             <Metric
               label="Twilio cost"
@@ -328,6 +346,71 @@ export function FleetPage() {
               title={`All-in fleet cost for this window: Twilio ${usd(hero.voiceCost + hero.recCost)} + OpenAI ${usd(hero.aiCost)} + Botscrew platform ${usd(hero.botscrewCost)} ($40/mo per live-production bot).`}
             />
           )}
+          {hasTotalCost && hero.conv > 0 && (
+            <Metric
+              label="Cost / conversation"
+              value={`$${costPerConv.toFixed(3)}`}
+              subValue={hasChannelSplit ? `chat $${chatCPC.toFixed(3)} · voice $${voiceCPC.toFixed(2)}` : 'all-in per conversation'}
+              title="All-in cost (Twilio + OpenAI + Botscrew) divided by conversations. Includes the fixed $40/mo platform fee, so low-volume bots read as pricey per conversation."
+            />
+          )}
+        </div>
+      )}
+
+      {/* ── Insight: Chat vs Voice — volume vs cost by channel ─────────── */}
+      {hasChannelSplit && hasTotalCost && (
+        <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+            <h2 className="text-sm font-semibold text-slate-700">Chat vs Voice</h2>
+            <span className="text-xs text-slate-400">volume &amp; cost this window</span>
+          </div>
+          <p className="mb-4 text-sm text-slate-600">
+            Voice is{' '}
+            <span className="font-semibold text-slate-800">{(voiceConvShare * 100).toFixed(1)}%</span>{' '}
+            of conversations but{' '}
+            <span className="font-semibold text-amber-600">{(voiceCostShare * 100).toFixed(0)}%</span>{' '}
+            of cost — about{' '}
+            <span className="font-semibold text-slate-800">{cpcRatio >= 10 ? Math.round(cpcRatio) : cpcRatio.toFixed(1)}×</span>{' '}
+            more expensive per conversation than chat.
+          </p>
+          {/* proportion bars: the gap between them IS the insight */}
+          <div className="space-y-3">
+            {[
+              { label: 'Conversations', chat: hero.chatConv, voice: hero.voiceConv, fmt: (n: number) => fmt(n) },
+              { label: 'Cost', chat: hero.chatCost, voice: hero.voiceChannelCost, fmt: (n: number) => usd(n) },
+            ].map((row) => {
+              const total = row.chat + row.voice
+              const vPct = total > 0 ? (row.voice / total) * 100 : 0
+              return (
+                <div key={row.label}>
+                  <div className="mb-1 flex items-center justify-between text-xs text-slate-500">
+                    <span className="font-medium uppercase tracking-wider">{row.label}</span>
+                    <span className="tabular-nums">
+                      <span className="text-botscrew-600">chat {row.fmt(row.chat)}</span>
+                      <span className="mx-1.5 text-slate-300">|</span>
+                      <span className="text-amber-600">voice {row.fmt(row.voice)}</span>
+                    </span>
+                  </div>
+                  <div className="flex h-2.5 overflow-hidden rounded-full bg-slate-100">
+                    <div className="bg-botscrew-500" style={{ width: `${100 - vPct}%` }} />
+                    <div className="bg-amber-400" style={{ width: `${vPct}%` }} />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+            <div className="rounded-xl border border-botscrew-100 bg-botscrew-50/50 p-3">
+              <div className="text-[11px] font-medium uppercase tracking-wider text-botscrew-700">Chat · cost / conversation</div>
+              <div className="mt-0.5 font-display text-xl font-semibold tabular-nums text-slate-900">${chatCPC.toFixed(3)}</div>
+              <div className="text-xs text-slate-500">{fmt(hero.chatConv)} conversations · {usd(hero.chatCost)}</div>
+            </div>
+            <div className="rounded-xl border border-amber-100 bg-amber-50/50 p-3">
+              <div className="text-[11px] font-medium uppercase tracking-wider text-amber-700">Voice · cost / conversation</div>
+              <div className="mt-0.5 font-display text-xl font-semibold tabular-nums text-slate-900">${voiceCPC.toFixed(2)}</div>
+              <div className="text-xs text-slate-500">{fmt(hero.voiceConv)} conversations · {usd(hero.voiceChannelCost)}</div>
+            </div>
+          </div>
         </div>
       )}
 

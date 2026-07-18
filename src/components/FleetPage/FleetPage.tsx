@@ -260,43 +260,23 @@ export function FleetPage() {
   )
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 md:px-6 md:py-10">
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+    <div className="mx-auto max-w-7xl px-4 py-6 md:px-6">
+      {/* Header: title (left) + period picker (right, fills the top row) */}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Fleet overview</h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-0.5 text-sm text-slate-500">
             {isLoading
               ? 'Loading fleet…'
               : `${rows.length} bots · ${hero.active} active in this window`}
             {isLive ? ' · live' : ''}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="relative w-full max-w-xs">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" strokeWidth={2} />
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search by name or id…"
-              className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-700 outline-none placeholder:text-slate-400 focus:border-botscrew-400 focus:ring-2 focus:ring-botscrew-100"
-            />
-          </div>
-          <button
-            type="button"
-            onClick={() => setGrouped((g) => !g)}
-            title={grouped ? 'Switch to one flat fleet ranking' : 'Group by vertical'}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 hover:border-botscrew-300 hover:text-botscrew-700"
-          >
-            {grouped ? <List className="h-4 w-4" strokeWidth={1.75} /> : <LayoutGrid className="h-4 w-4" strokeWidth={1.75} />}
-            {grouped ? 'Flat' : 'Grouped'}
-          </button>
-          <PeriodPicker value={selection} onChange={setSelection} align="end" />
-        </div>
+        <PeriodPicker value={selection} onChange={setSelection} align="end" />
       </div>
 
-      {/* Fleet-wide usage + cost for the selected window */}
-      <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+      {/* Fleet-wide numbers — Usage row, then Cost row (each fills its grid) */}
+      <div className="mb-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Metric
           label="Conversations"
           value={fmt(hero.conv)}
@@ -312,39 +292,66 @@ export function FleetPage() {
         />
         <Metric label="Messages" value={fmt(hero.msgs)} subValue="both directions" />
         <Metric label="Active bots" value={fmt(hero.active)} subValue={`of ${rows.length} deployed`} />
-        {hasBill && (
-          <Metric
-            label="Twilio cost"
-            value={usd(billTotal)}
-            subValue={
-              bill
-                ? `${fmt(hero.voiceCalls)} calls · ${fmt(Math.round(hero.voiceMinutes))} min`
-                : `${fmt(hero.voiceCalls)} calls · per-call only`
-            }
-            title={
-              bill
-                ? `True Twilio bill for this window — calls ${usd(bill.calls_usd)} + numbers ${usd(bill.numbers_usd)} + recordings ${usd(bill.recordings_usd)} + media streams ${usd(bill.media_streams_usd)} + fees. Source: Twilio Usage Records.`
-                : 'Summed per-call price across voice bots (number rental + recording storage not included). The full bill layer isn’t populated for this window yet.'
-            }
+      </div>
+      {(hasBill || hasAiCost || hasTotalCost) && (
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {hasBill && (
+            <Metric
+              label="Twilio cost"
+              value={usd(billTotal)}
+              subValue={
+                bill
+                  ? `${fmt(hero.voiceCalls)} calls · ${fmt(Math.round(hero.voiceMinutes))} min`
+                  : `${fmt(hero.voiceCalls)} calls · per-call only`
+              }
+              title={
+                bill
+                  ? `True Twilio bill for this window — calls ${usd(bill.calls_usd)} + numbers ${usd(bill.numbers_usd)} + recordings ${usd(bill.recordings_usd)} + media streams ${usd(bill.media_streams_usd)} + fees. Source: Twilio Usage Records.`
+                  : 'Summed per-call price across voice bots (number rental + recording storage not included). The full bill layer isn’t populated for this window yet.'
+              }
+            />
+          )}
+          {hasAiCost && (
+            <Metric
+              label="OpenAI cost"
+              value={usd(hero.aiCost)}
+              subValue="LLM spend, all bots"
+              title="True per-bot OpenAI spend for this window, from OpenAI's Costs API (each bot = its own OpenAI project). Excludes GSB-internal projects like enrichment."
+            />
+          )}
+          {hasTotalCost && (
+            <Metric
+              label="Total cost"
+              value={usd(hero.totalCost)}
+              tone="accent"
+              subValue={`incl. ${usd(hero.botscrewCost)} Botscrew platform`}
+              title={`All-in fleet cost for this window: Twilio ${usd(hero.voiceCost + hero.recCost)} + OpenAI ${usd(hero.aiCost)} + Botscrew platform ${usd(hero.botscrewCost)} ($40/mo per live-production bot).`}
+            />
+          )}
+        </div>
+      )}
+
+      {/* Toolbar: search + grouping toggle, right above the table */}
+      <div className="mb-3 flex items-center gap-2">
+        <div className="relative w-full max-w-sm">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" strokeWidth={2} />
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search by name or id…"
+            className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-700 outline-none placeholder:text-slate-400 focus:border-botscrew-400 focus:ring-2 focus:ring-botscrew-100"
           />
-        )}
-        {hasAiCost && (
-          <Metric
-            label="OpenAI cost"
-            value={usd(hero.aiCost)}
-            subValue="LLM spend, all bots"
-            title="True per-bot OpenAI spend for this window, from OpenAI's Costs API (each bot = its own OpenAI project). Excludes GSB-internal projects like enrichment."
-          />
-        )}
-        {hasTotalCost && (
-          <Metric
-            label="Total cost"
-            value={usd(hero.totalCost)}
-            tone="accent"
-            subValue={`incl. ${usd(hero.botscrewCost)} Botscrew platform`}
-            title={`All-in fleet cost for this window: Twilio ${usd(hero.voiceCost + hero.recCost)} + OpenAI ${usd(hero.aiCost)} + Botscrew platform ${usd(hero.botscrewCost)} ($40/mo per live-production bot).`}
-          />
-        )}
+        </div>
+        <button
+          type="button"
+          onClick={() => setGrouped((g) => !g)}
+          title={grouped ? 'Switch to one flat fleet ranking' : 'Group by vertical'}
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 hover:border-botscrew-300 hover:text-botscrew-700"
+        >
+          {grouped ? <List className="h-4 w-4" strokeWidth={1.75} /> : <LayoutGrid className="h-4 w-4" strokeWidth={1.75} />}
+          {grouped ? 'Flat' : 'Grouped'}
+        </button>
       </div>
 
       {isLoading ? (

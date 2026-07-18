@@ -219,10 +219,10 @@ export function FleetPage() {
     { key: 'delta', label: 'Δ', title: 'vs the equal-length window before this one' },
     { key: 'engaged', label: 'Engaged', title: 'Conversations with at least one real guest message' },
     { key: 'messages', label: 'Msgs', title: 'All messages, both directions' },
-    ...(hasVoiceCost ? [{ key: 'voice_cost_usd' as SortKey, label: 'Voice $', title: 'Twilio voice = call usage + monthly line rental, this window' }] : []),
-    ...(hasRecCost ? [{ key: 'voice_recording_usd' as SortKey, label: 'Rec $', title: 'Twilio call-recording + storage, allocated to this bot' }] : []),
-    ...(hasAiCost ? [{ key: 'ai_cost_usd' as SortKey, label: 'AI $', title: 'OpenAI spend for this bot’s project (true per-bot cost)' }] : []),
-    ...(hasTotalCost ? [{ key: 'total_cost_usd' as SortKey, label: 'Total $', title: 'Run cost: voice + recording + OpenAI (real billed spend)' }] : []),
+    ...(hasVoiceCost ? [{ key: 'voice_cost_usd' as SortKey, label: 'Twilio', title: 'Twilio telephony — call charges + monthly phone-line rental, this window' }] : []),
+    ...(hasRecCost ? [{ key: 'voice_recording_usd' as SortKey, label: 'Recordings', title: 'Twilio call-recording + storage, allocated to this bot' }] : []),
+    ...(hasAiCost ? [{ key: 'ai_cost_usd' as SortKey, label: 'AI Tokens', title: 'OpenAI token spend for this bot’s project (true per-bot cost)' }] : []),
+    ...(hasTotalCost ? [{ key: 'total_cost_usd' as SortKey, label: 'Total', title: 'Run cost: Twilio + recordings + AI tokens (real billed spend)' }] : []),
     { key: 'conv_all', label: 'All time' },
     { key: 'last_active', label: 'Active' },
   ]
@@ -294,7 +294,7 @@ export function FleetPage() {
               {hasTotalCost && (
                 <td className="px-3 py-2 text-right tabular-nums font-semibold text-slate-800">
                   {r.total_cost_usd > 0 ? (
-                    <span title={`voice ${usd(r.voice_cost_usd)} + recording ${usd(r.voice_recording_usd)} + AI ${usd(r.ai_cost_usd)}`}>{usd(r.total_cost_usd)}</span>
+                    <span title={`Twilio ${usd(r.voice_cost_usd)} + recordings ${usd(r.voice_recording_usd)} + AI tokens ${usd(r.ai_cost_usd)}`}>{usd(r.total_cost_usd)}</span>
                   ) : (
                     <span className="text-slate-300">—</span>
                   )}

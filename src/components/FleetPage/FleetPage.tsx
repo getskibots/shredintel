@@ -226,9 +226,13 @@ export function FleetPage() {
   const rowLink = (r: FleetBotRow) =>
     `${r.channel === 'voice' ? `/voice/${r.bot_id}` : `/bot/${r.bot_id}`}${location.search}`
 
+  // Δ (period-over-period change) is only meaningful when a prior window exists —
+  // hidden on "All time" where every bot reads as "new".
+  const hasDelta = hero.prev > 0
+
   const columns: { key: SortKey; label: string; title?: string }[] = [
     { key: 'conversations', label: 'Convs', title: `Conversations opened — ${range.label}` },
-    { key: 'delta', label: 'Δ', title: 'vs the equal-length window before this one' },
+    ...(hasDelta ? [{ key: 'delta' as SortKey, label: 'Δ', title: 'Change in conversations vs the equal-length window before this one' }] : []),
     { key: 'engaged', label: 'Engaged', title: 'Conversations with at least one real guest message' },
     { key: 'messages', label: 'Msgs', title: 'All messages, both directions' },
     ...(hasVoiceCost ? [{ key: 'voice_cost_usd' as SortKey, label: 'Twilio', title: 'Twilio telephony — call charges + monthly phone-line rental, this window' }] : []),
@@ -278,7 +282,7 @@ export function FleetPage() {
                 </Link>
               </td>
               <td className="px-3 py-2 text-right tabular-nums font-semibold text-slate-800">{fmt(r.conversations)}</td>
-              <td className="px-3 py-2 text-right"><DeltaBadge row={r} /></td>
+              {hasDelta && <td className="px-3 py-2 text-right"><DeltaBadge row={r} /></td>}
               <td className="px-3 py-2 text-right tabular-nums text-slate-600">
                 {fmt(r.engaged)}
                 {r.conversations > 0 && <span className="ml-1 text-[11px] text-slate-400">{Math.round((100 * r.engaged) / r.conversations)}%</span>}

@@ -21,7 +21,7 @@ import {
  * (report.voice_cost_daily). Each row links to that bot's dashboard.
  */
 
-type SortKey = 'conversations' | 'delta' | 'engaged' | 'messages' | 'voice_cost_usd' | 'voice_recording_usd' | 'ai_cost_usd' | 'total_cost_usd' | 'conv_all' | 'last_active'
+type SortKey = 'conversations' | 'delta' | 'engaged' | 'messages' | 'voice_minutes' | 'voice_cost_usd' | 'voice_recording_usd' | 'ai_cost_usd' | 'total_cost_usd' | 'cost_per_conv' | 'cost_per_min' | 'conv_all' | 'last_active'
 
 const fmt = (n: number) => n.toLocaleString('en-US')
 const usd = (n: number) => `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -37,9 +37,16 @@ function deltaPct(r: FleetBotRow): number | null {
   return (r.conversations - r.prev_conversations) / r.prev_conversations
 }
 
+/** Per-bot all-in run cost ÷ conversations. */
+const botCostPerConv = (r: FleetBotRow) => (r.conversations > 0 ? r.total_cost_usd / r.conversations : 0)
+/** Per-bot all-in run cost ÷ voice minutes (voice bots only). */
+const botCostPerMin = (r: FleetBotRow) => (r.voice_minutes > 0 ? r.total_cost_usd / r.voice_minutes : 0)
+
 function sortValue(r: FleetBotRow, key: SortKey): number {
   if (key === 'delta') return deltaPct(r) ?? Number.POSITIVE_INFINITY
   if (key === 'last_active') return r.last_active ? new Date(r.last_active).getTime() : 0
+  if (key === 'cost_per_conv') return botCostPerConv(r)
+  if (key === 'cost_per_min') return botCostPerMin(r)
   return r[key]
 }
 
@@ -235,10 +242,13 @@ export function FleetPage() {
     ...(hasDelta ? [{ key: 'delta' as SortKey, label: 'Δ', title: 'Change in conversations vs the equal-length window before this one' }] : []),
     { key: 'engaged', label: 'Engaged', title: 'Conversations with at least one real guest message' },
     { key: 'messages', label: 'Msgs', title: 'All messages, both directions' },
+    ...(hasVoiceCost ? [{ key: 'voice_minutes' as SortKey, label: 'Min', title: 'Voice call minutes this window' }] : []),
     ...(hasVoiceCost ? [{ key: 'voice_cost_usd' as SortKey, label: 'Twilio', title: 'Twilio telephony — call charges + monthly phone-line rental, this window' }] : []),
     ...(hasRecCost ? [{ key: 'voice_recording_usd' as SortKey, label: 'Recordings', title: 'Twilio call-recording + storage, allocated to this bot' }] : []),
     ...(hasAiCost ? [{ key: 'ai_cost_usd' as SortKey, label: 'AI Tokens', title: 'OpenAI token spend for this bot’s project (true per-bot cost)' }] : []),
     ...(hasTotalCost ? [{ key: 'total_cost_usd' as SortKey, label: 'Total', title: 'Run cost: Twilio + recordings + AI tokens (real billed spend)' }] : []),
+    ...(hasTotalCost ? [{ key: 'cost_per_conv' as SortKey, label: '$/conv', title: 'Total run cost ÷ conversations' }] : []),
+    ...(hasVoiceCost ? [{ key: 'cost_per_min' as SortKey, label: '$/min', title: 'Total run cost ÷ voice minutes' }] : []),
     { key: 'conv_all', label: 'All time' },
     { key: 'last_active', label: 'Active' },
   ]
@@ -289,6 +299,11 @@ export function FleetPage() {
               </td>
               <td className="px-3 py-2 text-right tabular-nums text-slate-500">{fmt(r.messages)}</td>
               {hasVoiceCost && (
+                <td className="px-3 py-2 text-right tabular-nums text-slate-500">
+                  {r.voice_minutes > 0 ? fmt(Math.round(r.voice_minutes)) : <span className="text-slate-300">—</span>}
+                </td>
+              )}
+              {hasVoiceCost && (
                 <td className="px-3 py-2 text-right tabular-nums text-slate-600">
                   {r.voice_cost_usd > 0 ? (
                     <span title={`${fmt(r.voice_calls)} calls · ${fmt(Math.round(r.voice_minutes))} min · usage ${usd(r.voice_cost_usd - r.voice_rental_usd)} + rental ${usd(r.voice_rental_usd)}`}>{usd(r.voice_cost_usd)}</span>
@@ -314,6 +329,16 @@ export function FleetPage() {
                   ) : (
                     <span className="text-slate-300">—</span>
                   )}
+                </td>
+              )}
+              {hasTotalCost && (
+                <td className="px-3 py-2 text-right tabular-nums text-slate-600">
+                  {r.total_cost_usd > 0 && r.conversations > 0 ? `$${botCostPerConv(r).toFixed(3)}` : <span className="text-slate-300">—</span>}
+                </td>
+              )}
+              {hasVoiceCost && (
+                <td className="px-3 py-2 text-right tabular-nums text-slate-600">
+                  {r.voice_minutes > 0 && r.total_cost_usd > 0 ? `$${botCostPerMin(r).toFixed(3)}` : <span className="text-slate-300">—</span>}
                 </td>
               )}
               <td className="px-3 py-2 text-right tabular-nums text-slate-400">{fmt(r.conv_all)}</td>

@@ -142,13 +142,19 @@ export function FleetPage() {
     const totalCost = rows.reduce((s, r) => s + r.total_cost_usd, 0)
     // Chat vs Voice split — the marquee insight (volume vs cost by channel).
     let chatConv = 0, voiceConv = 0, chatCost = 0, voiceCost2 = 0
+    // Voice marginal cost/minute = telephony usage (excl fixed rental) + recording
+    // + AI, over talk minutes. Fixed seat/rental excluded — they don't scale w/ time.
+    let voiceVarCost = 0
     for (const r of rows) {
-      if (r.channel === 'voice') { voiceConv += r.conversations; voiceCost2 += r.total_cost_usd }
-      else { chatConv += r.conversations; chatCost += r.total_cost_usd }
+      if (r.channel === 'voice') {
+        voiceConv += r.conversations
+        voiceCost2 += r.total_cost_usd
+        voiceVarCost += (r.voice_cost_usd - r.voice_rental_usd) + r.voice_recording_usd + r.ai_cost_usd
+      } else { chatConv += r.conversations; chatCost += r.total_cost_usd }
     }
     return {
       conv, prev, engaged, msgs, active, voiceCost, voiceCalls, voiceMinutes, aiCost, recCost, botscrewCost, totalCost,
-      chatConv, voiceConv, chatCost, voiceChannelCost: voiceCost2,
+      chatConv, voiceConv, chatCost, voiceChannelCost: voiceCost2, voiceVarCost,
     }
   }, [rows])
   const heroDelta = hero.prev > 0 ? (hero.conv - hero.prev) / hero.prev : null
@@ -168,6 +174,7 @@ export function FleetPage() {
   const voiceConvShare = hero.conv > 0 ? hero.voiceConv / hero.conv : 0
   const voiceCostShare = hero.totalCost > 0 ? hero.voiceChannelCost / hero.totalCost : 0
   const cpcRatio = chatCPC > 0 ? voiceCPC / chatCPC : 0
+  const voiceCPM = hero.voiceMinutes > 0 ? hero.voiceVarCost / hero.voiceMinutes : 0
   const hasChannelSplit = hero.voiceConv > 0 && hero.chatConv > 0
 
   const onSort = (key: SortKey) => {
@@ -406,9 +413,22 @@ export function FleetPage() {
               <div className="text-xs text-slate-500">{fmt(hero.chatConv)} conversations · {usd(hero.chatCost)}</div>
             </div>
             <div className="rounded-xl border border-amber-100 bg-amber-50/50 p-3">
-              <div className="text-[11px] font-medium uppercase tracking-wider text-amber-700">Voice · cost / conversation</div>
+              <div className="flex items-baseline justify-between">
+                <div className="text-[11px] font-medium uppercase tracking-wider text-amber-700">Voice · cost / conversation</div>
+                {voiceCPM > 0 && (
+                  <div
+                    className="text-[11px] font-medium tabular-nums text-amber-700"
+                    title="Marginal cost per talk minute — Twilio call charge + recording + OpenAI realtime audio, over voice minutes. Excludes the fixed $40 seat + line rental (they don't scale with time)."
+                  >
+                    ${voiceCPM.toFixed(3)} / min
+                  </div>
+                )}
+              </div>
               <div className="mt-0.5 font-display text-xl font-semibold tabular-nums text-slate-900">${voiceCPC.toFixed(2)}</div>
-              <div className="text-xs text-slate-500">{fmt(hero.voiceConv)} conversations · {usd(hero.voiceChannelCost)}</div>
+              <div className="text-xs text-slate-500">
+                {fmt(hero.voiceConv)} conversations · {usd(hero.voiceChannelCost)}
+                {hero.voiceMinutes > 0 && <> · {fmt(Math.round(hero.voiceMinutes))} min</>}
+              </div>
             </div>
           </div>
         </div>

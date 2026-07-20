@@ -29,6 +29,44 @@ await c.query(`set statement_timeout = '25min'`)
 const t0 = Date.now()
 console.log('Building report.conversation_depth (single-scan) …')
 
+// Other matviews now read from conversation_depth (report.fleet_benchmarks,
+// report.fleet_overview). A plain DROP fails against them, and DROP ... CASCADE
+// would silently DESTROY them — the script rebuilding fleet_overview lives on a
+// different branch, so cascading here would be unrecoverable. Detect dependents
+// and stop with instructions rather than guessing.
+//
+// NOTE: this script re-creates the DEFINITION. If you only need fresh DATA,
+// `refresh materialized view` is what you want and needs no drop at all — which
+// is why the nightly (refresh.mjs) is unaffected by this.
+const deps = await c.query(
+  `select distinct dep.relname as name
+     from pg_depend d
+     join pg_rewrite r   on r.oid = d.objid
+     join pg_class   dep on dep.oid = r.ev_class
+     join pg_class   src on src.oid = d.refobjid
+     join pg_namespace n on n.oid = src.relnamespace
+    where n.nspname = 'report'
+      and src.relname = $1
+      and dep.relname <> $1
+      and dep.relkind in ('m','v')
+    order by 1`,
+  ['conversation_depth'],
+)
+
+if (deps.rows.length) {
+  const names = deps.rows.map((r) => `report.${r.name}`).join(', ')
+  console.error(`\n✗ Cannot re-create report.conversation_depth — these depend on it:`)
+  console.error(`    ${names}\n`)
+  console.error(`  Only need fresh DATA? No drop required:`)
+  console.error(`    refresh materialized view report.conversation_depth;\n`)
+  console.error(`  Genuinely changing the DEFINITION? Then, in order:`)
+  console.error(`    1. drop materialized view ${names};`)
+  console.error(`    2. re-run this script`)
+  console.error(`    3. rebuild them (build-fleet-benchmarks.mjs, build-fleet-overview.mjs)\n`)
+  await c.end()
+  process.exit(1)
+}
+
 await c.query(`drop materialized view if exists report.conversation_depth`)
 
 await c.query(`

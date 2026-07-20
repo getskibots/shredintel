@@ -49,6 +49,13 @@ interface Check {
 }
 
 export default async function handler(_req: VercelRequest, res: VercelResponse) {
+  // NEVER let this response be cached. Vercel's default (`public, max-age=0,
+  // must-revalidate`) permits a CDN to STORE it, and a cached 200 would mask a
+  // real 503 — the monitor would sit green while the pipeline was broken, which
+  // is precisely the blind spot this endpoint exists to close.
+  // (UptimeRobot polls with HEAD, so the status code is the whole signal.)
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+
   const checks: Check[] = []
 
   try {

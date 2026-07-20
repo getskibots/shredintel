@@ -165,6 +165,14 @@ async function pgEstimate(pgc, table) {
 }
 
 // ── value coercion (MySQL row -> PG param) ────────────────────────
+// Postgres cannot store a NUL byte in text OR jsonb. MySQL happily holds one,
+// and the escaped form is legal JSON that JSON.parse() accepts — so a message
+// carrying one used to reach PG, throw "unsupported Unicode escape sequence",
+// fail the whole batch, and freeze the incremental cursor forever (the nightly
+// sync then re-ran the same doomed batch every night). Strip both the escaped
+// form and any literal NUL before the value ever leaves here.
+const stripNul = (s) => s.replace(/\\u0000/gi, '').replace(/\0/g, '')
+
 function coerce(val, pgType) {
   if (val === null || val === undefined) return null
 
@@ -182,22 +190,21 @@ function coerce(val, pgType) {
   if (pgType === 'jsonb' || pgType === 'json') {
     let s = val
     if (Buffer.isBuffer(s)) s = s.toString('utf8')
-    if (typeof s === 'string') {
-      const trimmed = s.trim()
-      if (trimmed === '') return null            // empty ≠ valid JSON
-      try { JSON.parse(trimmed); return trimmed } // already valid JSON → pass through
-      catch { return null }                       // plain text / malformed → null (don't crash)
-    }
-    // object/array/number from mysql2's native JSON parsing
-    return JSON.stringify(s)
+    // object/array/number from mysql2's native JSON parsing → back to text
+    if (typeof s !== 'string') s = JSON.stringify(s)
+    const trimmed = stripNul(String(s).trim())
+    if (trimmed === '') return null              // empty ≠ valid JSON
+    try { JSON.parse(trimmed); return trimmed }  // valid JSON → pass through
+    catch { return null }                        // plain text / malformed → null (don't crash)
   }
 
   // bytea target — hand PG the raw bytes (node-postgres encodes Buffers itself)
   if (pgType === 'bytea') return Buffer.isBuffer(val) ? val : Buffer.from(String(val))
 
   // Remaining Buffers (binary/bit on non-boolean columns): best-effort text
-  if (Buffer.isBuffer(val)) return val.toString('utf8')
-  return val
+  if (Buffer.isBuffer(val)) return stripNul(val.toString('utf8'))
+  // Plain text columns can carry a NUL too (PG rejects those as well).
+  return typeof val === 'string' ? stripNul(val) : val
 }
 
 // ── per-table sync ────────────────────────────────────────────────

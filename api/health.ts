@@ -27,6 +27,20 @@ const MAX_MESSAGE_AGE_HOURS = 36      // sync ran within the last day and a half
 const MAX_CONVERSATION_AGE_HOURS = 36
 const MAX_ENRICHMENT_LAG_DAYS = 2     // tolerate one missed night, alert on two
 
+/**
+ * Coverage floor, as a fraction of the trailing baseline.
+ *
+ * Recency alone is NOT enough. max(day) asks "does ANY enriched row exist
+ * recently?", and enrich-fleet processes bots largest-first — so one row from
+ * one bot makes the whole fleet look caught up. That produced a false green
+ * mid-run on 2026-07-20. Coverage asks the real question: did a settled day get
+ * enriched across roughly as many BOTS as usual?
+ *
+ * Measured on real data: healthy = 92% of baseline, mid-outage = 40-44%. The
+ * baseline is a trailing median, so this self-calibrates as the fleet grows.
+ */
+const MIN_ENRICHMENT_COVERAGE = 0.6
+
 interface Check {
   stage: string
   ok: boolean
@@ -55,6 +69,21 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
       const enr = await client.query<{ lag: number | null }>(
         `select (current_date - max(day))::int as lag from report.conversation_intel`,
       )
+      // Coverage: how many BOTS got enriched on a settled day, vs the trailing
+      // median. current_date - 2 is safely past the nightly run, so a healthy
+      // pipeline has fully covered it. ~80ms on 300k rows (indexed bot_id, day).
+      const cov = await client.query<{ recent: number | null; baseline: string | null }>(`
+        with per_day as (
+          select day, count(distinct bot_id)::int bots
+            from report.conversation_intel
+           where day between current_date - 15 and current_date - 2
+           group by day
+        ), baseline as (
+          select percentile_cont(0.5) within group (order by bots)::numeric med
+            from per_day where day <= current_date - 5
+        )
+        select (select bots from per_day where day = current_date - 2) as recent,
+               (select med from baseline)                             as baseline`)
 
       const hoursSince = (ts: Date | null | undefined) =>
         ts ? (Date.now() - new Date(ts).getTime()) / 3_600_000 : Number.POSITIVE_INFINITY
@@ -76,10 +105,22 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
         detail: `threshold ${MAX_CONVERSATION_AGE_HOURS}h`,
       })
       checks.push({
-        stage: 'enrichment',
+        stage: 'enrichment_recency',
         ok: enrLag <= MAX_ENRICHMENT_LAG_DAYS,
         age: Number.isFinite(enrLag) ? `${enrLag}d behind` : 'never',
         detail: `threshold ${MAX_ENRICHMENT_LAG_DAYS}d`,
+      })
+
+      // Catches the partial/in-progress case that recency alone misses.
+      const recentBots = Number(cov.rows[0]?.recent ?? 0)
+      const baselineBots = Number(cov.rows[0]?.baseline ?? 0)
+      // No baseline yet (fresh DB) → don't cry wolf.
+      const ratio = baselineBots > 0 ? recentBots / baselineBots : 1
+      checks.push({
+        stage: 'enrichment_coverage',
+        ok: ratio >= MIN_ENRICHMENT_COVERAGE,
+        age: `${Math.round(ratio * 100)}% of baseline (${recentBots}/${baselineBots} bots)`,
+        detail: `threshold ${Math.round(MIN_ENRICHMENT_COVERAGE * 100)}%`,
       })
     } finally {
       client.release()

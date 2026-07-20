@@ -27,6 +27,13 @@ const MAX_MESSAGE_AGE_HOURS = 36
 const MAX_CONVERSATION_AGE_HOURS = 36
 const MAX_ENRICHMENT_LAG_DAYS = 2
 
+// Recency alone is NOT enough: max(day) asks "does ANY enriched row exist
+// recently?", and enrich-fleet goes largest-bot-first, so ONE row can make the
+// whole fleet look caught up (a real false green on 2026-07-20). Coverage asks
+// whether a settled day was enriched across as many BOTS as usual.
+// Measured: healthy 92% of baseline, mid-outage 40-44%.
+const MIN_ENRICHMENT_COVERAGE = 0.6
+
 const i = process.argv.indexOf('--failed')
 const failedStages = (i > -1 ? String(process.argv[i + 1] || '') : '').trim()
 
@@ -47,6 +54,19 @@ try {
   const msg = await c.query(`select "timestamp" as ts from raw.admin_chat_history order by id desc limit 1`)
   const conv = await c.query(`select started_at as ts from raw.admin_conversation order by id desc limit 1`)
   const enr = await c.query(`select (current_date - max(day))::int as lag from report.conversation_intel`)
+  // Bots enriched on a settled day vs the trailing median (~80ms).
+  const cov = await c.query(`
+    with per_day as (
+      select day, count(distinct bot_id)::int bots
+        from report.conversation_intel
+       where day between current_date - 15 and current_date - 2
+       group by day
+    ), baseline as (
+      select percentile_cont(0.5) within group (order by bots)::numeric med
+        from per_day where day <= current_date - 5
+    )
+    select (select bots from per_day where day = current_date - 2) as recent,
+           (select med from baseline)                             as baseline`)
 
   // Mirrored MySQL datetimes carry a timezone skew: mysql2 reads a naive
   // DATETIME in the connection's local zone, so values can land ~6h in the
@@ -62,7 +82,17 @@ try {
 
   checks.push({ name: 'messages', ok: msgAge <= MAX_MESSAGE_AGE_HOURS, got: `${msgAge.toFixed(1)}h old`, limit: `${MAX_MESSAGE_AGE_HOURS}h` })
   checks.push({ name: 'conversations', ok: convAge <= MAX_CONVERSATION_AGE_HOURS, got: `${convAge.toFixed(1)}h old`, limit: `${MAX_CONVERSATION_AGE_HOURS}h` })
-  checks.push({ name: 'enrichment', ok: enrLag <= MAX_ENRICHMENT_LAG_DAYS, got: `${enrLag}d behind`, limit: `${MAX_ENRICHMENT_LAG_DAYS}d` })
+  checks.push({ name: 'enrich recency', ok: enrLag <= MAX_ENRICHMENT_LAG_DAYS, got: `${enrLag}d behind`, limit: `${MAX_ENRICHMENT_LAG_DAYS}d` })
+
+  const recentBots = Number(cov.rows[0]?.recent ?? 0)
+  const baselineBots = Number(cov.rows[0]?.baseline ?? 0)
+  const ratio = baselineBots > 0 ? recentBots / baselineBots : 1 // no baseline yet → don't cry wolf
+  checks.push({
+    name: 'enrich coverage',
+    ok: ratio >= MIN_ENRICHMENT_COVERAGE,
+    got: `${Math.round(ratio * 100)}% of baseline (${recentBots}/${baselineBots} bots)`,
+    limit: `${Math.round(MIN_ENRICHMENT_COVERAGE * 100)}%`,
+  })
 } catch (e) {
   checks.push({ name: 'database', ok: false, got: e.message, limit: 'reachable' })
 } finally {

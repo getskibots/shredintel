@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ShredIntel embed — BotScrew shell fit test</title>
+    <!--
+      A FAITHFUL mock of the real BotScrew admin shell (bots.getskitickets.com),
+      measured live 2026-07-21 from /admin/bot/1/analytics:
+
+        sidebar   110px  ·  #2182BF (brand blue)  ·  full height
+        top nav    65px  ·  white  ·  1px bottom border
+        <main>            ·  background #F7FAFE  ·  padding 0 0 0 40px
+        <main> parent     ·  TRANSPARENT · no padding   ← the important bit
+
+      Load this from the SAME origin as the app so the iframe shares the gate
+      and same-origin cookies:
+        dev:  http://localhost:5173/botscrew-embed-test.html
+        prod: https://analytics.getskibots.com/botscrew-embed-test.html
+      (You must have unlocked the app once in this browser so the gate passes.)
+
+      It drives the REAL /embed.js loader + the REAL token flow (mocked endpoint),
+      so what you see here is exactly what BotScrew would get. Use it to eyeball
+      the fit — in particular whether the iframe inherits main's bg + padding,
+      since the loader parks the frame BESIDE the (hidden) <main>, not inside it.
+    -->
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; font: 14px/1.5 Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; color: #354052; }
+      .admin { display: flex; min-height: 100vh; }
+
+      /* ── sidebar — BotScrew's brand-blue rail ─────────────────────── */
+      .rail { width: 110px; flex: 0 0 110px; background: #2182BF; color: #fff; display: flex; flex-direction: column; align-items: center; padding-top: 14px; gap: 20px; }
+      .rail .logo { font-weight: 800; font-size: 12px; text-align: center; line-height: 1.05; }
+      .rail .item { font-size: 11px; opacity: .92; text-align: center; }
+      .rail .item.active { opacity: 1; font-weight: 600; }
+
+      .col { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+      /* ── top nav — white, 65px ────────────────────────────────────── */
+      .topnav { height: 65px; flex: 0 0 65px; background: #fff; border-bottom: 1px solid #e6eaf0; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; }
+      .topnav .home { color: #2182BF; }
+      .topnav .bot { font-weight: 600; }
+      .topnav .who { color: #616581; }
+
+      /* ── route switcher (test-harness chrome, not part of BotScrew) ── */
+      .switcher { background: #eef5fb; border-bottom: 1px solid #d6e7f3; padding: 8px 24px; display: flex; gap: 8px; align-items: center; }
+      .switcher button { font: inherit; font-size: 12px; padding: 5px 10px; border: 1px solid #b7d4ec; background: #fff; border-radius: 6px; cursor: pointer; color: #236aa8; }
+      .switcher button:hover { background: #f1f8ff; }
+      .switcher .route { margin-left: auto; font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: #7a8aa0; }
+
+      /*
+        THE INJECTION TARGET. Matches real BotScrew: the background + left
+        padding live HERE on <main>, not on a wrapper. The loader hides this
+        and inserts the iframe as its sibling — so this is the honest test of
+        whether the embed still looks framed once main is gone.
+      */
+      main { flex: 1; background: #F7FAFE; padding: 0 0 0 40px; }
+      .placeholder { color: #94a3b8; border: 2px dashed #cfe0f0; border-radius: 12px; padding: 48px; text-align: center; margin: 40px 40px 40px 0; }
+    </style>
+
+    <!-- Point the loader at THIS origin so the iframe loads the local/prod app. -->
+    <script>
+      window.SHREDINTEL_EMBED = { appOrigin: location.origin }
+    </script>
+
+    <!-- Mock BotScrew's session-authed token endpoint with an UNSIGNED dev JWT
+         (right shape; real verification is server-side). -->
+    <script>
+      function b64url(o){return btoa(JSON.stringify(o)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
+      function devToken(botId){var n=Math.floor(Date.now()/1000);return b64url({alg:'HS256',typ:'JWT'})+'.'+b64url({botId:Number(botId),iss:'botscrew',iat:n,exp:n+3600})+'.dev'}
+      var _fetch = window.fetch.bind(window)
+      window.fetch = function(input, init){
+        var url = typeof input === 'string' ? input : (input && input.url) || ''
+        if (url.indexOf('/api/private/analytics-token') >= 0) {
+          var m = /botId=(\d+)/.exec(url); var id = m ? m[1] : '90'
+          return Promise.resolve(new Response(JSON.stringify({ token: devToken(id) }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+        }
+        return _fetch(input, init)
+      }
+    </script>
+  </head>
+  <body>
+    <div class="admin">
+      <aside class="rail">
+        <div class="logo">GET SKI BOTS</div>
+        <div class="item active">Analytics</div>
+        <div class="item">Knowledge</div>
+        <div class="item">AI&nbsp;Msgs</div>
+        <div class="item">Flows</div>
+        <div class="item">Actions</div>
+        <div class="item">Triggers</div>
+        <div class="item">Widget</div>
+        <div class="item">Settings</div>
+      </aside>
+      <div class="col">
+        <div class="topnav">
+          <span class="home">Home</span>
+          <span class="bot" id="botname">Mountain Creek Resort - ACTIVE</span>
+          <span class="who">Brandon Quinn</span>
+        </div>
+        <div class="switcher">
+          <button data-bot="90" data-name="Mountain Creek Resort - ACTIVE">bot 90 · Mountain Creek</button>
+          <button data-bot="1" data-name="Get Ski Tickets - ACTIVE">bot 1 · Get Ski Tickets</button>
+          <button data-leave="1">Leave analytics →</button>
+          <span class="route" id="route"></span>
+        </div>
+        <!-- Loader finds this <main>, hides it, and parks the iframe beside it. -->
+        <main>
+          <div class="placeholder">BotScrew's native analytics cards render here.<br />Pick a bot above to hand the region to ShredIntel.</div>
+        </main>
+      </div>
+    </div>
+
+    <!-- The REAL loader. -->
+    <script src="/embed.js"></script>
+
+    <script>
+      function go(path, name){ history.pushState({}, '', path); document.getElementById('route').textContent = location.pathname; if (name) document.getElementById('botname').textContent = name; }
+      Array.prototype.forEach.call(document.querySelectorAll('.switcher button'), function (b) {
+        b.addEventListener('click', function () {
+          if (b.dataset.leave) return go('/admin/bot/90/settings')
+          go('/admin/bot/' + b.dataset.bot + '/analytics', b.dataset.name)
+        })
+      })
+      // Start on bot 90's analytics route so the loader activates immediately.
+      go('/admin/bot/90/analytics', 'Mountain Creek Resort - ACTIVE')
+    </script>
+  </body>
+</html>

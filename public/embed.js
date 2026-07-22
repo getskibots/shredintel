@@ -31,6 +31,7 @@
   var MOUNT_SELECTOR = CFG.mountSelector || 'main'
   var ROUTE_RE = /\/admin\/bot\/(\d+)\/analytics/
   var FRAME_ID = 'shredintel-frame'
+  var WRAP_ID = 'shredintel-wrap'
   var FALLBACK_ID = 'shredintel-fallback'
 
   var currentBot = null // bot id currently framed, or null
@@ -64,8 +65,8 @@
   }
 
   function clearInjected() {
-    var f = document.getElementById(FRAME_ID)
-    if (f && f.parentNode) f.parentNode.removeChild(f)
+    var w = document.getElementById(WRAP_ID) // wrapper holds the iframe
+    if (w && w.parentNode) w.parentNode.removeChild(w)
     var fb = document.getElementById(FALLBACK_ID)
     if (fb && fb.parentNode) fb.parentNode.removeChild(fb)
     restoreMount()
@@ -101,7 +102,23 @@
       APP_ORIGIN + '/?embed=1#/bot/' + botId + '?token=' + encodeURIComponent(token)
     iframe.setAttribute('frameborder', '0')
     iframe.style.cssText = 'width:100%;border:0;display:block;min-height:80vh'
-    placeBesideMount(mount, iframe)
+
+    // The frame is parked BESIDE the hidden <mount>, so it does not inherit the
+    // host's content framing (background, padding). The dashboard renders
+    // transparent + edge-to-edge on purpose, so copy the mount's own background
+    // and padding onto a wrapper — the frame then visually REPLACES <mount> in
+    // ANY host (BotScrew's #F7FAFE + 40px-left today, auto-adapting elsewhere).
+    var wrap = document.createElement('div')
+    wrap.id = WRAP_ID
+    try {
+      var cs = window.getComputedStyle(mount)
+      wrap.style.background = cs.backgroundColor
+      wrap.style.padding = cs.padding
+    } catch (e) { /* getComputedStyle unavailable — degrade to no framing */ }
+    wrap.style.boxSizing = 'border-box'
+    wrap.appendChild(iframe)
+
+    placeBesideMount(mount, wrap)
     currentBot = botId
   }
 

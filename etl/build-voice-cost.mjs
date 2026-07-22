@@ -72,6 +72,21 @@ await c.query(`create materialized view report.voice_cost_daily as
      where bot_id is not null
      group by bot_id, day
   ),
+  transfers as (  -- calls that handed off to a human: AI-only time (before the
+                  -- transfer) vs human-bridge time. The parent inbound leg is the
+                  -- WHOLE call; the child outbound leg(s) = the human portion, which
+                  -- overlaps the parent — so AI-only = parent − child (never double-count).
+    select p.bot_id, p.day,
+           count(*)::int                                          as transferred_calls,
+           sum(greatest(p.duration_sec - ch.child_sec, 0)) / 60.0 as transfer_ai_min,
+           sum(ch.child_sec) / 60.0                               as transfer_human_min
+      from report.twilio_call_cost p
+      join (select parent_call_sid, sum(coalesce(duration_sec, 0)) child_sec
+              from report.twilio_call_cost where parent_call_sid is not null
+             group by parent_call_sid) ch on ch.parent_call_sid = p.call_sid
+     where p.bot_id is not null
+     group by p.bot_id, p.day
+  ),
   keys as (
     select bot_id, day from usage
     union select bot_id, day from rental
@@ -89,11 +104,15 @@ await c.query(`create materialized view report.voice_cost_daily as
          round(coalesce(u.inbound_usd, 0), 4)        as inbound_usd,
          coalesce(u.outbound_calls, 0)               as outbound_calls,
          round(coalesce(u.outbound_min, 0), 1)       as outbound_min,
-         round(coalesce(u.outbound_usd, 0), 4)       as outbound_usd
+         round(coalesce(u.outbound_usd, 0), 4)       as outbound_usd,
+         coalesce(t.transferred_calls, 0)            as transferred_calls,
+         round(coalesce(t.transfer_ai_min, 0), 1)    as transfer_ai_min,
+         round(coalesce(t.transfer_human_min, 0), 1) as transfer_human_min
     from keys k
     left join usage     u   on u.bot_id = k.bot_id and u.day = k.day
     left join rental    r   on r.bot_id = k.bot_id and r.day = k.day
-    left join recording rec on rec.bot_id = k.bot_id and rec.day = k.day`)
+    left join recording rec on rec.bot_id = k.bot_id and rec.day = k.day
+    left join transfers t   on t.bot_id = k.bot_id and t.day = k.day`)
 await c.query('create unique index voice_cost_daily_pk on report.voice_cost_daily (bot_id, day)')
 await c.query('grant select on report.voice_cost_daily to anon, authenticated')
 await c.query(`notify pgrst, 'reload schema'`)

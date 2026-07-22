@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useLocation, useSearchParams } from 'react-router-dom'
-import { ArrowDown, ArrowUp, Filter, Headphones, LayoutGrid, List, Search, TrendingUp } from 'lucide-react'
+import { ArrowDown, ArrowUp, Bot, Filter, Headphones, LayoutGrid, List, Search, TrendingUp, UserRound } from 'lucide-react'
 import { useFleetOverview, type FleetBotRow } from '../../data/useFleetOverview'
 import { verticalMeta } from '../../lib/verticalLabels'
 import { Metric } from '../shared/Metric'
@@ -171,6 +171,11 @@ export function FleetPage() {
     const outboundUsd = rows.reduce((s, r) => s + r.voice_outbound_usd, 0)
     const outboundMin = rows.reduce((s, r) => s + r.voice_outbound_min, 0)
     const outboundCalls = rows.reduce((s, r) => s + r.voice_outbound_calls, 0)
+    // Transferred calls: AI-only time (before handoff) vs human-bridge time — the
+    // ACCURATE, non-overlapping split (parent call − child leg).
+    const transferredCalls = rows.reduce((s, r) => s + r.voice_transferred_calls, 0)
+    const transferAiMin = rows.reduce((s, r) => s + r.voice_transfer_ai_min, 0)
+    const transferHumanMin = rows.reduce((s, r) => s + r.voice_transfer_human_min, 0)
     // Chat vs Voice split — the marquee insight (volume vs cost by channel).
     let chatConv = 0, voiceConv = 0, chatCost = 0, voiceCost2 = 0
     // Voice marginal cost/minute = telephony usage (excl fixed rental) + recording
@@ -187,6 +192,7 @@ export function FleetPage() {
       conv, prev, engaged, msgs, active, voiceCost, voiceCalls, voiceMinutes, aiCost, recCost, totalCost,
       chatConv, voiceConv, chatCost, voiceChannelCost: voiceCost2, voiceVarCost,
       inboundUsd, inboundMin, outboundUsd, outboundMin, outboundCalls,
+      transferredCalls, transferAiMin, transferHumanMin,
     }
   }, [rows])
   const heroDelta = hero.prev > 0 ? (hero.conv - hero.prev) / hero.prev : null
@@ -217,6 +223,10 @@ export function FleetPage() {
   const outboundCostShare = telephonyUsd > 0 ? hero.outboundUsd / telephonyUsd : 0
   const transferRate = hero.voiceCalls > 0 ? hero.outboundCalls / hero.voiceCalls : 0
   const hasTelephonySplit = hero.outboundUsd > 0 && hero.inboundUsd > 0
+  // On a TRANSFERRED call, how long the AI handles it before handing off vs how
+  // long the human is then on. Accurate (non-overlapping): AI-only = parent − child.
+  const avgAiDur = hero.transferredCalls > 0 ? hero.transferAiMin / hero.transferredCalls : 0
+  const avgHumanDur = hero.transferredCalls > 0 ? hero.transferHumanMin / hero.transferredCalls : 0
 
   const onSort = (key: SortKey) => {
     if (key === sortKey) setSortDesc((d) => !d)
@@ -462,7 +472,7 @@ export function FleetPage() {
             <h2 className="text-sm font-semibold text-slate-700">Chat vs Voice</h2>
             <span className="text-xs text-slate-400">volume &amp; cost this window</span>
           </div>
-          <p className="mb-4 text-sm text-slate-600">
+          <p className="mb-3 text-sm text-slate-600">
             Voice is{' '}
             <span className="font-semibold text-slate-800">{(voiceConvShare * 100).toFixed(1)}%</span>{' '}
             of conversations but{' '}
@@ -471,8 +481,31 @@ export function FleetPage() {
             <span className="font-semibold text-slate-800">{cpcRatio >= 10 ? Math.round(cpcRatio) : cpcRatio.toFixed(1)}×</span>{' '}
             more expensive per conversation than chat.
           </p>
-          {/* proportion bars: the gap between them IS the insight */}
-          <div className="space-y-3">
+
+          {/* On a transferred call: AI-only time before handoff, then human time.
+              Accurate non-overlapping split — the human usually runs longer. */}
+          {avgAiDur > 0 && avgHumanDur > 0 && (
+            <div
+              className="mb-3 flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl border border-slate-100 bg-slate-50/60 px-4 py-2.5"
+              title="For calls that transfer to a human: average time the AI handles the call before handoff, then average time the person is on. Non-overlapping (parent call minus the bridged leg)."
+            >
+              <span className="text-[11px] font-medium uppercase tracking-wider text-slate-400">On a transferred call</span>
+              <span className="inline-flex items-baseline gap-1.5">
+                <Bot className="h-4 w-4 translate-y-0.5 text-botscrew-500" strokeWidth={1.75} />
+                <span className="text-sm text-slate-500">AI first</span>
+                <span className="font-display text-base font-semibold tabular-nums text-slate-900">{avgAiDur.toFixed(1)} min</span>
+              </span>
+              <span className="text-slate-300">→</span>
+              <span className="inline-flex items-baseline gap-1.5">
+                <UserRound className="h-4 w-4 translate-y-0.5 text-amber-500" strokeWidth={1.75} />
+                <span className="text-sm text-slate-500">then human</span>
+                <span className="font-display text-base font-semibold tabular-nums text-slate-900">{avgHumanDur.toFixed(1)} min</span>
+              </span>
+            </div>
+          )}
+
+          {/* proportion bars (compact): the gap between them IS the insight */}
+          <div className="space-y-2">
             {[
               { label: 'Conversations', chat: hero.chatConv, voice: hero.voiceConv, fmt: (n: number) => fmt(n) },
               { label: 'Cost', chat: hero.chatCost, voice: hero.voiceChannelCost, fmt: (n: number) => usd(n) },
@@ -481,7 +514,7 @@ export function FleetPage() {
               const vPct = total > 0 ? (row.voice / total) * 100 : 0
               return (
                 <div key={row.label}>
-                  <div className="mb-1 flex items-center justify-between text-xs text-slate-500">
+                  <div className="mb-0.5 flex items-center justify-between text-[11px] text-slate-500">
                     <span className="font-medium uppercase tracking-wider">{row.label}</span>
                     <span className="tabular-nums">
                       <span className="text-botscrew-600">chat {row.fmt(row.chat)}</span>
@@ -489,7 +522,7 @@ export function FleetPage() {
                       <span className="text-amber-600">voice {row.fmt(row.voice)}</span>
                     </span>
                   </div>
-                  <div className="flex h-2.5 overflow-hidden rounded-full bg-slate-100">
+                  <div className="flex h-1.5 overflow-hidden rounded-full bg-slate-100">
                     <div className="bg-botscrew-500" style={{ width: `${100 - vPct}%` }} />
                     <div className="bg-amber-400" style={{ width: `${vPct}%` }} />
                   </div>

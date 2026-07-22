@@ -48,6 +48,9 @@ returns table (
   voice_outbound_usd numeric,
   voice_outbound_min numeric,
   voice_outbound_calls bigint,
+  voice_transferred_calls bigint,
+  voice_transfer_ai_min numeric,
+  voice_transfer_human_min numeric,
   ai_cost_usd        numeric,
   botscrew_usd       numeric
 )
@@ -101,7 +104,10 @@ as $fn$
            sum(v.inbound_min)   as inbound_min,
            sum(v.outbound_usd)  as outbound_usd,
            sum(v.outbound_min)  as outbound_min,
-           sum(v.outbound_calls)::bigint as outbound_calls
+           sum(v.outbound_calls)::bigint as outbound_calls,
+           sum(v.transferred_calls)::bigint as transferred_calls,
+           sum(v.transfer_ai_min)    as transfer_ai_min,
+           sum(v.transfer_human_min) as transfer_human_min
       from report.voice_cost_daily v
      where v.day between p_from and p_to
      group by v.bot_id
@@ -129,6 +135,9 @@ as $fn$
          coalesce(vc.outbound_usd, 0)   as voice_outbound_usd,
          coalesce(vc.outbound_min, 0)   as voice_outbound_min,
          coalesce(vc.outbound_calls, 0)::bigint as voice_outbound_calls,
+         coalesce(vc.transferred_calls, 0)::bigint as voice_transferred_calls,
+         coalesce(vc.transfer_ai_min, 0)    as voice_transfer_ai_min,
+         coalesce(vc.transfer_human_min, 0) as voice_transfer_human_min,
          coalesce(ai.cost_usd, 0)       as ai_cost_usd,
          -- Botscrew platform fee: $40/mo, only for billable bots (report.bot_go_live),
          -- prorated to the overlap of the window with [live_since, window_end] at

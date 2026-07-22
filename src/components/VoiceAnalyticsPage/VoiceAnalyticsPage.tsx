@@ -19,7 +19,6 @@ import { useVoiceCallAnalytics, type VoiceBreakdown } from '../../data/useVoiceC
 import { useAvailableBots } from '../../data/useAnalytics'
 import { ConversationExplorer } from '../ConversationExplorer/ConversationExplorer'
 import { TwilioConnect } from '../TwilioConnect/TwilioConnect'
-import { VerticalBadge } from '../VerticalBadge/VerticalBadge'
 import { ChannelToggle } from '../ChannelToggle/ChannelToggle'
 import { omniGroupByKey } from '../../lib/omniGroups'
 import { NaDotMap } from '../NaDotMap/NaDotMap'
@@ -30,7 +29,7 @@ import { useShredPulse } from '../ShreddingOverlay'
 import { type DrillPayload } from '../../lib/drill'
 import { Panel, Metric, EmptyState } from '../shared'
 import { formatNumber, formatPercent } from '../../lib/formatters'
-import { brand, chart, sentimentColors } from '../../lib/chartTheme'
+import { brand, chart, dateAxisProps, dateFull, sentimentColors } from '../../lib/chartTheme'
 
 function fmtDuration(sec: number | null): string {
   if (sec == null) return '—'
@@ -107,7 +106,7 @@ export function VoiceAnalyticsPage() {
   const [params] = useSearchParams()
   const omniGroup = omniGroupByKey(params.get('omni'))
   const [selection, setSelection] = useState<PeriodSelection>(DEFAULT_PERIOD)
-  const { data, isLoading, isLive } = useVoiceCallAnalytics(botId, selection)
+  const { data, isLoading } = useVoiceCallAnalytics(botId, selection)
   const { bots } = useAvailableBots()
   const [drill, setDrill] = useState<DrillPayload | null>(null)
 
@@ -143,7 +142,7 @@ export function VoiceAnalyticsPage() {
   )
 
   return (
-    <div className="mx-auto max-w-[1400px] px-4 pb-16 pt-4 sm:px-6">
+    <div className="px-4 pb-16 pt-4 sm:px-6">
       {/* Header */}
       <div className="sticky top-0 z-20 -mx-4 mb-5 border-b border-slate-200 bg-botscrew-50/80 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -151,16 +150,6 @@ export function VoiceAnalyticsPage() {
             {omniGroup && <ChannelToggle group={omniGroup} active="voice" />}
             <h1 className="text-lg font-semibold tracking-tight text-slate-900">Voice Analytics</h1>
             {!omniGroup && <span className="rounded-md bg-white px-2 py-0.5 text-xs font-medium text-slate-600 shadow-sm">{botLabel}</span>}
-            <span
-              className={[
-                'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold',
-                isLive ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500',
-              ].join(' ')}
-            >
-              <span className={['h-1.5 w-1.5 rounded-full', isLive ? 'bg-emerald-500' : 'bg-slate-400'].join(' ')} />
-              {isLive ? 'LIVE' : 'Demo'}
-            </span>
-            <VerticalBadge botId={botId} />
             <TwilioConnect botId={botId} />
           </div>
           <PeriodPicker value={selection} onChange={setSelection} />
@@ -194,31 +183,27 @@ export function VoiceAnalyticsPage() {
             className="lg:col-span-12"
             eyebrow="Overview"
             title="Call volume & connection"
-            description="How many calls came in, how many the AI answered, and how long they run."
+            description={
+              m.volumeSource === 'twilio'
+                ? 'How many calls came in, how many the AI answered, and how long they run.'
+                : 'How many calls came in, how many got past hello, and how long they run.'
+            }
             action={
               m.volumeSource === 'twilio' ? (
                 <div
                   className="rounded-2xl border border-emerald-200 bg-emerald-50/70 px-4 py-2 text-right"
-                  title="Share of real inbound calls the AI answered (Twilio) — only the rest got no-answer/busy"
+                  title="Share of real inbound calls the AI answered (Twilio); only the rest got no-answer/busy"
                 >
                   <div className="text-[10px] font-semibold uppercase tracking-wider text-emerald-700">Connect rate</div>
                   <div className="mt-0.5 font-display text-2xl font-semibold tabular-nums text-emerald-700">{formatPercent(100 - m.abandonPct)}</div>
                 </div>
-              ) : (
-                <div
-                  className="rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-2 text-right"
-                  title="Share of callers who hung up before the AI answered — their choice, not a dropped call"
-                >
-                  <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Hung up early</div>
-                  <div className="mt-0.5 font-display text-2xl font-semibold tabular-nums text-slate-700">{formatPercent(m.abandonPct)}</div>
-                </div>
-              )
+              ) : undefined
             }
           >
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
               <Metric label="Voice calls" value={formatNumber(m.voiceConvs)} subValue={m.volumeSource === 'twilio' ? 'inbound calls · Twilio' : 'total sessions'} tone="accent" />
-              <Metric label="Connected" value={formatNumber(m.connectedCalls)} subValue={`${formatPercent((m.connectedCalls / m.voiceConvs) * 100)} of calls`} tone={m.volumeSource === 'twilio' ? 'good' : undefined} />
-              <Metric label="Didn't connect" value={formatNumber(m.unconnected)} subValue={m.volumeSource === 'twilio' ? `${formatPercent(m.abandonPct)} no-answer/busy` : `${formatPercent(m.abandonPct)} hung up`} />
+              {m.volumeSource === 'twilio' && <Metric label="Connected" value={formatNumber(m.connectedCalls)} subValue={`${formatPercent((m.connectedCalls / m.voiceConvs) * 100)} of calls`} tone="good" />}
+              {m.volumeSource === 'twilio' && <Metric label="Didn't connect" value={formatNumber(m.unconnected)} subValue={`${formatPercent(m.abandonPct)} no-answer/busy`} />}
               {m.volumeSource !== 'twilio' && <Metric label="Engaged" value={formatNumber(m.engagedCalls)} subValue="got past hello" tone="good" />}
               {m.volumeSource !== 'twilio' && <Metric label="Handover-flagged" value={formatNumber(m.handoverCalls)} subValue={`${formatPercent((m.handoverCalls / m.voiceConvs) * 100)} of calls`} tone="risk" />}
               <Metric label="Typical length" value={fmtDuration(m.medianDurSec)} subValue={m.durationSource === 'twilio' ? 'median · Twilio' : 'median (est.)'} />
@@ -243,26 +228,36 @@ export function VoiceAnalyticsPage() {
                       </linearGradient>
                     </defs>
                     <CartesianGrid {...chart.grid} />
-                    <XAxis dataKey="date" {...chart.xAxis} minTickGap={24} />
+                    <XAxis dataKey="date" {...chart.xAxis} {...dateAxisProps(m.volumeTrend.map((d) => d.date))} />
                     <YAxis {...chart.yAxis} />
-                    <Tooltip {...chart.tooltip} />
+                    <Tooltip {...chart.tooltip} labelFormatter={(l) => dateFull(String(l))} />
                     <Area type="monotone" dataKey="voiceConvs" name="Calls" stroke={brand.blue} strokeWidth={2} fill="url(#voiceVol)" isAnimationActive={false} />
-                    <Area type="monotone" dataKey="connectedCalls" name="Connected" stroke={brand.gold} strokeWidth={2} fill="none" isAnimationActive={false} />
+                    {m.volumeSource === 'twilio' && <Area type="monotone" dataKey="connectedCalls" name="Connected" stroke={brand.gold} strokeWidth={2} fill="none" isAnimationActive={false} />}
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
             )}
+
+            {m.volumeSource !== 'twilio' && (
+              <p className="mt-4 text-[11px] text-slate-400">
+                Volume and engagement here read from the conversation record. Connect rate and
+                missed-call detail light up once this line&apos;s phone-system call logs are ingested.
+              </p>
+            )}
           </Panel>
 
           {/* AI vs human — the headline Voice-AI story, standalone. Ground truth from
-              Twilio transfers (call-level) + call_facts durations (talk-time). */}
+              Twilio transfers (call-level) + call_facts durations (talk-time). We show the
+              split only when there are REAL escalations; with 0 transfers we show a neutral
+              note instead. 0 transfers is ambiguous (no live-agent line vs AI resolved
+              everything), so we deliberately don't claim "100% AI-resolved". */}
           <Panel
             className="lg:col-span-12"
             eyebrow="Voice AI"
             title="AI resolution vs human escalation"
             description="How often ShredIntel handles the call itself versus escalating to your team — ground truth from Twilio."
           >
-            {m.transfers ? (() => {
+            {m.transfers && m.transfers.transferred > 0 ? (() => {
               const tr = m.transfers
               const escalated = tr.transferred
               const aiResolved = Math.max(0, tr.checked - tr.transferred)
@@ -322,7 +317,9 @@ export function VoiceAnalyticsPage() {
                 </>
               )
             })() : (
-              <EmptyState title="No transfer data yet" message="Run the Twilio transfer ingest for this bot to light up the AI-vs-human split." />
+              <p className="py-8 text-center text-sm text-slate-400">
+                Live-agent handoff is not currently configured for this bot.
+              </p>
             )}
           </Panel>
 

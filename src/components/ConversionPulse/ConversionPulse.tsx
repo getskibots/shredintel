@@ -7,7 +7,7 @@ import {
   XAxis,
 } from 'recharts'
 import { EmptyState, Metric, Panel } from '../shared'
-import { chart } from '../../lib/chartTheme'
+import { chart, dateAxisProps, dateFull } from '../../lib/chartTheme'
 import {
   deltaTone,
   formatDelta,
@@ -81,9 +81,10 @@ export function ConversionPulse({
                 margin={{ top: 4, right: 8, left: 0, bottom: 0 }}
               >
                 <CartesianGrid {...chart.grid} />
-                <XAxis dataKey="date" {...chart.xAxis} />
+                <XAxis dataKey="date" {...chart.xAxis} {...dateAxisProps(timeline.map((d) => d.date))} />
                 <Tooltip
                   {...chart.tooltip}
+                  labelFormatter={(l) => dateFull(String(l))}
                   formatter={(value) => [
                     formatNumber(Number(value)),
                     'Conversions',

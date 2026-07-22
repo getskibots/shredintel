@@ -10,6 +10,7 @@ import {
 } from 'recharts'
 import { EmptyState, Metric, Panel } from '../shared'
 import { formatNumber, formatPercent } from '../../lib/formatters'
+import { dateAxisProps, dateFull } from '../../lib/chartTheme'
 import type { SenderMixStackProps } from '../../types/analytics'
 
 export type { SenderMixStackProps } from '../../types/analytics'
@@ -80,6 +81,7 @@ export function SenderMixStack({ totals, data }: SenderMixStackProps) {
                   tick={{ fill: '#64748B', fontSize: 11 }}
                   tickLine={false}
                   axisLine={{ stroke: '#E2E8F0' }}
+                  {...dateAxisProps(data.map((d) => d.date))}
                 />
                 <YAxis
                   tick={{ fill: '#64748B', fontSize: 11 }}
@@ -93,6 +95,7 @@ export function SenderMixStack({ totals, data }: SenderMixStackProps) {
                     border: '1px solid #E2E8F0',
                     fontSize: 12,
                   }}
+                  labelFormatter={(l) => dateFull(String(l))}
                   formatter={(value, name) => [
                     formatNumber(Number(value)),
                     String(name),

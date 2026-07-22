@@ -379,6 +379,11 @@ function overlayJHChatLive(base: PeriodFixtures, live: LiveBundle, pageStage?: s
       sessions,
       messages,
       userMessages,
+      // Bot (AI) messages only — from sender_mix_stack, so it excludes live-agent
+      // messages (which live in the Human handover card, not here).
+      botMessages: sum(live.senderMixStack.map((r) => Number(r.bot_messages))),
+      // Fleet median engagement rate for the "vs typical resort" hero.
+      engagementBenchmark: live.fleetEngagementMedian ?? undefined,
       engagedSessions,
       singleUserMsgSessions,
       singleMsgShareOfEngaged: engagedSessions > 0 ? singleUserMsgSessions / engagedSessions : 0,
@@ -1048,6 +1053,9 @@ function selectionKey(sel: PeriodSelection): string {
 export interface BotAnalyticsState extends AnalyticsState<PeriodFixtures> {
   /** Where questions originate (ecommerce funnel). null unless live + populated. */
   funnel: PageFunnelSummary | null
+  /** True when the live query succeeded but this bot has no data in the window
+   *  (so the page can show one clean empty banner instead of a stack of empties). */
+  isEmpty: boolean
 }
 
 /**
@@ -1083,7 +1091,10 @@ export function useBotAnalytics(
       const bundle = await fetchLiveBundle(botId, from, to)
       if (cancelled) return
       if (!bundleHasData(bundle)) {
-        setRaw({ bundle: null, isLoading: false, isLive: false, error: null })
+        // Live query succeeded, but this bot has no data in the window. Show honest
+        // zeros / per-panel empty states — NOT the demo fixtures (Jackson Hole sample
+        // data), which would misrepresent this bot on short/sparse windows.
+        setRaw({ bundle: null, isLoading: false, isLive: true, error: null })
         return
       }
       setRaw({ bundle, isLoading: false, isLive: true, error: null })
@@ -1093,12 +1104,20 @@ export function useBotAnalytics(
   }, [botId, selKey])
 
   const data = useMemo(
-    () => (raw.bundle ? overlayJHChatLive(blankData(fixtureFallback), raw.bundle, pageStage) : fixtureFallback),
-    [raw.bundle, fixtureFallback, pageStage],
+    () =>
+      raw.bundle
+        ? overlayJHChatLive(blankData(fixtureFallback), raw.bundle, pageStage)
+        : raw.isLive
+          ? blankData(fixtureFallback) // live query, no data in this window → honest zeros
+          : fixtureFallback, // Supabase not configured (local dev) → demo fixtures
+    [raw.bundle, raw.isLive, fixtureFallback, pageStage],
   )
   const funnel = useMemo(() => (raw.bundle ? summarizeFunnel(raw.bundle.pageFunnel) : null), [raw.bundle])
 
-  return { data, funnel, isLoading: raw.isLoading, isLive: raw.isLive, error: raw.error }
+  // Live query returned, but this bot has no rows in the window (bundle stayed null
+  // while isLive is true). Lets the page show one clean banner, not a wall of empties.
+  const isEmpty = raw.isLive && !raw.bundle
+  return { data, funnel, isLoading: raw.isLoading, isLive: raw.isLive, error: raw.error, isEmpty }
 }
 
 export function useJHChatAnalytics(selection: PeriodSelection): AnalyticsState<PeriodFixtures> {

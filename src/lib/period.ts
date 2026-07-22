@@ -8,7 +8,7 @@
  * shape.
  */
 
-export type PresetKey = '1d' | '3d' | '7d' | '30d' | '90d' | 'all'
+export type PresetKey = '1d' | '3d' | '7d' | '30d' | '90d' | '365d' | 'all'
 
 export type PeriodSelection =
   | { kind: 'preset'; preset: PresetKey }
@@ -96,6 +96,7 @@ const PRESET_LABELS: Record<PresetKey, { long: string; short: string }> = {
   '7d':  { long: 'Last 7 days',   short: 'Last 7 days' },
   '30d': { long: 'Last 30 days',  short: 'Last 30 days' },
   '90d': { long: 'Last 90 days',  short: 'Last 90 days' },
+  '365d': { long: 'Last 12 months', short: 'Last 12 months' },
   'all': { long: 'All time',      short: 'All time' },
 }
 
@@ -113,6 +114,7 @@ export function resolveSelection(sel: PeriodSelection): ResolvedPeriod {
       preset === '7d' ? 7 :
       preset === '30d' ? 30 :
       preset === '90d' ? 90 :
+      preset === '365d' ? 365 :
       ALL_TIME_LOOKBACK_DAYS
     const from = addDays(to, -(days - 1))
     return {
@@ -144,7 +146,7 @@ export function resolveSelection(sel: PeriodSelection): ResolvedPeriod {
 //
 // Any invalid combination falls back to the default preset.
 
-const VALID_PRESETS: PresetKey[] = ['1d', '3d', '7d', '30d', '90d', 'all']
+const VALID_PRESETS: PresetKey[] = ['1d', '3d', '7d', '30d', '90d', '365d', 'all']
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
 
 export function selectionFromSearchParams(

@@ -1,6 +1,7 @@
-import { useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Sparkles, ArrowUp, AudioLines, Mic, ChevronDown, Loader2, TriangleAlert, Target, Zap, TrendingUp, MessagesSquare, Brush } from 'lucide-react'
 import { useBranding } from '../../data/useBranding'
+import { isEmbedMode } from '../../lib/embed'
 import { BrandingBackdrop, BrandingEditor } from '../Branding'
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -46,6 +47,19 @@ const LENSES = [
   { id: 'revenue-risk', label: 'Capture more revenue', Icon: TrendingUp },
 ]
 
+// Rotating placeholder — tantalizing, plain-English example questions that bait
+// the click. The tagline already says "Ask anything", so the box leads with the
+// example. Cycles while idle; pauses on focus. Kept SHORT (≤~30 chars) so they
+// never clip in the ~576px bar. A balanced mix: find the friction + find the magic.
+const ASK_EXAMPLES = [
+  'Where am I losing revenue?',
+  "What's frustrating my guests?",
+  "What can't the bot answer?",
+  'What are guests raving about?',
+  'What surprised my guests?',
+  "What made a guest's day?",
+]
+
 // One-line chart caption (lens + window) built from request context — never the
 // model — so every AI chart states what it's showing (specSanitizer policy).
 function chartCaption(focus: string | null | undefined, rangeLabel?: string): string {
@@ -59,7 +73,11 @@ function chartCaption(focus: string | null | undefined, rangeLabel?: string): st
 
 export function AskBar({ botId, range, onVoice }: { botId: number; range?: { from: string; to: string; label: string }; onVoice?: () => void }) {
   const { branding, reload: reloadBranding } = useBranding(botId)
+  const embed = isEmbedMode()
   const [brandingOpen, setBrandingOpen] = useState(false)
+  const [logoError, setLogoError] = useState(false)
+  const [phIdx, setPhIdx] = useState(0)
+  const [focused, setFocused] = useState(false)
   const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<AskResult | null>(null)
@@ -77,6 +95,15 @@ export function AskBar({ botId, range, onVoice }: { botId: number; range?: { fro
   const recogRef = useRef<{ stop: () => void } | null>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const SR = typeof window !== 'undefined' ? (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition : null
+  // Once you've asked, the hero drops into focus mode: starters/helper step aside,
+  // the hero compacts, and the answer surfaces directly under the bar.
+  const hasActivity = loading || result != null || error != null
+  // Rotate the placeholder example while the box is idle + empty (pause on focus).
+  useEffect(() => {
+    if (focused || query) return
+    const id = window.setInterval(() => setPhIdx((i) => (i + 1) % ASK_EXAMPLES.length), 3600)
+    return () => window.clearInterval(id)
+  }, [focused, query])
 
   async function ask(body: { question?: string; templateId?: string }) {
     setLoading(true)
@@ -138,7 +165,7 @@ export function AskBar({ botId, range, onVoice }: { botId: number; range?: { fro
 
   return (
     <div className="mb-10">
-      <div className="relative">
+      <div className="relative overflow-hidden rounded-3xl">
         <BrandingBackdrop url={branding?.backgroundUrl} overlay={branding?.overlay ?? 0.6} />
         {/* discreet per-bot branding editor */}
         <div className="absolute right-2 top-2 z-30">
@@ -155,34 +182,34 @@ export function AskBar({ botId, range, onVoice }: { botId: number; range?: { fro
             <BrandingEditor botId={botId} branding={branding} onSaved={reloadBranding} onClose={() => setBrandingOpen(false)} />
           )}
         </div>
-        <div className="relative z-10 mx-auto flex min-h-[46vh] max-w-3xl flex-col items-center justify-center text-center">
+        <div className={`relative z-10 mx-auto flex max-w-3xl flex-col items-center justify-center px-6 text-center transition-all duration-500 ${embed || hasActivity ? 'min-h-0 py-7' : 'min-h-[46vh] py-10'}`}>
           {/* Header — the per-bot logo (uploaded) or the ShredIntel wordmark */}
-          {branding?.logoUrl ? (
-            <img src={branding.logoUrl} alt="Resort logo" className="mb-3 h-9 w-auto max-w-[220px] object-contain" />
+          {branding?.logoUrl && !logoError ? (
+            <img src={branding.logoUrl} alt="Resort logo" onError={() => setLogoError(true)} className={`w-auto max-w-[280px] object-contain drop-shadow-[0_1px_12px_rgba(0,0,0,0.4)] ${embed ? 'mb-2 h-11' : 'mb-3 h-14 sm:h-16'}`} />
           ) : (
-            <div className="mb-2 inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-botscrew-500">
-              <Sparkles className="h-3.5 w-3.5" strokeWidth={2.2} /> ShredIntel
+            <div className={`inline-flex items-center gap-2 font-bold tracking-tight text-white [text-shadow:0_2px_18px_rgba(0,0,0,0.45)] ${embed ? 'mb-1.5 text-2xl' : 'mb-2 text-4xl sm:text-[46px]'}`}>
+              <Sparkles className={`${embed ? 'h-5 w-5' : 'h-8 w-8 sm:h-9 sm:w-9'} text-[#8FCBF0]`} strokeWidth={2.2} />
+              Shred <span className="text-[#8FCBF0]">Intel</span>
             </div>
           )}
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-[30px] sm:leading-tight">
-          Your conversational intelligence layer
+        <h1 className={`font-semibold tracking-tight text-white/95 [text-shadow:0_1px_12px_rgba(0,0,0,0.4)] ${embed ? 'text-base sm:text-lg' : 'text-lg sm:text-2xl'}`}>
+          Carve through your conversations. Get instant insights.
         </h1>
-        <p className="mt-2 max-w-lg text-sm text-slate-500">
-          Ask anything about your guests’ conversations — in plain English or by voice, and ShredIntel answers and charts it on the spot.
-        </p>
 
         {/* Ask bar — the focal element */}
-        <form onSubmit={onSubmit} className="relative mt-7 w-full">
+        <form onSubmit={onSubmit} className={`relative mx-auto w-full max-w-xl ${hasActivity ? 'mt-5' : 'mt-7'}`}>
           <Sparkles
-            className="pointer-events-none absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-botscrew-500"
+            className={`pointer-events-none absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-botscrew-500 ${loading ? 'animate-spin' : ''}`}
             strokeWidth={2}
           />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Ask your resort’s data…  e.g. where am I losing revenue?"
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            placeholder={focused ? 'Ask anything…' : ASK_EXAMPLES[phIdx]}
             aria-label="Ask your resort’s data"
-            className="w-full rounded-full border border-slate-200 bg-white py-4 pl-14 pr-40 text-base text-slate-800 shadow-sm outline-none placeholder:text-slate-400 focus:border-botscrew-400 focus:ring-2 focus:ring-botscrew-100"
+            className={`w-full rounded-full border border-slate-200 bg-white py-4 pl-14 pr-40 text-base text-slate-800 shadow-sm outline-none placeholder:text-slate-400 focus:border-botscrew-400 focus:ring-2 focus:ring-botscrew-100 ${loading ? 'shredintel-carving' : ''}`}
           />
           <div className="absolute right-2.5 top-1/2 flex -translate-y-1/2 items-center gap-1.5">
             {SR && (
@@ -228,48 +255,49 @@ export function AskBar({ botId, range, onVoice }: { botId: number; range?: { fro
           </div>
         </form>
 
-        {/* Starter lenses — three action items: diagnose → act → grow */}
-        <div className="mt-4 flex flex-wrap justify-center gap-2.5">
-          {LENSES.map((l) => (
-            <button
-              key={l.id}
-              type="button"
-              onClick={() => !loading && ask({ templateId: l.id })}
-              disabled={loading}
-              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-botscrew-300 hover:bg-botscrew-50 hover:text-botscrew-700 disabled:opacity-50"
-            >
-              <l.Icon className="h-4 w-4 text-botscrew-500" strokeWidth={2} />
-              {l.label}
-            </button>
-          ))}
-        </div>
+        {!hasActivity && (
+          <>
+            {/* Starter lenses — three action items: diagnose → act → grow */}
+            <div className="mx-auto mt-4 flex max-w-xl flex-wrap justify-center gap-2.5">
+              {LENSES.map((l) => (
+                <button
+                  key={l.id}
+                  type="button"
+                  onClick={() => !loading && ask({ templateId: l.id })}
+                  disabled={loading}
+                  className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-botscrew-300 hover:bg-botscrew-50 hover:text-botscrew-700 disabled:opacity-50"
+                >
+                  <l.Icon className="h-4 w-4 text-botscrew-500" strokeWidth={2} />
+                  {l.label}
+                </button>
+              ))}
+            </div>
 
-        <p className="mt-3.5 text-[11px] text-slate-400">
-          Type it, dictate with the mic, or talk to ShredIntel — or tap a starter above.
-        </p>
-        <div className="mt-1.5">
-          <PromptEditor botId={botId} />
-        </div>
+            <div className="mt-4">
+              <PromptEditor botId={botId} />
+            </div>
+          </>
+        )}
         </div>
       </div>
 
-      {/* Answer + states — readable column below the hero */}
-      <div className="mx-auto max-w-3xl">
+      {/* Answer + states — surfaces directly under the ask bar (aligned to it) */}
+      <div className="mx-auto mt-4 max-w-2xl">
         {loading && (
-          <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-500">
+          <div className="shredintel-surface flex items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-500">
             <Loader2 className="h-4 w-4 animate-spin text-botscrew-500" /> ShredIntel is carving through your conversations…
           </div>
         )}
 
         {error && !loading && (
-          <div className="flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+          <div className="shredintel-surface flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
             <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={2} />
             <span>{error}</span>
           </div>
         )}
 
         {result && !loading && (
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="shredintel-surface rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-2 flex items-center gap-2 text-xs text-slate-400">
               <Sparkles className="h-3.5 w-3.5 text-botscrew-500" strokeWidth={2} />
               ShredIntel

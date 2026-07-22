@@ -65,3 +65,25 @@ html.shredintel-embed #root {
   85% { opacity: 1; }
   100% { top: 100%; opacity: 0; }
 }
+
+/* Ask answer — surfaces right out of the bar (slide-up + fade + settle). */
+@keyframes shredintel-surface {
+  0% { opacity: 0; transform: translateY(16px) scale(0.985); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.shredintel-surface {
+  animation: shredintel-surface 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Ask bar "carving" glow while ShredIntel thinks. */
+@keyframes shredintel-carve {
+  0%, 100% { box-shadow: 0 8px 24px rgba(33, 130, 191, 0.10); }
+  50% { box-shadow: 0 0 0 4px rgba(33, 130, 191, 0.14), 0 12px 32px rgba(33, 130, 191, 0.24); }
+}
+.shredintel-carving {
+  animation: shredintel-carve 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shredintel-surface, .shredintel-carving { animation: none; }
+}

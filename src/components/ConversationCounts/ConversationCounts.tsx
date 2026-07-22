@@ -9,7 +9,7 @@ import {
 } from 'recharts'
 import { EmptyState, Metric, Panel } from '../shared'
 import type { MetricProps } from '../shared/Metric'
-import { brand, chart } from '../../lib/chartTheme'
+import { brand, chart, dateAxisProps, dateFull } from '../../lib/chartTheme'
 import { formatNumber, formatPercent } from '../../lib/formatters'
 import type { ConversationCountsProps } from '../../types/analytics'
 
@@ -31,56 +31,98 @@ function formatDuration(sec: number | null): string {
  */
 export function ConversationCounts({
   users,
-  substantive,
   sessions,
   messages,
   userMessages,
+  botMessages,
+  engagementBenchmark,
   engagedSessions,
   singleMsgShareOfEngaged,
-  messagesPerSession,
   avgFirstResponseSec,
   medianFirstResponseSec,
   trend,
 }: ConversationCountsProps) {
   const empty = sessions === 0 && messages === 0
   const engagedShare = sessions > 0 ? engagedSessions / sessions : 0
-  const substantiveShareOfEngaged = engagedSessions > 0 && substantive != null ? substantive / engagedSessions : 0
+  // Depth of REAL conversations — excludes bounces, so it's more honest than
+  // messages-per-chat (which is diluted by chats where the guest never replied).
+  const messagesPerEngaged = engagedSessions > 0 ? messages / engagedSessions : 0
   const convosPerUser = users && users > 0 ? sessions / users : 0
   const responseSec = medianFirstResponseSec ?? avgFirstResponseSec
   const responseLabel =
     medianFirstResponseSec != null ? 'median' : avgFirstResponseSec != null ? 'avg' : 'coming soon'
 
-  type Tile = { label: string; value: string; sub: string; tone: MetricProps['tone'] }
+  type Tile = { label: string; value: string; sub: string; tone: MetricProps['tone']; title?: string; span?: boolean }
   const tiles: Tile[] = []
-  if (users != null) {
-    tiles.push({ label: 'Users', value: formatNumber(users), sub: 'unique visitors', tone: 'accent' })
-  }
+  // Chats opened leads (the volume); Users follows as the de-dup behind it — so it
+  // reads "105k chats from 69k visitors", not the backwards "fewer users than chats".
   tiles.push({
     label: 'Chats opened',
     value: formatNumber(sessions),
-    sub: convosPerUser ? `${convosPerUser.toFixed(1)} per user` : 'chats started',
-    tone: users != null ? 'neutral' : 'accent',
+    sub: convosPerUser ? `${convosPerUser.toFixed(1)} per visitor` : 'chat sessions',
+    tone: 'accent',
+    title: 'Chat sessions started this period (one conversation thread each). A single visitor can open several — hence the per-visitor figure. Counts every session, whether or not the guest replied.',
   })
-  tiles.push({
-    label: 'Engaged',
-    value: formatNumber(engagedSessions),
-    sub: `guest replied · ${formatPercent(engagedShare)}`,
-    tone: 'good',
-  })
-  if (substantive != null) {
+  if (users != null) {
     tiles.push({
-      label: 'Real questions',
-      value: formatNumber(substantive),
-      sub: `${formatPercent(substantiveShareOfEngaged)} of engaged · what ShredIntel analyzes`,
-      tone: 'good',
+      label: 'Users',
+      value: formatNumber(users),
+      sub: 'unique visitors who chatted',
+      tone: 'neutral',
+      title: 'Distinct people who opened the chat this period — the same Active-users count as your admin. NOT all website visitors, only those who chatted.',
     })
   }
   tiles.push({
-    label: 'Messages',
-    value: formatNumber(messages),
-    sub: `${formatNumber(userMessages)} from guests`,
-    tone: 'neutral',
+    label: 'Engaged conversations',
+    value: formatNumber(engagedSessions),
+    sub: `guest replied · ${formatPercent(engagedShare)}`,
+    tone: 'good',
+    title: 'Chats where the guest sent at least one real message (not just opened the widget). This is the base ShredIntel analyzes.',
   })
+  // Engagement-rate hero, paired with its count above — chats that became real
+  // conversations, benchmarked against the fleet median. Color pops above typical.
+  tiles.push({
+    label: 'Engagement rate',
+    value: formatPercent(engagedShare),
+    sub: engagementBenchmark != null ? `typical resort: ${formatPercent(engagementBenchmark)}` : 'of chats opened',
+    tone: engagementBenchmark != null && engagedShare >= engagementBenchmark ? 'good' : 'accent',
+    title: 'Share of chats where the guest actually engaged (engaged conversations ÷ chats opened), vs the median across our chat-bot fleet.',
+    span: true,
+  })
+  // Depth headline for the messages cluster: how substantive the average real
+  // conversation is. Leads the Bot/Guest breakdown that follows and explains it.
+  tiles.push({
+    label: 'Messages per chat',
+    value: messagesPerEngaged.toFixed(1),
+    sub: 'back-and-forth depth',
+    tone: 'neutral',
+    title: 'Average messages exchanged per engaged conversation, counting bot, guest, and any live-agent replies together. Only engaged chats are included, so one-and-done bounces do not drag it down.',
+  })
+  // Bot vs guest as their own tiles (live-agent stays in the Human handover card).
+  // Fall back to a single "Messages" total when the sender split isn't available
+  // (fixtures/demo).
+  if (botMessages != null) {
+    tiles.push({
+      label: 'Bot messages',
+      value: formatNumber(botMessages),
+      sub: 'sent by the AI',
+      tone: 'neutral',
+    })
+    tiles.push({
+      label: 'Guest messages',
+      value: formatNumber(userMessages),
+      sub: 'sent by guests',
+      tone: 'neutral',
+    })
+  } else {
+    tiles.push({
+      label: 'Messages',
+      value: formatNumber(messages),
+      sub: `${formatNumber(userMessages)} from guests`,
+      tone: 'neutral',
+    })
+  }
+
   // Only show First response once we actually have the number — no "coming
   // soon" placeholder. Reappears automatically when the response-time
   // enrichment lands.
@@ -97,7 +139,7 @@ export function ConversationCounts({
     <Panel
       eyebrow="Overview"
       title="Activity & engagement"
-      description="How many visitors turn into real conversations: visitors → chats opened → engaged (guest replied) → real questions. “Users” matches the Active-users count in your admin."
+      description="How visitors turn into real conversations: chats opened → engaged conversations → messages. Chats = sessions started (one visitor can open several); Users = the distinct visitors behind them, matching your admin’s Active-users count."
     >
       {empty ? (
         <EmptyState
@@ -106,9 +148,17 @@ export function ConversationCounts({
         />
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-7">
             {tiles.map((t) => (
-              <Metric key={t.label} label={t.label} value={t.value} subValue={t.sub} tone={t.tone} />
+              <Metric
+                key={t.label}
+                label={t.label}
+                value={t.value}
+                subValue={t.sub}
+                tone={t.tone}
+                title={t.title}
+                className={t.span ? 'sm:col-span-2 lg:col-span-1' : undefined}
+              />
             ))}
           </div>
 
@@ -125,10 +175,11 @@ export function ConversationCounts({
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={trend} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                   <CartesianGrid {...chart.grid} />
-                  <XAxis dataKey="date" {...chart.xAxis} />
+                  <XAxis dataKey="date" {...chart.xAxis} {...dateAxisProps(trend.map((d) => d.date))} />
                   <YAxis {...chart.yAxis} />
                   <Tooltip
                     {...chart.tooltip}
+                    labelFormatter={(label) => dateFull(String(label))}
                     formatter={(value, name) => [formatNumber(Number(value)), name]}
                   />
                   {/* Chats opened = light backdrop; Engaged nested inside; the gap = bounce. */}
@@ -143,18 +194,11 @@ export function ConversationCounts({
             {users != null && (
               <>
                 <span className="font-semibold text-slate-700">{formatNumber(users)}</span> visitors opened{' '}
-                <span className="font-semibold text-slate-700">{formatNumber(sessions)}</span> chats —{' '}
+                <span className="font-semibold text-slate-700">{formatNumber(sessions)}</span> chats, and{' '}
               </>
             )}
-            <span className="font-semibold text-slate-700">{formatPercent(engagedShare)}</span> engaged
-            {substantive != null && (
-              <>
-                {' '}and <span className="font-semibold text-slate-700">{formatNumber(substantive)}</span> asked a real
-                question (ShredIntel’s analysis base)
-              </>
-            )}
-            . {messagesPerSession.toFixed(1)} messages per chat; {formatPercent(singleMsgShareOfEngaged)} were
-            one-and-done.
+            <span className="font-semibold text-slate-700">{formatPercent(engagedShare)}</span> engaged.{' '}
+            {formatPercent(singleMsgShareOfEngaged)} of those were one-and-done.
           </p>
         </>
       )}

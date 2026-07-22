@@ -1,5 +1,4 @@
 import { useSearchParams } from 'react-router-dom'
-import { BotSelector } from '../BotSelector'
 import { CallTimeMetrics } from '../CallTimeMetrics'
 import { DemandHeatmap } from '../DemandHeatmap'
 import { IntentCategoryBreakdown } from '../IntentCategoryBreakdown'
@@ -49,7 +48,6 @@ export function VoiceReportGrid() {
               <h1 className="text-lg font-semibold tracking-tight text-slate-900 md:text-xl">
                 Voice
               </h1>
-              <BotSelector />
               <span
                 className={
                   isLive

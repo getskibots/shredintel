@@ -19,6 +19,7 @@ import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 import { config } from 'dotenv'
 import pg from 'pg'
+import { decryptToken } from './twilio-token.mjs'
 config({ path: join(dirname(fileURLToPath(import.meta.url)), '.env') })
 
 const BOT = Number(process.argv[2] || 248)
@@ -26,9 +27,16 @@ const FLOOR = '2024-10-01'
 
 function tokenFor(accountSid) {
   const map = (process.env.TWILIO_ACCOUNTS || '').trim()
-  if (map) { try { const j = JSON.parse(map); if (j[accountSid]) return j[accountSid] } catch { /* bad json */ } }
-  if (!map) return (process.env.TWILIO_AUTH_TOKEN || '').trim() || null
-  return null
+  if (map) {
+    try { const j = JSON.parse(map); if (j[accountSid]) return j[accountSid] } catch { /* bad json */ }
+    // The single TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN pair counts as one implicit
+    // entry, so adding TWILIO_ACCOUNTS for a NEW account (e.g. Sipapu) doesn't require
+    // re-listing the default account's token.
+    const sid = (process.env.TWILIO_ACCOUNT_SID || '').trim()
+    if (sid && sid === accountSid) return (process.env.TWILIO_AUTH_TOKEN || '').trim() || null
+    return null
+  }
+  return (process.env.TWILIO_AUTH_TOKEN || '').trim() || null
 }
 const iso = (s) => { if (!s) return null; const d = new Date(s); return isNaN(d) ? null : d.toISOString() }
 
@@ -40,10 +48,12 @@ const c = new pg.Client({
 await c.connect()
 await c.query("set statement_timeout='300000ms'")
 
-const acct = (await c.query('select account_sid from report.bot_twilio where bot_id=$1', [BOT])).rows[0]?.account_sid
+const cfg = (await c.query('select account_sid, auth_token_enc from report.bot_twilio where bot_id=$1', [BOT])).rows[0]
+const acct = cfg?.account_sid
 if (!acct) { console.error(`No report.bot_twilio row for bot ${BOT}. Connect it in the dashboard first.`); process.exit(1) }
-const token = tokenFor(acct)
-if (!token) { console.error(`No Twilio token for account ${acct}. Add TWILIO_ACCOUNTS json (or TWILIO_AUTH_TOKEN) to etl/.env.`); process.exit(1) }
+// Prefer a dashboard-entered token (encrypted in report.bot_twilio); fall back to env.
+const token = decryptToken(cfg?.auth_token_enc) || tokenFor(acct)
+if (!token) { console.error(`No Twilio token for account ${acct}. Paste it in the dashboard "Connect Twilio" control (needs TWILIO_TOKEN_ENC_KEY set), or add TWILIO_ACCOUNTS json / TWILIO_AUTH_TOKEN to etl/.env.`); process.exit(1) }
 const authHeader = 'Basic ' + Buffer.from(`${acct}:${token}`).toString('base64')
 
 // The bot's inbound number(s): its configured number + any number its calls came to.

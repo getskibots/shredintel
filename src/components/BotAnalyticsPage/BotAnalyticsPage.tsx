@@ -1,28 +1,24 @@
 import { useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { AskBar } from '../AskBar'
-import { BotSelector } from '../BotSelector'
-import { ChatFaqAudit } from '../ChatFaqAudit'
 import { ConversationCounts } from '../ConversationCounts'
 import { ConversionBlockers } from '../ConversionBlockers'
 import { PageFunnel } from '../PageFunnel'
 import { GuestSentiment } from '../GuestSentiment'
 import { HumanHandover } from '../HumanHandover'
 import { NeedsAttention } from '../NeedsAttention'
+import { EmptyRange } from '../EmptyRange/EmptyRange'
 import { KnowledgeSectionDemand } from '../KnowledgeSectionDemand'
 import { DemandHeatmap } from '../DemandHeatmap'
 import { DeviceExperienceMix } from '../DeviceExperienceMix'
 import { GuestLocations } from '../GuestLocations'
 import { GuestIdentitySplit } from '../GuestIdentitySplit'
 import { PeriodPicker } from '../PeriodPicker'
-import { SenderMixStack } from '../SenderMixStack'
 import { RealtimeAgent } from '../RealtimeAgent'
-import { TwilioConnect } from '../TwilioConnect/TwilioConnect'
-import { VerticalBadge } from '../VerticalBadge/VerticalBadge'
 import { ChannelToggle } from '../ChannelToggle/ChannelToggle'
 import { omniGroupByKey } from '../../lib/omniGroups'
 import { ShreddingOverlay, useShredPulse } from '../ShreddingOverlay'
-import { useBotAnalytics } from '../../data/useAnalytics'
+import { useBotAnalytics, useAvailableBots } from '../../data/useAnalytics'
 import {
   resolveSelection,
   selectionFromSearchParams,
@@ -46,14 +42,15 @@ export function BotAnalyticsPage() {
     const params = writeSelectionToSearchParams(new URLSearchParams(searchParams), next)
     setSearchParams(params, { replace: true })
   }
-  const { data: f, funnel, isLive, isLoading } = useBotAnalytics(botId, selection)
+  const { data: f, funnel, isLoading, isEmpty } = useBotAnalytics(botId, selection)
+  const { bots } = useAvailableBots()
+  const botName = bots.find((b) => b.botId === botId)?.label
   // Scope the AI (ask + voice) to the same window the dashboard is showing.
   const resolved = resolveSelection(selection)
   const askRange = { from: resolved.from, to: resolved.to, label: resolved.label }
   // "Shredding the data" pulse — fires on any date-range change (both surfaces).
   const shredding = useShredPulse(`${askRange.from}|${askRange.to}`)
   const [voiceActive, setVoiceActive] = useState(false)
-  const [auditOpen, setAuditOpen] = useState(false)
 
   // Bento: single column below lg, 12-col grid at lg+. Cards declare a span
   // (col-span-6 = paired, col-span-12 = full row). items-start keeps each card
@@ -75,7 +72,7 @@ export function BotAnalyticsPage() {
   if (isLoading || !f) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <p className="text-sm text-slate-500">Loading analytics for bot {botId}…</p>
+        <p className="text-sm text-slate-500">Loading {botName ?? `bot ${botId}`}…</p>
       </div>
     )
   }
@@ -87,25 +84,13 @@ export function BotAnalyticsPage() {
           <div className="flex flex-wrap items-center gap-2">
             {omniGroup && <ChannelToggle group={omniGroup} active="chat" />}
             <h1 className="text-lg font-semibold tracking-tight text-slate-900 md:text-xl">
-              Analytics
+              Advanced Analytics
             </h1>
-            {!omniGroup && <BotSelector />}
-            <span
-              className={
-                isLive
-                  ? 'inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-700'
-                  : 'inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500'
-              }
-              title={isLive ? 'Reading live from Supabase' : 'Using bundled fixtures'}
-            >
-              <span
-                aria-hidden
-                className={isLive ? 'h-1.5 w-1.5 rounded-full bg-emerald-500' : 'h-1.5 w-1.5 rounded-full bg-slate-400'}
-              />
-              {isLive ? 'Live' : 'Demo'}
-            </span>
-            <VerticalBadge botId={botId} />
-            <TwilioConnect botId={botId} />
+            {!omniGroup && (
+              <span className="rounded-md bg-white px-2 py-0.5 text-xs font-medium text-slate-600 shadow-sm">
+                {botName ?? `Bot ${botId}`}
+              </span>
+            )}
           </div>
           <PeriodPicker value={selection} onChange={setSelection} align="end" />
         </div>
@@ -126,6 +111,13 @@ export function BotAnalyticsPage() {
         {/* Data sections — the scan sweeps + dims these on any date-range change */}
         <div className="relative">
           <ShreddingOverlay active={shredding} />
+          {isEmpty ? (
+            <EmptyRange
+              botName={botName ?? `Bot ${botId}`}
+              periodLabel={askRange.label}
+              onViewAll={() => setSelection({ kind: 'preset', preset: 'all' })}
+            />
+          ) : (
           <div className={`space-y-12 transition-opacity duration-300 ${shredding ? 'opacity-60' : 'opacity-100'}`}>
             {/* 1 — Overview: how busy the assistant is + whether guests engage.
                 (ResolutionHero / KpiStrip / OutcomeTimeline stay benched until the
@@ -203,30 +195,11 @@ export function BotAnalyticsPage() {
                 </div>
               </div>
             </section>
-
-            {/* 6 — Under the hood: message mechanics */}
-            <section id="detail" className="scroll-mt-40 space-y-5">
-              <SenderMixStack {...f.senderMixStack} />
-            </section>
           </div>
+          )}
         </div>
       </div>
 
-      {/* Discreet corner entry point — faint, all-caps, bottom-right. There when
-          you want it, invisible to a partner scanning the page. */}
-      <button
-        onClick={() => setAuditOpen(true)}
-        className="fixed bottom-3 right-4 z-30 text-[10px] font-medium uppercase tracking-wider text-slate-300 transition hover:text-slate-500"
-        title="Pepper this bot with test questions"
-      >
-        Ahhh FAQ It
-      </button>
-
-      <ChatFaqAudit
-        open={auditOpen}
-        onClose={() => setAuditOpen(false)}
-        botLabel={botId === 43 ? 'Jackson Hole' : `Bot ${botId}`}
-      />
     </div>
   )
 }

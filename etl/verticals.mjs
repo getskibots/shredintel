@@ -42,6 +42,12 @@ export const VERTICALS = {
     sections: ['General Info', 'Registration & Entry', 'Categories & Courses', 'Pricing & Packages', 'Schedule & Logistics', 'Lodging & Travel', 'Rules & Requirements', 'Transfers & Refunds', 'Merchandise', 'Volunteering', 'Ecommerce / Account Management', 'Other'] },
   marketplace: { label: 'lift-ticket marketplace / reseller', desc: 'multi-resort lift-ticket marketplace or reseller — discount tickets across many resorts',
     sections: ['General Info', 'Finding Tickets & Passes', 'Pricing & Availability', 'Booking & Checkout', 'Order Lookup & Changes', 'Payments & Billing', 'Resort Information', 'Refund Policies', 'Account / Access', 'Ecommerce / Account Management', 'Other'] },
+  retailer: { label: 'ski & snowboard shop', desc: 'ski/snowboard gear SHOP or retailer (e.g. UtahSkis) — sells or rents skis, boards, boots, apparel; product catalog, sizing, shipping, returns, tuning. NOT a resort with lifts.',
+    sections: ['General Info', 'Product Catalog & Stock', 'Sizing & Fit', 'Product Advice', 'Pricing, Deals & Price Match', 'Shipping & Delivery', 'Returns & Exchanges', 'Order Status & Tracking', 'Rentals & Demos', 'Tuning, Mounting & Repair', 'Store Locations & Hours', 'Ecommerce / Account Management', 'Other'] },
+  travel_insurance: { label: 'travel insurance', desc: 'travel or trip insurance provider — coverage plans, quotes, buying a policy, claims, trip cancellation',
+    sections: ['General Info', 'Coverage & Plans', 'Quotes & Pricing', 'Buying a Policy', 'Policy Details & Documents', 'Claims', 'Cancellations & Refunds', 'Eligibility & Requirements', 'Account / Access', 'Ecommerce / Account Management', 'Other'] },
+  ski_tech: { label: 'ski-tech / e-commerce platform', desc: 'ski-industry TECHNOLOGY or e-commerce PLATFORM vendor — booking/ticketing software, RFID, POS, resort tech; its customers are resorts/operators, not end guests',
+    sections: ['General Info', 'Products & Modules', 'Pricing & Plans', 'Onboarding & Setup', 'Integrations & API', 'Support & Troubleshooting', 'Billing & Account', 'Demos & Sales', 'Documentation & Training', 'Ecommerce / Account Management', 'Other'] },
   generic: { label: 'tourism / leisure (fallback)', desc: 'use only when the vertical is genuinely unclear or novel',
     sections: ['General Info', 'Products & Services', 'Pricing & Availability', 'Booking & Reservations', 'Account / Access', 'Refund / Cancellation Policies', 'Ecommerce / Account Management', 'Other'] },
 }

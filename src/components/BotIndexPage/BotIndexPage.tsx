@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Search, TrendingUp, Headphones } from 'lucide-react'
+import { BarChart3, Search, TrendingUp, Headphones } from 'lucide-react'
 import { useAvailableBots, type BotOption } from '../../data/useAnalytics'
 import { verticalMeta } from '../../lib/verticalLabels'
 
@@ -72,15 +72,24 @@ export function BotIndexPage() {
           </p>
         </div>
 
-        <div className="relative w-full max-w-xs">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" strokeWidth={2} />
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by name or id…"
-            className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-700 outline-none placeholder:text-slate-400 focus:border-botscrew-400 focus:ring-2 focus:ring-botscrew-100"
-          />
+        <div className="flex items-center gap-2">
+          <div className="relative w-full max-w-xs">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" strokeWidth={2} />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by name or id…"
+              className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-700 outline-none placeholder:text-slate-400 focus:border-botscrew-400 focus:ring-2 focus:ring-botscrew-100"
+            />
+          </div>
+          <Link
+            to={hrefFor('/fleet')}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 hover:border-botscrew-300 hover:text-botscrew-700"
+          >
+            <BarChart3 className="h-4 w-4" strokeWidth={1.75} />
+            Fleet overview
+          </Link>
         </div>
       </div>
 

@@ -3,6 +3,8 @@ import { AhhhFaqItTool } from './components/AhhhFaqItTool'
 import { BotAnalyticsPage } from './components/BotAnalyticsPage'
 import { BotIndexPage } from './components/BotIndexPage'
 import { DashboardShell } from './components/DashboardShell'
+import { FleetPage } from './components/FleetPage'
+import { MasterBotterShell } from './components/MasterBotterShell'
 import { PasswordGate } from './components/PasswordGate'
 import { VoiceReportGrid } from './components/VoiceReportGrid'
 import { VoiceAnalyticsPage } from './components/VoiceAnalyticsPage/VoiceAnalyticsPage'
@@ -55,10 +57,18 @@ function ChannelShell() {
   // Ahhh FAQ It is its own standalone surface — no dashboard chrome.
   if (location.pathname === '/tools/ahhh-faq-it') return <AhhhFaqItTool />
 
+  // Master'Botter (fleet master dashboard) — its own clean chrome, NOT the
+  // Botscrew-admin sidebar. GSB-internal product surface.
+  if (location.pathname === '/fleet')
+    return (
+      <MasterBotterShell>
+        <FleetPage />
+      </MasterBotterShell>
+    )
+
   return (
     <DashboardShell
       botLabel={botLabel}
-      userName="Brandon Quinn"
       activeChannel={channel}
     >
       <Routes>
@@ -67,6 +77,8 @@ function ChannelShell() {
             Voice stays separate because its data model differs (no page URLs,
             call summaries live in raw.admin_call). */}
         <Route path="/" element={<BotIndexPage />} />
+        {/* /fleet (Master'Botter) is handled by an early return above with its
+            own standalone chrome — it never reaches this Routes block. */}
         <Route path="/chat" element={<Navigate to="/" replace />} />
         <Route path="/chat/jh" element={<Navigate to="/bot/43" replace />} />
         <Route path="/chat/mc" element={<Navigate to="/bot/2" replace />} />

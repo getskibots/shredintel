@@ -101,6 +101,10 @@
     iframe.src =
       APP_ORIGIN + '/?embed=1#/bot/' + botId + '?token=' + encodeURIComponent(token)
     iframe.setAttribute('frameborder', '0')
+    // Delegate mic + audio into the frame so the realtime voice feature works
+    // when embedded. A cross-origin iframe gets NEITHER without this, so voice
+    // would fail with "Permission denied" (the host must grant, not the app).
+    iframe.setAttribute('allow', 'microphone; autoplay')
     iframe.style.cssText = 'width:100%;border:0;display:block;min-height:80vh'
 
     // The frame is parked BESIDE the hidden <mount>, so it does not inherit the

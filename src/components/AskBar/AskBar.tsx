@@ -209,10 +209,10 @@ export function AskBar({ botId, range, onVoice }: { botId: number; range?: { fro
             onBlur={() => setFocused(false)}
             placeholder={focused ? 'Ask anything…' : ASK_EXAMPLES[phIdx]}
             aria-label="Ask your resort’s data"
-            className={`w-full rounded-full border border-slate-200 bg-white py-4 pl-14 ${embed ? 'pr-16' : 'pr-40'} text-base text-slate-800 shadow-sm outline-none placeholder:text-slate-400 focus:border-botscrew-400 focus:ring-2 focus:ring-botscrew-100 ${loading ? 'shredintel-carving' : ''}`}
+            className={`w-full rounded-full border border-slate-200 bg-white py-4 pl-14 pr-40 text-base text-slate-800 shadow-sm outline-none placeholder:text-slate-400 focus:border-botscrew-400 focus:ring-2 focus:ring-botscrew-100 ${loading ? 'shredintel-carving' : ''}`}
           />
           <div className="absolute right-2.5 top-1/2 flex -translate-y-1/2 items-center gap-1.5">
-            {SR && !embed && (
+            {SR && (
               <button
                 type="button"
                 onClick={toggleMic}
@@ -228,7 +228,7 @@ export function AskBar({ botId, range, onVoice }: { botId: number; range?: { fro
                 <Mic className="h-5 w-5" strokeWidth={2} />
               </button>
             )}
-            {onVoice && !embed && (
+            {onVoice && (
               <button
                 type="button"
                 onClick={onVoice}

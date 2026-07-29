@@ -193,7 +193,7 @@ export function BotAnalyticsPage() {
                 </div>
                 <div className="xl:col-span-12">
                   {f.demandRhythm ? (
-                    <DemandRhythm {...f.demandRhythm} />
+                    <DemandRhythm {...f.demandRhythm} botId={botId} range={askRange} />
                   ) : (
                     <DemandHeatmap {...f.demandHeatmap} />
                   )}

@@ -173,6 +173,12 @@ export function ConversationExplorer({
         if (p.pinchpoint) q = q.ilike('pinchpoint', p.pinchpoint)
         if (p.funnel_stage) q = q.eq('funnel_stage', p.funnel_stage)
         if (p.city) q = q.eq('city', p.city)
+        // Demand-rhythm drills — hour of day, day of week, and the working- vs
+        // after-hours donut (conversation_time carries hour_local + dow + isodow).
+        if (p.hour_local != null && p.hour_local !== '') q = q.eq('hour_local', Number(p.hour_local))
+        if (p.dow) q = q.eq('dow', p.dow)
+        if (p.coverage === 'working') q = q.in('isodow', [1, 2, 3, 4, 5]).gte('hour_local', 9).lte('hour_local', 17)
+        else if (p.coverage === 'after') q = q.or('isodow.gte.6,hour_local.lt.9,hour_local.gt.17')
       }
       if (from && to) q = q.gte('day', from).lte('day', to)
       // Each drill is a single pure category — when the drill target is a sentiment,
@@ -191,7 +197,7 @@ export function ConversationExplorer({
     })()
     return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [p.botId, p.section, p.pinchpoint, p.sentiment, p.urgency, p.funnel_stage, p.topic, p.city, p.day, p.handover, p.hour_local, p.user_id, source, from, to])
+  }, [p.botId, p.section, p.pinchpoint, p.sentiment, p.urgency, p.funnel_stage, p.topic, p.city, p.day, p.handover, p.hour_local, p.dow, p.coverage, p.user_id, source, from, to])
 
   async function openConv(cid: number) {
     if (openCid === cid) { setOpenCid(null); setTranscript(null); return }

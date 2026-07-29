@@ -1,10 +1,13 @@
+import { useState } from 'react'
 import {
   Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart,
   ReferenceDot, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts'
 import { EmptyState, Metric, Panel } from '../shared'
+import { ConversationExplorer } from '../ConversationExplorer'
 import { brand, chart } from '../../lib/chartTheme'
 import { formatNumber, formatPercent } from '../../lib/formatters'
+import type { DrillPayload } from '../../lib/drill'
 import type { DemandRhythmProps } from '../../types/analytics'
 
 export type { DemandRhythmProps } from '../../types/analytics'
@@ -29,7 +32,10 @@ export function DemandRhythm({
   afterHoursShare,
   peakHour,
   peakDay,
-}: DemandRhythmProps) {
+  botId,
+  range,
+}: DemandRhythmProps & { botId: number; range?: { from: string; to: string } }) {
+  const [drill, setDrill] = useState<Partial<DrillPayload> | null>(null)
   const total = workingConversations + afterHoursConversations
   const empty = total === 0 || hourly.every((h) => h.conversations === 0)
 
@@ -69,7 +75,7 @@ export function DemandRhythm({
     <Panel
       eyebrow="Your guests"
       title="When your guests reach out"
-      description="The hours and days your guests actually show up — and how much lands after hours, when only the bot is awake."
+      description="The hours and days your guests actually show up — and how much lands after hours, when only the bot is awake. Click any slice, hour, or day to read those conversations."
       action={action}
     >
       {/* Band 1 — coverage donut + headline metrics */}
@@ -86,6 +92,11 @@ export function DemandRhythm({
                 stroke="none"
                 startAngle={90}
                 endAngle={-270}
+                cursor="pointer"
+                onClick={(_d: unknown, index: number) => {
+                  const slice = donut[index]
+                  if (slice) setDrill({ coverage: slice.name === 'After hours' ? 'after' : 'working' })
+                }}
               >
                 {donut.map((d) => (
                   <Cell key={d.name} fill={d.color} />
@@ -149,7 +160,15 @@ export function DemandRhythm({
           )}
         </div>
         <ResponsiveContainer width="100%" height={200}>
-          <AreaChart data={hourly} margin={{ top: 6, right: 6, bottom: 0, left: 0 }}>
+          <AreaChart
+            data={hourly}
+            margin={{ top: 6, right: 6, bottom: 0, left: 0 }}
+            style={{ cursor: 'pointer' }}
+            onClick={(e: { activeLabel?: string | number } | null) => {
+              const h = e?.activeLabel
+              if (h != null && h !== '') setDrill({ hour_local: String(h) })
+            }}
+          >
             <defs>
               <linearGradient id="demandArea" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={brand.blue} stopOpacity={0.35} />
@@ -208,7 +227,16 @@ export function DemandRhythm({
               {...chart.tooltip}
               formatter={(v) => [formatNumber(Number(v)), 'conversations']}
             />
-            <Bar dataKey="conversations" radius={[6, 6, 0, 0]} isAnimationActive={false}>
+            <Bar
+              dataKey="conversations"
+              radius={[6, 6, 0, 0]}
+              isAnimationActive={false}
+              cursor="pointer"
+              onClick={(d) => {
+                const day = (d as { payload?: { day?: string } })?.payload?.day
+                if (day) setDrill({ dow: String(day) })
+              }}
+            >
               {byDay.map((d) => (
                 <Cell
                   key={d.day}
@@ -219,6 +247,14 @@ export function DemandRhythm({
           </BarChart>
         </ResponsiveContainer>
       </div>
+
+      {drill && (
+        <ConversationExplorer
+          botId={botId}
+          payload={{ botId, from: range?.from, to: range?.to, ...drill }}
+          onClose={() => setDrill(null)}
+        />
+      )}
     </Panel>
   )
 }

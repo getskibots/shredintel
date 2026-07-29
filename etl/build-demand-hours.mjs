@@ -36,7 +36,8 @@ await c.query(`
     ct.isodow::int      as isodow,       -- 1=Mon .. 7=Sun, resort-local
     count(*)::int       as conversations
   from report.conversation_time ct
-  where ct.hour_local is not null and ct.isodow is not null
+  where ct.substantive                      -- the same analyzed base as every other card
+    and ct.hour_local is not null and ct.isodow is not null
   group by ct.bot_id, ct.day, ct.hour_local, ct.isodow
 `)
 await c.query('create index on report.demand_hours (bot_id)')

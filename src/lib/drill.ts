@@ -11,7 +11,7 @@
 /** Contract dimensions a datum can carry, in drill precedence order.
  *  `handover` + `hour_local` are voice-relevant (backed by report.call_base);
  *  `city` doubles as the caller city for voice. */
-export const DRILL_DIMENSIONS = ['section', 'pinchpoint', 'sentiment', 'urgency', 'funnel_stage', 'topic', 'handover', 'user_id', 'city', 'hour_local', 'day'] as const
+export const DRILL_DIMENSIONS = ['section', 'pinchpoint', 'sentiment', 'urgency', 'funnel_stage', 'topic', 'handover', 'user_id', 'city', 'hour_local', 'dow', 'day'] as const
 export type DrillDimension = (typeof DRILL_DIMENSIONS)[number]
 
 export interface DrillPayload {
@@ -29,6 +29,12 @@ export interface DrillPayload {
   user_id?: string
   city?: string
   hour_local?: string
+  /** Resort-local day of week 'Mon'..'Sun' (chat demand rhythm). */
+  dow?: string
+  /** Compound time filter from the demand donut: 'working' (Mon–Fri 9 AM–6 PM)
+   *  vs 'after' (everything else). Set explicitly by the donut click, not a
+   *  chart-datum dimension. */
+  coverage?: 'working' | 'after'
   day?: string
 }
 
@@ -43,7 +49,9 @@ export const FIELD_LABELS: Record<string, string> = {
   handover: 'Handover need',
   user_id: 'Caller',
   city: 'City',
-  hour_local: 'Call hour',
+  hour_local: 'Hour of day',
+  dow: 'Day of week',
+  coverage: 'When',
   day: 'Day',
   conversations: 'Conversations',
   negative: 'Frustrated',

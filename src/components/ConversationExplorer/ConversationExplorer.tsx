@@ -153,7 +153,9 @@ export function ConversationExplorer({
         ? sb.schema('report').from('call_base')
             .select('bot_id, conversation_id, topic, sentiment, day, started_local, duration_sec:dur_sec, city:from_city, region:from_region, country_iso:from_country, lat:from_lat, lon:from_lon, recording_sid', { count: 'exact' })
             .eq('bot_id', p.botId)
-        : sb.schema('report').from('conversation_time')
+        // A layer drill lists from conversation_time_layer (conversation_time +
+        // the knowledge layer per conversation); everything else from conversation_time.
+        : sb.schema('report').from(p.layer ? 'conversation_time_layer' : 'conversation_time')
             .select('bot_id, conversation_id, topic, sentiment, day, started_local, duration_sec, page_path, city, region, country_iso, lat, lon', { count: 'exact' })
             .eq('bot_id', p.botId)
             .eq('substantive', true)
@@ -179,6 +181,8 @@ export function ConversationExplorer({
         if (p.dow) q = q.eq('dow', p.dow)
         if (p.coverage === 'working') q = q.in('isodow', [1, 2, 3, 4, 5]).gte('hour_local', 9).lte('hour_local', 17)
         else if (p.coverage === 'after') q = q.or('isodow.gte.6,hour_local.lt.9,hour_local.gt.17')
+        // conversations that used a given knowledge layer (from conversation_time_layer)
+        if (p.layer) q = q.eq('layer', p.layer)
       }
       if (from && to) q = q.gte('day', from).lte('day', to)
       // Each drill is a single pure category — when the drill target is a sentiment,
@@ -197,7 +201,7 @@ export function ConversationExplorer({
     })()
     return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [p.botId, p.section, p.pinchpoint, p.sentiment, p.urgency, p.funnel_stage, p.topic, p.city, p.day, p.handover, p.hour_local, p.dow, p.coverage, p.user_id, source, from, to])
+  }, [p.botId, p.section, p.layer, p.pinchpoint, p.sentiment, p.urgency, p.funnel_stage, p.topic, p.city, p.day, p.handover, p.hour_local, p.dow, p.coverage, p.user_id, source, from, to])
 
   async function openConv(cid: number) {
     if (openCid === cid) { setOpenCid(null); setTranscript(null); return }

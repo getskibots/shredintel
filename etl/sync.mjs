@@ -52,6 +52,7 @@ const MATVIEWS = [
   'conversation_geo',   // IP → location per conversation (built by build-geo-views.mjs; needs build-ip-geo.mjs first)
   'knowledge_layer_mix',        // answer-source mix by Knowledge Layer (built by build-knowledge-layer.mjs)
   'knowledge_layer_by_section', // per-topic answer-source mix (built by build-knowledge-layer.mjs)
+  'conversation_layer',         // per-conversation knowledge-layer attribution for the layer-bar drill (built by build-conversation-layer.mjs)
 ]
 
 // ── tiny logger ───────────────────────────────────────────────────

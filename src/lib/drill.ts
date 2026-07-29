@@ -11,7 +11,7 @@
 /** Contract dimensions a datum can carry, in drill precedence order.
  *  `handover` + `hour_local` are voice-relevant (backed by report.call_base);
  *  `city` doubles as the caller city for voice. */
-export const DRILL_DIMENSIONS = ['section', 'pinchpoint', 'sentiment', 'urgency', 'funnel_stage', 'topic', 'handover', 'user_id', 'city', 'hour_local', 'dow', 'day'] as const
+export const DRILL_DIMENSIONS = ['section', 'layer', 'pinchpoint', 'sentiment', 'urgency', 'funnel_stage', 'topic', 'handover', 'user_id', 'city', 'hour_local', 'dow', 'day'] as const
 export type DrillDimension = (typeof DRILL_DIMENSIONS)[number]
 
 export interface DrillPayload {
@@ -19,6 +19,9 @@ export interface DrillPayload {
   from?: string
   to?: string
   section?: string
+  /** Knowledge layer 'Website'|'Text Edits'|'Files'|'Instructions'|'Failed'
+   *  (the "Where answers come from" bar → conversations that used that source). */
+  layer?: string
   pinchpoint?: string
   sentiment?: string
   urgency?: string
@@ -41,6 +44,7 @@ export interface DrillPayload {
 /** Human-readable labels for axis titles, captions, and drill headers. */
 export const FIELD_LABELS: Record<string, string> = {
   section: 'Knowledge section',
+  layer: 'Knowledge layer',
   pinchpoint: 'Conversion blocker',
   sentiment: 'Sentiment',
   urgency: 'Urgency',

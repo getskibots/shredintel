@@ -35,6 +35,7 @@ export function KnowledgeSectionDemand({
   range?: { from: string; to: string }
 }) {
   const [drill, setDrill] = useState<string | null>(null)
+  const [layerDrill, setLayerDrill] = useState<string | null>(null)
   const empty = !sections || sections.length === 0
 
   const ld = layers && layers.layers.length > 0 ? layers.layers : null
@@ -103,14 +104,19 @@ export function KnowledgeSectionDemand({
             <div className="mt-6 border-t border-slate-100 pt-5">
               <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-800">
                 Where answers come from
-                <span className="text-xs font-normal text-slate-400">— by knowledge layer</span>
+                <span className="text-xs font-normal text-slate-400">
+                  — by knowledge layer{botId ? ' · click a layer to read its chats' : ''}
+                </span>
               </div>
               <div className="flex h-6 w-full overflow-hidden rounded-lg">
                 {ordered.map((l) =>
                   l.answers > 0 ? (
-                    <div
+                    <button
                       key={l.layer}
-                      title={`${l.layer}: ${formatNumber(l.answers)} (${formatPercent(l.answers / total)})`}
+                      type="button"
+                      onClick={botId ? () => setLayerDrill(l.layer) : undefined}
+                      title={`${l.layer}: ${formatNumber(l.answers)} (${formatPercent(l.answers / total)})${botId ? ' — click to read these chats' : ''}`}
+                      className={botId ? 'cursor-pointer transition hover:opacity-80' : ''}
                       style={{ width: `${(l.answers / total) * 100}%`, backgroundColor: LAYER_COLOR[l.layer] ?? '#94A3B8' }}
                     />
                   ) : null,
@@ -118,12 +124,21 @@ export function KnowledgeSectionDemand({
               </div>
               <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 text-xs">
                 {ordered.map((l) => (
-                  <span key={l.layer} className="inline-flex items-center gap-1.5 text-slate-600">
+                  <button
+                    key={l.layer}
+                    type="button"
+                    onClick={botId ? () => setLayerDrill(l.layer) : undefined}
+                    title={botId ? `Read ${l.layer} chats` : undefined}
+                    className={[
+                      'inline-flex items-center gap-1.5 text-slate-600',
+                      botId ? 'cursor-pointer rounded transition hover:text-slate-900' : 'cursor-default',
+                    ].join(' ')}
+                  >
                     <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: LAYER_COLOR[l.layer] ?? '#94A3B8' }} />
                     {l.layer}{' '}
                     <span className="font-semibold tabular-nums text-slate-800">{formatPercent(l.answers / total)}</span>
                     <span className="tabular-nums text-slate-400">({formatNumber(l.answers)})</span>
-                  </span>
+                  </button>
                 ))}
               </div>
               <p className="mt-3 text-xs text-slate-400">
@@ -184,6 +199,13 @@ export function KnowledgeSectionDemand({
           range={range}
           filter={{ dim: 'section', value: drill, label: drill }}
           onClose={() => setDrill(null)}
+        />
+      )}
+      {layerDrill && botId && (
+        <ConversationExplorer
+          botId={botId}
+          payload={{ botId, from: range?.from, to: range?.to, layer: layerDrill }}
+          onClose={() => setLayerDrill(null)}
         />
       )}
     </Panel>

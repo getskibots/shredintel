@@ -12,7 +12,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "frame-ancestors 'self' https://bots.getskitickets.com https://getskibots.com https://www.getskibots.com"
+          "value": "frame-ancestors 'self' https://bots.getskitickets.com https://getskibots.com https://www.getskibots.com https://gst-dev.botscrew.net"
         }
       ]
     }

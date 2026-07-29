@@ -49,6 +49,19 @@ await c.query(`
    and x.sent_at <= coalesce(cv.last_message_date_time, cv.started_at + interval '2 hours')
   join report.conversation_intel ci on ci.conversation_id = cv.id
   where ci.substantive is true
+  union
+  -- Live data: conversations that had a reply from an AI-action atom
+  -- (get_snow_report etc.). chat_history carries conversation_id directly, so no
+  -- fuzzy time bridge is needed here — the atom→action-handler match is exact.
+  select distinct
+    ci.bot_id, ci.day, cv.id as conversation_id, 'Live data' as layer
+  from raw.admin_chat_history ch
+  join raw.admin_conversation cv on cv.id = ch.conversation_id
+  join report.conversation_intel ci on ci.conversation_id = cv.id
+  join (select distinct bot_id, handler_atom_id
+          from raw.admin_ai_action where handler_atom_id is not null) aa
+    on aa.bot_id = ci.bot_id and aa.handler_atom_id = ch.atom_entity_id
+  where ci.substantive is true
 `)
 await c.query('create index on report.conversation_layer (bot_id, layer)')
 await c.query('create index on report.conversation_layer (bot_id, conversation_id)')

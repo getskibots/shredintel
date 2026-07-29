@@ -48,6 +48,24 @@ await c.query(`create materialized view report.knowledge_layer_mix as
     from raw.admin_knowledge_reply x
     join raw.admin_user u on u.id = x.user_id
    where u.bot_id is not null
+   group by 1, 2, 3
+  union all
+  -- Live data: replies produced by an AI-action atom (get_snow_report / lift status /
+  -- weather…). These NEVER create an admin_knowledge_reply row, so before this they
+  -- were INVISIBLE in the mix. Identified definitionally — the reply's atom IS an
+  -- action handler (admin_ai_action.handler_atom_id) — not a fuzzy time window. A real
+  -- answer source alongside your content, so it counts toward grounding.
+  select u.bot_id,
+         ch.timestamp::date as day,
+         'Live data' as layer,
+         count(*)::int as answers
+    from raw.admin_chat_history ch
+    join raw.admin_conversation cv on cv.id = ch.conversation_id
+    join raw.admin_user u on u.id = cv.user_id
+    join (select distinct bot_id, handler_atom_id
+            from raw.admin_ai_action where handler_atom_id is not null) aa
+      on aa.bot_id = u.bot_id and aa.handler_atom_id = ch.atom_entity_id
+   where u.bot_id is not null
    group by 1, 2, 3`)
 await c.query('create index on report.knowledge_layer_mix (bot_id, day)')
 await c.query(`grant select on report.knowledge_layer_mix to anon, authenticated`)

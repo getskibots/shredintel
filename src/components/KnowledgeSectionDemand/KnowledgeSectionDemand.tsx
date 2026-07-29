@@ -62,7 +62,7 @@ export function KnowledgeSectionDemand({
     <Panel
       eyebrow="Knowledge"
       title="What guests ask about"
-      description="Every substantive chat mapped to a resort knowledge topic — plus which knowledge layer answered it (Text Edits, Website, Files, or the prompt). Click a topic to read the chats."
+      description="Every substantive chat mapped to a resort knowledge topic — plus which knowledge layer answered it (Text Edits, Website, Files, Live data, or the prompt). Click a topic to read the chats."
       action={
         ld ? (
           <div
@@ -142,9 +142,9 @@ export function KnowledgeSectionDemand({
                 ))}
               </div>
               <p className="mt-3 text-xs text-slate-400">
-                {formatPercent(groundingRate)} of answers came from your own knowledge — Text Edits, Website, or Files.
-                The rest fell back to the prompt (“Instructions”), with no source behind them — that’s where adding a
-                Text Edit helps most.
+                {formatPercent(groundingRate)} of answers came from a real source — your content (Text Edits, Website,
+                Files) or Live data. The rest fell back to the prompt (“Instructions”), with no source behind them —
+                that’s where adding a Text Edit helps most.
               </p>
             </div>
           )}

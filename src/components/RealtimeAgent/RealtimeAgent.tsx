@@ -287,7 +287,7 @@ export function RealtimeAgent({ botId, range, selection, onSelectionChange, shre
     : caption && !ended ? `“${caption}”`
     : ended ? 'Your report is below — save or share it, or head back to the dashboard.'
     : busy ? 'Reading the conversations and charting the answer.'
-    : `Ask anything about your resort — I’ll answer out loud and chart it here, for ${range?.label ?? 'the selected range'}.`
+    : 'Ask anything about your data — I’ll answer out loud and chart it here.'
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-canvas">
@@ -350,8 +350,8 @@ export function RealtimeAgent({ botId, range, selection, onSelectionChange, shre
         <div className="mx-auto max-w-3xl px-4 pt-12 pb-16 md:px-6">
           <div className="flex flex-col items-center text-center">
             <VoiceOrb state={orbState} />
-            <div className="mt-5 text-lg font-semibold text-slate-800">{statusTitle}</div>
-            <div className={`mt-1.5 min-h-[2.75rem] max-w-md text-sm ${caption && !ended ? 'font-medium text-slate-600' : 'text-slate-500'}`}>
+            <div className="mt-5 text-xl font-semibold text-white [text-shadow:0_2px_18px_rgba(0,0,0,0.45)]">{statusTitle}</div>
+            <div className={`mt-1.5 min-h-[2.75rem] max-w-md text-sm [text-shadow:0_1px_12px_rgba(0,0,0,0.4)] ${caption && !ended ? 'font-medium text-white' : 'text-white/85'}`}>
               {statusLine}
             </div>
             <div className="mt-4">

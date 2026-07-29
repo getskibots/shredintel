@@ -11,6 +11,7 @@ import { EmptyRange } from '../EmptyRange/EmptyRange'
 import { KnowledgeSectionDemand } from '../KnowledgeSectionDemand'
 import { DemandHeatmap } from '../DemandHeatmap'
 import { DemandRhythm } from '../DemandRhythm'
+import { CarveLoader } from '../CarveLoader'
 import { DeviceExperienceMix } from '../DeviceExperienceMix'
 import { GuestLocations } from '../GuestLocations'
 import { GuestIdentitySplit } from '../GuestIdentitySplit'
@@ -71,11 +72,7 @@ export function BotAnalyticsPage() {
     )
   }
   if (isLoading || !f) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <p className="text-sm text-slate-500">Loading {botName ?? `bot ${botId}`}…</p>
-      </div>
-    )
+    return <CarveLoader />
   }
 
   return (

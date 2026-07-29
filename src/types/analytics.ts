@@ -429,3 +429,35 @@ export interface DemandHeatmapProps {
   afterHoursShare: number
   workingHoursConversations: number
 }
+
+// § 4 (redesign) — DemandRhythm: "When your guests reach out"
+// Three clear views off report.demand_hours: an hourly filled-area curve, a
+// day-of-week bar chart, and a working- vs after-hours donut.
+
+/** One point on the 24-hour curve (resort-local). */
+export interface DemandHourPoint {
+  hour: number // 0..23
+  conversations: number
+}
+
+/** One bar in the day-of-week chart (Mon..Sun order). */
+export interface DemandDayPoint {
+  day: DayOfWeek
+  isodow: number // 1=Mon..7=Sun
+  conversations: number
+}
+
+export interface DemandRhythmProps {
+  /** 24 points, hour 0..23, resort-local. Empty → section shows empty state. */
+  hourly: DemandHourPoint[]
+  /** 7 bars, Mon..Sun. */
+  byDay: DemandDayPoint[]
+  /** Working = Mon–Fri, 9 AM–6 PM (local). */
+  workingConversations: number
+  afterHoursConversations: number
+  afterHoursShare: number
+  /** Busiest single local hour, for the callout badge. */
+  peakHour?: DemandHourPoint
+  /** Busiest day of week, for the callout badge. */
+  peakDay?: DemandDayPoint
+}

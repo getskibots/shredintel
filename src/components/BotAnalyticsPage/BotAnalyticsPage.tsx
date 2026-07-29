@@ -10,6 +10,7 @@ import { NeedsAttention } from '../NeedsAttention'
 import { EmptyRange } from '../EmptyRange/EmptyRange'
 import { KnowledgeSectionDemand } from '../KnowledgeSectionDemand'
 import { DemandHeatmap } from '../DemandHeatmap'
+import { DemandRhythm } from '../DemandRhythm'
 import { DeviceExperienceMix } from '../DeviceExperienceMix'
 import { GuestLocations } from '../GuestLocations'
 import { GuestIdentitySplit } from '../GuestIdentitySplit'
@@ -191,7 +192,11 @@ export function BotAnalyticsPage() {
                   <GuestLocations {...f.guestLocations} botId={botId} range={askRange} />
                 </div>
                 <div className="xl:col-span-12">
-                  <DemandHeatmap {...f.demandHeatmap} />
+                  {f.demandRhythm ? (
+                    <DemandRhythm {...f.demandRhythm} />
+                  ) : (
+                    <DemandHeatmap {...f.demandHeatmap} />
+                  )}
                 </div>
               </div>
             </section>

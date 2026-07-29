@@ -94,6 +94,17 @@ export interface DemandHeatmapRow {
   user_messages: number
 }
 
+/** report.demand_hours — chat demand by resort-local hour + day-of-week, per
+ *  bot/day. The chat twin of call_hours; powers the "When your guests reach
+ *  out" section (hourly area, day-of-week bars, working/after-hours donut). */
+export interface DemandHoursRow {
+  bot_id: number
+  day: string
+  hour_local: number // 0..23, resort-local
+  isodow: number // 1=Mon .. 7=Sun, resort-local
+  conversations: number
+}
+
 /**
  * report.conversation_depth (bot_id, day) — the one view we added for §1
  * "Extended Conversation Counts": bounce sessions + time-to-first-response.
@@ -207,6 +218,7 @@ export interface LiveBundle {
   leadCaptureFunnel: LeadCaptureRow[]
   deviceExperienceMix: DeviceExperienceRow[]
   demandHeatmap: DemandHeatmapRow[]
+  demandHours: DemandHoursRow[]
   conversationDepth: ConversationDepthRow[]
   /** Fleet-wide median engagement rate (report.fleet_benchmarks); null/absent when
    *  unavailable. Bot/period-independent — the "vs typical resort" benchmark. */
@@ -289,7 +301,7 @@ export async function fetchLiveBundle(
     .limit(1) as unknown as Promise<{ data: { engagement_median: number }[] | null; error: unknown }>
 
   try {
-    const [outcome, conversion, knowledge, sender, identity, funnel, device, heatmap, depth,
+    const [outcome, conversion, knowledge, sender, identity, funnel, device, heatmap, demandHours, depth,
            iSection, iPinch, iSent, iHand, iUrg, pFunnel, pSection, pPinch, pSent, gCountry, gCity, kLayer, kLayerSec, users, benchmark] =
       await withTimeout(Promise.all([
         q<OutcomeRow>('outcome_timeline'),
@@ -300,6 +312,7 @@ export async function fetchLiveBundle(
         q<LeadCaptureRow>('lead_capture_funnel'),
         q<DeviceExperienceRow>('device_experience_mix'),
         q<DemandHeatmapRow>('demand_heatmap'),
+        q<DemandHoursRow>('demand_hours'),
         q<ConversationDepthRow>('conversation_depth'),
         q<IntelBreakdownRow>('intel_section'),
         q<IntelBreakdownRow>('intel_pinchpoint'),
@@ -348,6 +361,8 @@ export async function fetchLiveBundle(
       leadCaptureFunnel: funnel.data ?? [],
       deviceExperienceMix: device.data ?? [],
       demandHeatmap: heatmap.data ?? [],
+      // demand_hours — newer aggregate; non-fatal (empty → section shows the legacy heatmap fallback)
+      demandHours: demandHours.error ? [] : (demandHours.data ?? []),
       conversationDepth: depth.error ? [] : (depth.data ?? []),
       // intel_* are newer enrichment views — non-fatal like conversation_depth
       intelSection: iSection.error ? [] : (iSection.data ?? []),

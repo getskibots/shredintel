@@ -48,6 +48,7 @@ const MATVIEWS = [
   'conversation_depth', // §1 Extended Conversation Counts (built by build-conversation-depth.mjs)
   'conversation_page',  // page/URL → ecommerce funnel stage (built by build-page-funnel.mjs)
   'conversation_time',  // resort-local time-spine per conversation (built by build-conversation-time.mjs)
+  'demand_hours',       // chat demand by local hour + day-of-week (built by build-demand-hours.mjs; reads conversation_time)
   'conversation_geo',   // IP → location per conversation (built by build-geo-views.mjs; needs build-ip-geo.mjs first)
   'knowledge_layer_mix',        // answer-source mix by Knowledge Layer (built by build-knowledge-layer.mjs)
   'knowledge_layer_by_section', // per-topic answer-source mix (built by build-knowledge-layer.mjs)

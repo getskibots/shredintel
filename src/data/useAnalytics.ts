@@ -757,6 +757,43 @@ function overlayJHChatLive(base: PeriodFixtures, live: LiveBundle, pageStage?: s
     }
   }
 
+  // § 4 (redesign) — demand rhythm from report.demand_hours (resort-local hour +
+  // day-of-week). Powers the "When your guests reach out" section: hourly area,
+  // day-of-week bars, working/after-hours donut. Working = Mon–Fri, 9 AM–6 PM.
+  if (live.demandHours.length > 0) {
+    const hourAgg = new Array<number>(24).fill(0)
+    const dayAgg = new Map<number, number>()
+    let working = 0
+    let total = 0
+    for (const r of live.demandHours) {
+      const h = r.hour_local
+      const d = r.isodow
+      const n = r.conversations
+      if (h >= 0 && h < 24) hourAgg[h] += n
+      if (d >= 1 && d <= 7) dayAgg.set(d, (dayAgg.get(d) ?? 0) + n)
+      total += n
+      if (d >= 1 && d <= 5 && h >= 9 && h <= 17) working += n
+    }
+    const hourly = hourAgg.map((conversations, hour) => ({ hour, conversations }))
+    const DOW = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const
+    const byDay = ([1, 2, 3, 4, 5, 6, 7] as const).map((isodow) => ({
+      day: DOW[isodow - 1],
+      isodow,
+      conversations: dayAgg.get(isodow) ?? 0,
+    }))
+    const peakHour = hourly.reduce((a, b) => (b.conversations > a.conversations ? b : a), hourly[0])
+    const peakDay = byDay.reduce((a, b) => (b.conversations > a.conversations ? b : a), byDay[0])
+    out.demandRhythm = {
+      hourly,
+      byDay,
+      workingConversations: working,
+      afterHoursConversations: total - working,
+      afterHoursShare: total > 0 ? (total - working) / total : 0,
+      peakHour: peakHour.conversations > 0 ? peakHour : undefined,
+      peakDay: peakDay.conversations > 0 ? peakDay : undefined,
+    }
+  }
+
   return out
 }
 

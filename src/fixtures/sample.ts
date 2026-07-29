@@ -12,6 +12,7 @@ import type {
   DayOfWeek,
   DemandHeatmapCell,
   DemandHeatmapProps,
+  DemandRhythmProps,
   DeviceExperienceMixProps,
   FrictionPage,
   FunnelRow,
@@ -546,6 +547,10 @@ export interface PeriodFixtures {
   deviceExperienceMix: DeviceExperienceMixProps
   guestLocations: GuestLocationsProps
   demandHeatmap: DemandHeatmapProps
+  /** Redesigned demand section (hourly area + day bars + donut). Optional:
+   *  only the live path (report.demand_hours) populates it; fixtures/demo fall
+   *  back to the legacy heatmap when absent. */
+  demandRhythm?: DemandRhythmProps
 }
 
 const END_DATE = '2026-05-19'

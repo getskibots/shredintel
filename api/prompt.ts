@@ -17,7 +17,7 @@
  * api/_lib/*, NOT this HTTP route, so gating the editor never affects the bots.
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { getPrompts, upsertPrompt } from './_lib/db.js'
+import { getPrompts, upsertPrompt, getPromptHistory } from './_lib/db.js'
 
 export const maxDuration = 15
 
@@ -30,6 +30,12 @@ const isGsbAdmin = (req: VercelRequest): boolean =>
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     if (req.method === 'GET') {
+      // GSB-only: version history for a layer (?history=<botId>; 0 = the fleet master).
+      if (req.query.history !== undefined) {
+        if (!isGsbAdmin(req)) return res.status(403).json({ error: 'admin only' })
+        const historyBotId = Number(req.query.history || 0)
+        return res.status(200).json({ history: await getPromptHistory(historyBotId) })
+      }
       const botId = Number(req.query.botId || 0)
       const { master, slave } = await getPrompts(botId)
       // Master (product IP) only goes back to a GSB-authed caller.

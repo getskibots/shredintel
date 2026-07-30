@@ -1,78 +1,41 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Settings2, X, Loader2, Globe, Building2, KeyRound } from 'lucide-react'
-import { fetchPrompts, savePrompt, PROMPT_MAX, hasAdminKey, setAdminKey, type PromptScope } from '../../lib/aiPrompt'
-import { isEmbedMode } from '../../lib/embed'
+import { Settings2, X, Loader2, Building2 } from 'lucide-react'
+import { fetchPrompts, savePrompt, PROMPT_MAX } from '../../lib/aiPrompt'
 
 /**
- * Semi-discreet editor for the two AI-instruction layers (Supabase-backed via
- * /api/prompt): the MASTER (global ShredIntel base — persona + methodology,
- * shared by every bot) and the per-bot SLAVE (this resort only). A subtle gear
- * opens a modal; saving persists the selected layer and the next text/voice
- * request picks it up. The fixed data grounding (schema + SQL safety) is not
- * editable here.
+ * Per-bot editor for THIS resort's AI guidance (the slave layer,
+ * report._ai_prompts bot_id = this bot). A subtle gear opens a modal; saving
+ * persists and the next text/voice request picks it up.
+ *
+ * The fleet-wide MASTER prompt is NOT edited here — it powers every bot and is
+ * GSB-only, so it lives on the fleet dashboard (FleetMasterEditor). The fixed
+ * data grounding (schema + SQL safety) is not editable anywhere in-app.
  */
 export function PromptEditor({ botId }: { botId: number }) {
   const [open, setOpen] = useState(false)
-  const [scope, setScope] = useState<PromptScope>('bot')
-  const [master, setMaster] = useState('')
   const [slave, setSlave] = useState('')
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
-  // Master (fleet-wide product IP) is GSB-only: shown when a valid admin key is
-  // stored (localStorage) AND we're not inside a partner embed.
-  const embed = isEmbedMode()
-  const [isAdmin, setIsAdmin] = useState(hasAdminKey())
-  const showMaster = isAdmin && !embed
-
-  const text = scope === 'master' ? master : slave
-  const setText = (v: string) => (scope === 'master' ? setMaster : setSlave)(v.slice(0, PROMPT_MAX))
 
   async function openEditor() {
     setOpen(true)
     setSaved(false)
-    setScope('bot')
     setLoading(true)
     const p = await fetchPrompts(botId)
-    setMaster(p.master)
     setSlave(p.slave)
     setLoading(false)
   }
 
   async function save() {
     setSaving(true)
-    const ok = await savePrompt(scope, botId, text)
+    const ok = await savePrompt('bot', botId, slave)
     setSaving(false)
     if (ok) {
       setSaved(true)
       setTimeout(() => setSaved(false), 1600)
     }
-  }
-
-  // GSB-only: enter the admin key to reveal + edit the fleet master. Re-fetches
-  // so the master (which the API withholds without the key) loads in.
-  async function unlockMaster() {
-    const key = window.prompt('GSB admin key (unlocks the fleet-wide master prompt)')
-    if (key == null) return
-    setAdminKey(key)
-    const ok = hasAdminKey()
-    setIsAdmin(ok)
-    if (ok) {
-      setLoading(true)
-      const p = await fetchPrompts(botId)
-      setMaster(p.master)
-      setSlave(p.slave)
-      setLoading(false)
-      setScope('master')
-    }
-  }
-
-  function lockMaster() {
-    setAdminKey('')
-    setIsAdmin(false)
-    setMaster('')
-    if (scope === 'master') setScope('bot')
   }
 
   return (
@@ -101,48 +64,14 @@ export function PromptEditor({ botId }: { botId: number }) {
               </button>
             </div>
 
-            {/* Layer toggle: per-resort (slave) always; the fleet master is GSB-only */}
-            <div className="flex items-center gap-1 border-b border-slate-100 px-5 pt-3">
-              {([
-                { id: 'bot', label: 'This resort', Icon: Building2 } as const,
-                ...(showMaster ? [{ id: 'master', label: 'Master · all resorts', Icon: Globe } as const] : []),
-              ]).map(({ id, label, Icon }) => (
-                <button
-                  key={id}
-                  onClick={() => setScope(id)}
-                  className={`-mb-px inline-flex items-center gap-1.5 border-b-2 px-3 py-2 text-xs font-semibold transition ${
-                    scope === id ? 'border-botscrew-500 text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'
-                  }`}
-                >
-                  <Icon className="h-3.5 w-3.5" />
-                  {label}
-                </button>
-              ))}
-              {/* GSB-only unlock / lock for the master — never shown in a partner embed */}
-              {!embed && (
-                <button
-                  onClick={showMaster ? lockMaster : unlockMaster}
-                  title={showMaster ? 'Lock the master (clear this machine’s GSB key)' : 'GSB only — enter the admin key to edit the fleet-wide master'}
-                  className="ml-auto mb-1 inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-medium text-slate-300 transition hover:text-slate-500"
-                >
-                  <KeyRound className="h-3 w-3" /> {showMaster ? 'Lock' : 'Unlock master'}
-                </button>
-              )}
-            </div>
-
             <div className="space-y-3 overflow-y-auto p-5">
-              {scope === 'master' ? (
-                <p className="text-sm text-slate-500">
-                  The <span className="font-medium text-slate-700">global ShredIntel base</span> — persona, methodology, and
-                  capabilities shared by <span className="font-medium text-slate-700">every resort</span>. Editing this changes the
-                  AI for all bots. The data grounding (schema + SQL safety) stays fixed.
-                </p>
-              ) : (
-                <p className="text-sm text-slate-500">
-                  Guidance for <span className="font-medium text-slate-700">this resort only</span>, layered on top of the master.
-                  Powers <span className="font-medium text-slate-700">both text search and voice</span>.
-                </p>
-              )}
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+                <Building2 className="h-3.5 w-3.5 text-slate-400" /> This resort
+              </div>
+              <p className="text-sm text-slate-500">
+                Guidance for <span className="font-medium text-slate-700">this resort only</span>, layered on top of the fleet base.
+                Powers <span className="font-medium text-slate-700">both text search and voice</span>.
+              </p>
 
               {loading ? (
                 <div className="flex h-48 items-center justify-center text-slate-400">
@@ -150,25 +79,19 @@ export function PromptEditor({ botId }: { botId: number }) {
                 </div>
               ) : (
                 <textarea
-                  value={text}
-                  onChange={(e) => setText(e.target.value)}
+                  value={slave}
+                  onChange={(e) => setSlave(e.target.value.slice(0, PROMPT_MAX))}
                   rows={14}
                   autoFocus
-                  placeholder={
-                    scope === 'master'
-                      ? 'The global ShredIntel persona + report methodology…'
-                      : 'e.g. This resort calls lift tickets “day passes.” Lead with revenue findings and flag any lodging questions.'
-                  }
+                  placeholder='e.g. This resort calls lift tickets “day passes.” Lead with revenue findings and flag any lodging questions.'
                   className="w-full resize-y rounded-xl border border-slate-200 bg-white p-3 font-mono text-[13px] leading-relaxed text-slate-800 outline-none focus:border-botscrew-400 focus:ring-2 focus:ring-botscrew-100"
                 />
               )}
 
               <div className="flex items-center justify-between">
-                <span className="text-[11px] text-slate-400">
-                  {text.length}/{PROMPT_MAX} · {scope === 'master' ? 'global · all resorts' : `bot #${botId}`}
-                </span>
+                <span className="text-[11px] text-slate-400">{slave.length}/{PROMPT_MAX} · bot #{botId}</span>
                 <div className="flex items-center gap-2">
-                  <button onClick={() => setText('')} disabled={loading} className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-500 transition hover:bg-slate-50 disabled:opacity-40">
+                  <button onClick={() => setSlave('')} disabled={loading} className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-500 transition hover:bg-slate-50 disabled:opacity-40">
                     Clear
                   </button>
                   <button onClick={save} disabled={loading || saving} className="inline-flex items-center gap-1.5 rounded-full bg-botscrew-500 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-botscrew-600 disabled:opacity-60">

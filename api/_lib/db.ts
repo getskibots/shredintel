@@ -84,13 +84,40 @@ export async function getBotDataRange(botId: number): Promise<{ from: string | n
   }
 }
 
-/** Upsert a prompt layer. botId 0 = master (global); else per-bot slave. */
+/** Upsert a prompt layer. botId 0 = master (global); else per-bot slave.
+ *  Also snapshots the new value into _ai_prompt_history for version history. */
 export async function upsertPrompt(botId: number, prompt: string): Promise<void> {
-  await getPool().query(
+  const text = String(prompt || '').slice(0, 8000)
+  const pool = getPool()
+  await pool.query(
     `insert into report._ai_prompts (bot_id, prompt, updated_at) values ($1, $2, now())
        on conflict (bot_id) do update set prompt = excluded.prompt, updated_at = now()`,
-    [botId, String(prompt || '').slice(0, 8000)],
+    [botId, text],
   )
+  // Version history — best-effort: a save must never fail because history is down.
+  try {
+    await pool.query(`insert into report._ai_prompt_history (bot_id, prompt) values ($1, $2)`, [botId, text])
+  } catch { /* history table missing/unreachable — the save itself already succeeded */ }
+}
+
+export interface PromptVersion { id: number; prompt: string; saved_at: string }
+
+/** Saved versions of a prompt layer (newest first). botId 0 = the fleet master.
+ *  GSB-internal (read behind the admin-key gate in api/prompt.ts). */
+export async function getPromptHistory(botId: number, limit = 40): Promise<PromptVersion[]> {
+  try {
+    const { rows } = await getPool().query<PromptVersion>(
+      `select id, prompt, saved_at::text as saved_at
+         from report._ai_prompt_history
+        where bot_id = $1
+        order by saved_at desc, id desc
+        limit $2`,
+      [botId, limit],
+    )
+    return rows
+  } catch {
+    return []
+  }
 }
 
 const WRITE_KW = /\b(insert|update|delete|drop|alter|create|truncate|grant|revoke|copy|call|do|merge|vacuum|reindex|comment|refresh)\b/i

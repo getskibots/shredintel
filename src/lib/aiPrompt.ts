@@ -56,6 +56,25 @@ export async function fetchPrompts(botId: number): Promise<Prompts> {
   }
 }
 
+export interface PromptVersion {
+  id: number
+  prompt: string
+  saved_at: string
+}
+
+/** Saved versions of a layer (newest first). GSB-only — needs the admin key.
+ *  botId 0 = the fleet master. Never throws — empty list on failure. */
+export async function fetchPromptHistory(botId: number): Promise<PromptVersion[]> {
+  try {
+    const r = await fetch(`/api/prompt?history=${botId}`, { headers: adminHeaders() })
+    if (!r.ok) return []
+    const d = await r.json()
+    return Array.isArray(d.history) ? (d.history as PromptVersion[]) : []
+  } catch {
+    return []
+  }
+}
+
 /** Persist one layer. scope 'master' ignores botId (writes the global row) and
  *  requires the GSB admin key; returns false (403) without it. */
 export async function savePrompt(scope: PromptScope, botId: number, prompt: string): Promise<boolean> {

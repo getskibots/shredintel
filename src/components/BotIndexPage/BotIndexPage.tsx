@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { Search, TrendingUp, Headphones } from 'lucide-react'
 import { useAvailableBots, type BotOption } from '../../data/useAnalytics'
 import { verticalMeta } from '../../lib/verticalLabels'
+import { FleetMasterEditor } from '../FleetMasterEditor'
 
 /**
  * Landing page at "/" — a directory of every bot, GROUPED BY its auto-detected
@@ -72,15 +73,19 @@ export function BotIndexPage() {
           </p>
         </div>
 
-        <div className="relative w-full max-w-xs">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" strokeWidth={2} />
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by name or id…"
-            className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-700 outline-none placeholder:text-slate-400 focus:border-botscrew-400 focus:ring-2 focus:ring-botscrew-100"
-          />
+        <div className="flex items-center gap-2">
+          {/* Fleet-wide master AI prompt (GSB only) — lives here because it powers every bot */}
+          <FleetMasterEditor />
+          <div className="relative w-56 sm:w-64">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" strokeWidth={2} />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by name or id…"
+              className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-700 outline-none placeholder:text-slate-400 focus:border-botscrew-400 focus:ring-2 focus:ring-botscrew-100"
+            />
+          </div>
         </div>
       </div>
 

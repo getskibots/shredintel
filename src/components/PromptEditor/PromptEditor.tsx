@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Settings2, X, Loader2, Globe, Building2 } from 'lucide-react'
-import { fetchPrompts, savePrompt, PROMPT_MAX, type PromptScope } from '../../lib/aiPrompt'
+import { Settings2, X, Loader2, Globe, Building2, KeyRound } from 'lucide-react'
+import { fetchPrompts, savePrompt, PROMPT_MAX, hasAdminKey, setAdminKey, type PromptScope } from '../../lib/aiPrompt'
+import { isEmbedMode } from '../../lib/embed'
 
 /**
  * Semi-discreet editor for the two AI-instruction layers (Supabase-backed via
@@ -19,6 +20,11 @@ export function PromptEditor({ botId }: { botId: number }) {
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  // Master (fleet-wide product IP) is GSB-only: shown when a valid admin key is
+  // stored (localStorage) AND we're not inside a partner embed.
+  const embed = isEmbedMode()
+  const [isAdmin, setIsAdmin] = useState(hasAdminKey())
+  const showMaster = isAdmin && !embed
 
   const text = scope === 'master' ? master : slave
   const setText = (v: string) => (scope === 'master' ? setMaster : setSlave)(v.slice(0, PROMPT_MAX))
@@ -42,6 +48,31 @@ export function PromptEditor({ botId }: { botId: number }) {
       setSaved(true)
       setTimeout(() => setSaved(false), 1600)
     }
+  }
+
+  // GSB-only: enter the admin key to reveal + edit the fleet master. Re-fetches
+  // so the master (which the API withholds without the key) loads in.
+  async function unlockMaster() {
+    const key = window.prompt('GSB admin key (unlocks the fleet-wide master prompt)')
+    if (key == null) return
+    setAdminKey(key)
+    const ok = hasAdminKey()
+    setIsAdmin(ok)
+    if (ok) {
+      setLoading(true)
+      const p = await fetchPrompts(botId)
+      setMaster(p.master)
+      setSlave(p.slave)
+      setLoading(false)
+      setScope('master')
+    }
+  }
+
+  function lockMaster() {
+    setAdminKey('')
+    setIsAdmin(false)
+    setMaster('')
+    if (scope === 'master') setScope('bot')
   }
 
   return (
@@ -70,12 +101,12 @@ export function PromptEditor({ botId }: { botId: number }) {
               </button>
             </div>
 
-            {/* Layer toggle: per-resort (slave) vs the global master base */}
-            <div className="flex gap-1 border-b border-slate-100 px-5 pt-3">
+            {/* Layer toggle: per-resort (slave) always; the fleet master is GSB-only */}
+            <div className="flex items-center gap-1 border-b border-slate-100 px-5 pt-3">
               {([
-                { id: 'bot', label: 'This resort', Icon: Building2 },
-                { id: 'master', label: 'Master · all resorts', Icon: Globe },
-              ] as const).map(({ id, label, Icon }) => (
+                { id: 'bot', label: 'This resort', Icon: Building2 } as const,
+                ...(showMaster ? [{ id: 'master', label: 'Master · all resorts', Icon: Globe } as const] : []),
+              ]).map(({ id, label, Icon }) => (
                 <button
                   key={id}
                   onClick={() => setScope(id)}
@@ -87,6 +118,16 @@ export function PromptEditor({ botId }: { botId: number }) {
                   {label}
                 </button>
               ))}
+              {/* GSB-only unlock / lock for the master — never shown in a partner embed */}
+              {!embed && (
+                <button
+                  onClick={showMaster ? lockMaster : unlockMaster}
+                  title={showMaster ? 'Lock the master (clear this machine’s GSB key)' : 'GSB only — enter the admin key to edit the fleet-wide master'}
+                  className="ml-auto mb-1 inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-medium text-slate-300 transition hover:text-slate-500"
+                >
+                  <KeyRound className="h-3 w-3" /> {showMaster ? 'Lock' : 'Unlock master'}
+                </button>
+              )}
             </div>
 
             <div className="space-y-3 overflow-y-auto p-5">

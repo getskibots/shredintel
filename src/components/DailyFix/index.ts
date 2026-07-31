@@ -1,0 +1,1 @@
+export { DailyFixView } from './DailyFixView'

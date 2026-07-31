@@ -4,7 +4,8 @@ import { BotAnalyticsPage } from './components/BotAnalyticsPage'
 import { BotIndexPage } from './components/BotIndexPage'
 import { DashboardShell } from './components/DashboardShell'
 import { FleetPage } from './components/FleetPage'
-import { MasterBotterShell } from './components/MasterBotterShell'
+import { DailyFixView } from './components/DailyFix'
+import { MasterBotterShell, MasterBotterTabs } from './components/MasterBotterShell'
 import { PasswordGate } from './components/PasswordGate'
 import { VoiceReportGrid } from './components/VoiceReportGrid'
 import { VoiceAnalyticsPage } from './components/VoiceAnalyticsPage/VoiceAnalyticsPage'
@@ -57,12 +58,14 @@ function ChannelShell() {
   // Ahhh FAQ It is its own standalone surface — no dashboard chrome.
   if (location.pathname === '/tools/ahhh-faq-it') return <AhhhFaqItTool />
 
-  // Master'Botter (fleet master dashboard) — its own clean chrome, NOT the
-  // Botscrew-admin sidebar. GSB-internal product surface.
-  if (location.pathname === '/fleet')
+  // Master'Botter — its own clean chrome (not the Botscrew sidebar), with two
+  // tabs: The Daily Fix (daily heartbeat, default at /fleet) and Daily Cost
+  // (the fleet cost view at /fleet/costs).
+  if (location.pathname === '/fleet' || location.pathname === '/fleet/costs')
     return (
       <MasterBotterShell>
-        <FleetPage />
+        <MasterBotterTabs />
+        {location.pathname === '/fleet/costs' ? <FleetPage /> : <DailyFixView />}
       </MasterBotterShell>
     )
 

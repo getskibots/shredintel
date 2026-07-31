@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 # ShredIntel nightly pipeline — the whole thing, self-running, on the droplet:
 #   sync (Botscrew → Supabase) → detect verticals for new bots → enrich new
-#   conversations → refresh every matview → health gate + heartbeat.
-# (GA4 site-traffic pull runs SEPARATELY as a Vercel cron — /api/ga4-cron — because
-#  the OAuth encryption key lives on Vercel, not here. See the switch-later note.)
+#   conversations → refresh every matview → GA4 pull (via Vercel) → health gate
+#   + heartbeat.
+# The GA4 pull is a CURL to the Vercel endpoint /api/ga4-cron (best-effort): Vercel
+# holds the OAuth encryption key and does the decrypt + pull, so nothing GA4-secret
+# lives here. Switch-later: rename+rotate the key onto this box and pull locally.
 # Wired via crontab (0 8 * * *). Logs to /opt/app/etl/nightly.log.
 # Runs from /opt/app/etl (the git clone) with its .env (Supabase + Botscrew MySQL
 # + OpenAI + HEARTBEAT_URL).
@@ -43,6 +45,12 @@ RC=${PIPESTATUS[0]}; [ "$RC" -eq 0 ] || FAILED="$FAILED enrich-fleet"
 echo "── 4/4 refresh matviews ──"
 $NODE refresh.mjs 2>&1 | tail -6
 RC=${PIPESTATUS[0]}; [ "$RC" -eq 0 ] || FAILED="$FAILED refresh"
+
+# GA4 site traffic — trigger the Vercel endpoint (it holds the keys + does the
+# decrypt/pull). Best-effort: NOT added to FAILED, so a GA4 hiccup can never
+# false-red the core freshness heartbeat. Response is logged for spot-checking.
+echo "── GA4 site-traffic pull (via Vercel, best-effort) ──"
+curl -sS -m 180 -H "x-vercel-cron: 1" https://analytics.getskibots.com/api/ga4-cron | tail -c 500; echo
 
 echo "── health check + heartbeat ──"
 $NODE heartbeat.mjs --failed "$(echo $FAILED | xargs)"

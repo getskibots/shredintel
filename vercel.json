@@ -6,9 +6,6 @@
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ],
-  "crons": [
-    { "path": "/api/ga4-cron", "schedule": "0 8 * * *" }
-  ],
   "headers": [
     {
       "source": "/(.*)",

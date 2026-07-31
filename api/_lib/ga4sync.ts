@@ -1,0 +1,113 @@
+/**
+ * Shared GA4 pull for ONE connected bot — used by both the on-demand endpoint
+ * (/api/ga4-refresh) and the nightly cron (/api/ga4-cron). Decrypts the bot's
+ * OAuth refresh token, mints an access token, runs the aggregate reports, and
+ * upserts into the anon report.ga4_*_daily tables. No PII stored.
+ */
+import type { Pool } from 'pg'
+import { decryptToken } from './tokenCrypto.js'
+import { refreshAccessToken, runReportREST } from './ga4.js'
+
+const ymd = (s: string) => `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`
+const num = (v: string) => Number(v || 0)
+
+async function upsert(pool: Pool, table: string, cols: string[], conflict: string[], rows: Record<string, unknown>[]) {
+  if (!rows.length) return 0
+  const upd = cols.filter((c) => !conflict.includes(c)).map((c) => `${c} = excluded.${c}`).join(', ')
+  let done = 0
+  for (let i = 0; i < rows.length; i += 500) {
+    const chunk = rows.slice(i, i + 500)
+    const params: unknown[] = []
+    const values = chunk.map((r, ri) => {
+      cols.forEach((c) => params.push(r[c]))
+      return `(${cols.map((_, ci) => `$${ri * cols.length + ci + 1}`).join(', ')})`
+    })
+    await pool.query(
+      `insert into ${table} (${cols.join(', ')}) values ${values.join(', ')}
+       on conflict (${conflict.join(', ')}) do update set ${upd}`,
+      params,
+    )
+    done += chunk.length
+  }
+  return done
+}
+
+export interface GA4SyncResult { botId: number; days: number; pages: number; sources: number; events: number }
+
+/** Pull the last `days` for a bot via its stored OAuth token; throws on any failure. */
+export async function syncBotGA4(pool: Pool, botId: number, days = 30): Promise<GA4SyncResult> {
+  const { rows } = await pool.query(
+    'select ga4_property_id, oauth_refresh_token_enc from report.bot_ga4 where bot_id = $1', [botId],
+  )
+  const row = rows[0]
+  if (!row?.ga4_property_id) throw new Error('no GA4 property selected for this bot yet')
+  const refresh = decryptToken(row.oauth_refresh_token_enc)
+  if (!refresh) throw new Error('this bot is not connected via OAuth')
+
+  const access = await refreshAccessToken(refresh)
+  const property = String(row.ga4_property_id)
+  const dateRanges = [{ startDate: `${days}daysAgo`, endDate: 'yesterday' }]
+
+  // 1) traffic by day
+  const t = await runReportREST(access, property, {
+    dateRanges, dimensions: [{ name: 'date' }],
+    metrics: [{ name: 'sessions' }, { name: 'activeUsers' }, { name: 'screenPageViews' }, { name: 'eventCount' }],
+  })
+  const nT = await upsert(pool, 'report.ga4_traffic_daily',
+    ['bot_id', 'day', 'sessions', 'users', 'pageviews', 'events'], ['bot_id', 'day'],
+    t.map((r) => ({
+      bot_id: botId, day: ymd(r.dimensionValues[0].value),
+      sessions: num(r.metricValues[0].value), users: num(r.metricValues[1].value),
+      pageviews: num(r.metricValues[2].value), events: num(r.metricValues[3].value),
+    })))
+
+  // 2) pages by day + host + path
+  const p = await runReportREST(access, property, {
+    dateRanges, dimensions: [{ name: 'date' }, { name: 'hostName' }, { name: 'pagePath' }],
+    metrics: [{ name: 'screenPageViews' }, { name: 'sessions' }], limit: 50000,
+  })
+  const pMap = new Map<string, Record<string, unknown>>()
+  for (const r of p) {
+    const host = r.dimensionValues[1].value || ''
+    const path = r.dimensionValues[2].value || ''
+    const full = host + path
+    const key = r.dimensionValues[0].value + '|' + full
+    const prev = pMap.get(key)
+    const pv = num(r.metricValues[0].value); const ses = num(r.metricValues[1].value)
+    if (prev) { prev.pageviews = (prev.pageviews as number) + pv; prev.sessions = (prev.sessions as number) + ses }
+    else pMap.set(key, { bot_id: botId, day: ymd(r.dimensionValues[0].value), host, page_path: path, full_path: full, pageviews: pv, sessions: ses })
+  }
+  const nP = await upsert(pool, 'report.ga4_page_daily',
+    ['bot_id', 'day', 'host', 'page_path', 'full_path', 'pageviews', 'sessions'],
+    ['bot_id', 'day', 'full_path'], [...pMap.values()])
+
+  // 3) sources by day
+  const s = await runReportREST(access, property, {
+    dateRanges, dimensions: [{ name: 'date' }, { name: 'sessionSourceMedium' }],
+    metrics: [{ name: 'sessions' }, { name: 'activeUsers' }], limit: 50000,
+  })
+  const nS = await upsert(pool, 'report.ga4_source_daily',
+    ['bot_id', 'day', 'source_medium', 'sessions', 'users'], ['bot_id', 'day', 'source_medium'],
+    s.map((r) => ({
+      bot_id: botId, day: ymd(r.dimensionValues[0].value),
+      source_medium: r.dimensionValues[1].value || '(unknown)',
+      sessions: num(r.metricValues[0].value), users: num(r.metricValues[1].value),
+    })))
+
+  // 4) events by day
+  const e = await runReportREST(access, property, {
+    dateRanges, dimensions: [{ name: 'date' }, { name: 'eventName' }],
+    metrics: [{ name: 'eventCount' }], limit: 50000,
+  })
+  const nE = await upsert(pool, 'report.ga4_event_daily',
+    ['bot_id', 'day', 'event_name', 'event_count'], ['bot_id', 'day', 'event_name'],
+    e.map((r) => ({
+      bot_id: botId, day: ymd(r.dimensionValues[0].value),
+      event_name: r.dimensionValues[1].value || '', event_count: num(r.metricValues[0].value),
+    })))
+
+  await pool.query(
+    `update report.bot_ga4 set last_synced_at = now(), last_error = null, status = 'connected',
+       updated_at = now() where bot_id = $1`, [botId])
+  return { botId, days: nT, pages: nP, sources: nS, events: nE }
+}

@@ -21,6 +21,8 @@ import { ChannelToggle } from '../ChannelToggle/ChannelToggle'
 import { omniGroupByKey } from '../../lib/omniGroups'
 import { ShreddingOverlay, useShredPulse } from '../ShreddingOverlay'
 import { useBotAnalytics, useAvailableBots } from '../../data/useAnalytics'
+import { useGA4 } from '../../data/useGA4'
+import { GA4TrafficCard } from '../GA4TrafficCard/GA4TrafficCard'
 import {
   resolveSelection,
   selectionFromSearchParams,
@@ -45,6 +47,7 @@ export function BotAnalyticsPage() {
     setSearchParams(params, { replace: true })
   }
   const { data: f, funnel, isLoading, isEmpty } = useBotAnalytics(botId, selection)
+  const ga4 = useGA4(botId, selection)
   const { bots } = useAvailableBots()
   const botName = bots.find((b) => b.botId === botId)?.label
   // Scope the AI (ask + voice) to the same window the dashboard is showing.
@@ -122,6 +125,8 @@ export function BotAnalyticsPage() {
                 SOLVED outcome derivation is settled — see reference_shredintel_data_model.) */}
             <section id="overview" className="scroll-mt-40 space-y-5">
               <ConversationCounts {...f.conversationCounts} />
+              {/* Site-traffic denominator (Google Analytics) — only for GA4-connected bots */}
+              {ga4.data && <GA4TrafficCard summary={ga4.data} botSessions={f.conversationCounts.sessions} />}
             </section>
 
             {/* 2 — Sales & conversion: where guests get stuck (by page) + what blocks

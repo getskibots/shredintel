@@ -29,7 +29,7 @@ await c.connect()
 await c.query(`
   create table if not exists report.bot_ga4 (
     bot_id          int primary key,
-    ga4_property_id text not null,                       -- numeric GA4 Property ID (as text)
+    ga4_property_id text,                                -- numeric GA4 Property ID; NULL until a property is picked
     label           text,
     status          text not null default 'connected',   -- connected | paused | error
     note            text,

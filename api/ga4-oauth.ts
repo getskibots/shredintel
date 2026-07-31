@@ -37,8 +37,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // --- CALLBACK ---
   const botId = state ? verifyState(state) : null
-  const back = (flag: string) => {
-    res.setHeader('Location', `${APP_BASE}/#/bot/${botId ?? ''}?ga4=${flag}`)
+  const back = (flag: string, detail?: string) => {
+    const extra = detail ? `&ga4msg=${encodeURIComponent(String(detail).slice(0, 180))}` : ''
+    res.setHeader('Location', `${APP_BASE}/#/bot/${botId ?? ''}?ga4=${flag}${extra}`)
     return res.status(302).end()
   }
 
@@ -89,6 +90,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return back(auto ? 'connected' : 'pick')
   } catch (e) {
     console.error('[api/ga4-oauth] callback failed:', e)
-    return back('error')
+    return back('error', e instanceof Error ? e.message : 'unknown error')
   }
 }

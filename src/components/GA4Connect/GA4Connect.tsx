@@ -64,8 +64,8 @@ export function GA4Connect({ botId }: { botId: number }) {
     if (flag === 'connected') { setMsg('Google Analytics connected.'); setOpen(true); load(true) }
     else if (flag === 'pick') { setOpen(true); load(true) }
     else if (flag === 'denied') { setErr('Connection cancelled.'); setOpen(true) }
-    else if (flag === 'error') { setErr('Could not connect. Try again.'); setOpen(true) }
-    const next = new URLSearchParams(params); next.delete('ga4'); setParams(next, { replace: true })
+    else if (flag === 'error') { setErr(`Could not connect. ${params.get('ga4msg') || 'Try again.'}`); setOpen(true) }
+    const next = new URLSearchParams(params); next.delete('ga4'); next.delete('ga4msg'); setParams(next, { replace: true })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params])
 

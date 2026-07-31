@@ -3,6 +3,7 @@ import { Sparkles, ArrowUp, AudioLines, Mic, ChevronDown, Loader2, TriangleAlert
 import { useBranding } from '../../data/useBranding'
 import { isEmbedMode } from '../../lib/embed'
 import { BrandingBackdrop, BrandingEditor } from '../Branding'
+import { GA4Connect } from '../GA4Connect/GA4Connect'
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
 } from 'recharts'
@@ -167,20 +168,23 @@ export function AskBar({ botId, range, onVoice }: { botId: number; range?: { fro
     <div className="mb-10">
       <div className="relative overflow-hidden rounded-3xl">
         <BrandingBackdrop url={branding?.backgroundUrl} overlay={branding?.overlay ?? 0.6} />
-        {/* discreet per-bot branding editor */}
-        <div className="absolute right-2 top-2 z-30">
-          <button
-            type="button"
-            onClick={() => setBrandingOpen((o) => !o)}
-            aria-label="Branding"
-            title="Branding"
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white/70 text-slate-400 opacity-50 backdrop-blur transition hover:opacity-100 hover:text-slate-700"
-          >
-            <Brush className="h-4 w-4" />
-          </button>
-          {brandingOpen && (
-            <BrandingEditor botId={botId} branding={branding} onSaved={reloadBranding} onClose={() => setBrandingOpen(false)} />
-          )}
+        {/* discreet per-bot controls: GA4 connect + branding editor */}
+        <div className="absolute right-2 top-2 z-30 flex items-center gap-1.5">
+          <GA4Connect botId={botId} />
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setBrandingOpen((o) => !o)}
+              aria-label="Branding"
+              title="Branding"
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white/70 text-slate-400 opacity-50 backdrop-blur transition hover:opacity-100 hover:text-slate-700"
+            >
+              <Brush className="h-4 w-4" />
+            </button>
+            {brandingOpen && (
+              <BrandingEditor botId={botId} branding={branding} onSaved={reloadBranding} onClose={() => setBrandingOpen(false)} />
+            )}
+          </div>
         </div>
         <div className={`relative z-10 mx-auto flex max-w-3xl flex-col items-center justify-center px-6 text-center transition-all duration-500 ${embed || hasActivity ? 'min-h-0 py-7' : 'min-h-[46vh] py-10'}`}>
           {/* Header — the per-bot logo (uploaded) or the ShredIntel wordmark */}

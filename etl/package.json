@@ -11,6 +11,7 @@
     "refresh": "node sync.mjs --refresh-only"
   },
   "dependencies": {
+    "@google-analytics/data": "^6.1.0",
     "dotenv": "^16.4.7",
     "maxmind": "^5.0.6",
     "mysql2": "^3.11.5",

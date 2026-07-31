@@ -23,6 +23,7 @@ import { ShreddingOverlay, useShredPulse } from '../ShreddingOverlay'
 import { useBotAnalytics, useAvailableBots } from '../../data/useAnalytics'
 import { useGA4 } from '../../data/useGA4'
 import { GA4TrafficCard } from '../GA4TrafficCard/GA4TrafficCard'
+import { GA4PageOpportunity } from '../GA4PageOpportunity/GA4PageOpportunity'
 import {
   resolveSelection,
   selectionFromSearchParams,
@@ -150,6 +151,12 @@ export function BotAnalyticsPage() {
                   className={funnel ? 'lg:col-span-6' : 'lg:col-span-12'}
                 />
               </div>
+              {/* GA4 overlay: busiest pages weighted by real traffic + bot reach (GA4-connected bots only) */}
+              {ga4.data && ga4.data.pages.length > 0 && (
+                <div className="mt-5">
+                  <GA4PageOpportunity pages={ga4.data.pages} />
+                </div>
+              )}
             </section>
 
             {/* 3 — Knowledge: what guests ask about (demand by topic) merged with

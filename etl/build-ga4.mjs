@@ -121,6 +121,45 @@ await c.query(`
 
 await c.query('grant select on report.ga4_traffic_daily, report.ga4_page_daily, report.ga4_source_daily, report.ga4_event_daily, report.ga4_page_opportunity to anon')
 
+// Date-aware page-opportunity join (the all-time view above can't respect the
+// dashboard's window). Postgres does the heavy GA4-pages × bot-page-funnel join
+// and returns the top pages by real traffic, with the bot's reach on each.
+// SECURITY DEFINER so it can read conversation_page regardless of anon grants;
+// returns only aggregates (URLs + counts), no PII — same exposure as the anon
+// report.* matviews. Fully-qualified names + fixed search_path.
+await c.query(`
+  create or replace function report.ga4_page_opportunity(
+    p_bot_id int, p_from date, p_to date, p_limit int default 20)
+  returns table(page_path text, pageviews bigint, sessions bigint,
+                conversations bigint, friction bigint, reach_pct numeric)
+  language sql stable security definer set search_path = pg_catalog, report as $$
+    with ga as (
+      select full_path as page_path, sum(pageviews)::bigint pageviews, sum(sessions)::bigint sessions
+      from report.ga4_page_daily
+      where bot_id = p_bot_id and day between p_from and p_to
+      group by 1
+    ),
+    cp as (
+      select page_path, count(*)::bigint conversations,
+             count(*) filter (where pinchpoint is not null and pinchpoint <> 'None')::bigint friction
+      from report.conversation_page
+      where bot_id = p_bot_id and day between p_from and p_to
+      group by 1
+    )
+    select coalesce(ga.page_path, cp.page_path) as page_path,
+           coalesce(ga.pageviews, 0) as pageviews,
+           coalesce(ga.sessions, 0) as sessions,
+           coalesce(cp.conversations, 0) as conversations,
+           coalesce(cp.friction, 0) as friction,
+           case when ga.sessions > 0
+                then round(100.0 * coalesce(cp.conversations, 0) / ga.sessions, 2) end as reach_pct
+    from ga full join cp on ga.page_path = cp.page_path
+    order by coalesce(ga.pageviews, 0) desc, coalesce(cp.conversations, 0) desc
+    limit least(greatest(p_limit, 1), 100)
+  $$`)
+await c.query('revoke all on function report.ga4_page_opportunity(int, date, date, int) from public')
+await c.query('grant execute on function report.ga4_page_opportunity(int, date, date, int) to anon')
+
 // --- seed the bot 2 (Mountain Collective) mapping for the first test. ---
 // Stand-in property = GSB's own 475800896 (getskibots.com), the only property the
 // service account can read today. Swap ga4_property_id to Mountain Collective's

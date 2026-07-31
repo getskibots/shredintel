@@ -5,14 +5,24 @@ import { resolveSelection, type PeriodSelection } from '../lib/period'
 /**
  * useGA4 — site-wide GA4 traffic for a bot, scoped to the dashboard's date range.
  * Reads the anon-safe report.ga4_*_daily tables (populated by the GA4 connector).
- * Returns null when the bot has no GA4 connected / no rows in range, so the card
- * simply doesn't render for non-GA4 bots (no empty state).
+ * Returns null when the bot has no GA4 connected / no rows in range, so the cards
+ * simply don't render for non-GA4 bots (no empty state).
  *
  * Sessions + pageviews are additive across days (a session belongs to one day),
  * so summing daily rows is correct. Daily activeUsers is NOT unique-additive, so
  * we deliberately do not surface a period "users" total here.
+ *
+ * `pages` = the date-aware page-opportunity ranking (report.ga4_page_opportunity
+ * RPC): top pages by real traffic with the bot's reach on each.
  */
 export interface GA4SourceSlice { source: string; sessions: number }
+export interface GA4PageOpp {
+  page_path: string
+  pageviews: number
+  conversations: number
+  friction: number
+  reach_pct: number | null   // conversations ÷ GA4 sessions for that page; null = no GA4 sessions
+}
 export interface GA4Summary {
   sessions: number
   pageviews: number
@@ -20,11 +30,13 @@ export interface GA4Summary {
   fromDay: string | null   // actual first GA4 day present in the window
   toDay: string | null     // actual last GA4 day present
   sources: GA4SourceSlice[]
+  pages: GA4PageOpp[]
 }
 export interface GA4State { data: GA4Summary | null; isLoading: boolean }
 
 interface TrafficRow { day: string; sessions: number; pageviews: number; events: number }
 interface SourceRow { source_medium: string; sessions: number }
+interface PageOppRow { page_path: string; pageviews: number | string; sessions: number | string; conversations: number | string; friction: number | string; reach_pct: number | string | null }
 
 export function useGA4(botId: number, selection: PeriodSelection): GA4State {
   const [state, setState] = useState<GA4State>({ data: null, isLoading: supabaseConfigured })
@@ -40,9 +52,10 @@ export function useGA4(botId: number, selection: PeriodSelection): GA4State {
       try {
         const base = (v: string) =>
           supabase.schema('report').from(v).select('*').eq('bot_id', botId).gte('day', from).lte('day', to)
-        const [tr, src] = await Promise.all([
+        const [tr, src, opp] = await Promise.all([
           base('ga4_traffic_daily').order('day', { ascending: true }) as unknown as Promise<{ data: TrafficRow[] | null }>,
           base('ga4_source_daily').limit(5000) as unknown as Promise<{ data: SourceRow[] | null }>,
+          supabase.schema('report').rpc('ga4_page_opportunity', { p_bot_id: botId, p_from: from, p_to: to, p_limit: 12 }) as unknown as Promise<{ data: PageOppRow[] | null }>,
         ])
         if (cancelled) return
         const traffic = tr.data ?? []
@@ -65,7 +78,15 @@ export function useGA4(botId: number, selection: PeriodSelection): GA4State {
           .sort((a, b) => b.sessions - a.sessions)
           .slice(0, 5)
 
-        setState({ data: { sessions, pageviews, events, fromDay, toDay, sources }, isLoading: false })
+        const pages: GA4PageOpp[] = (opp.data ?? []).map((r) => ({
+          page_path: r.page_path,
+          pageviews: Number(r.pageviews || 0),
+          conversations: Number(r.conversations || 0),
+          friction: Number(r.friction || 0),
+          reach_pct: r.reach_pct == null ? null : Number(r.reach_pct),
+        }))
+
+        setState({ data: { sessions, pageviews, events, fromDay, toDay, sources, pages }, isLoading: false })
       } catch { if (!cancelled) setState({ data: null, isLoading: false }) }
     })()
     return () => { cancelled = true }

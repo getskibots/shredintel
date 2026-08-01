@@ -1,1 +1,1 @@
-export { DailyFixView } from './DailyFixView'
+export { FleetSummary } from './FleetSummary'

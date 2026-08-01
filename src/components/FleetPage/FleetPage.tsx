@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react'
 import { Link, useLocation, useSearchParams } from 'react-router-dom'
-import { ArrowDown, ArrowUp, Bot, Filter, Headphones, LayoutGrid, List, Search, TrendingUp, UserRound } from 'lucide-react'
+import { ArrowDown, ArrowUp, Bot, Filter, Headphones, LayoutGrid, List, Search, TrendingUp, UserRound, Zap } from 'lucide-react'
 import { useFleetOverview, type FleetBotRow } from '../../data/useFleetOverview'
+import { useFleetFix } from '../../data/useFleetFix'
+import { FleetSummary } from '../DailyFix/FleetSummary'
 import { verticalMeta } from '../../lib/verticalLabels'
 import { Metric } from '../shared/Metric'
 import { PeriodPicker } from '../PeriodPicker'
@@ -98,8 +100,10 @@ function lastActiveLabel(iso: string | null): string {
 export function FleetPage() {
   const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
-  const selection = selectionFromSearchParams(searchParams, { kind: 'preset', preset: '30d' })
+  const selection = selectionFromSearchParams(searchParams, { kind: 'preset', preset: 'all' })
   const range = resolveSelection(selection)
+  const fleetFix = useFleetFix(range)
+  const isDailyFix = selection.kind === 'preset' && selection.preset === '1d'
   const setSelection = (next: PeriodSelection) => {
     const params = writeSelectionToSearchParams(new URLSearchParams(searchParams), next)
     setSearchParams(params, { replace: true })
@@ -363,19 +367,38 @@ export function FleetPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 md:px-6">
-      {/* Header: title (left) + period picker (right, fills the top row) */}
+      {/* Header: title (left) + Daily Fix button + period picker (right) */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Fleet overview</h1>
           <p className="mt-0.5 text-sm text-slate-500">
             {isLoading
               ? 'Loading fleet…'
-              : `${rows.length} bots · ${hero.active} with traffic in this window`}
+              : `${rows.length} bots · ${hero.active} with traffic · ${range.label}`}
             {isLive ? ' · live' : ''}
           </p>
         </div>
-        <PeriodPicker value={selection} onChange={setSelection} align="end" />
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setSelection({ kind: 'preset', preset: '1d' })}
+            title="Jump to the latest complete day — today's fleet heartbeat"
+            className={[
+              'inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition',
+              isDailyFix
+                ? 'border-botscrew-500 bg-botscrew-500 text-white shadow-sm'
+                : 'border-botscrew-200 bg-white text-botscrew-700 hover:border-botscrew-400',
+            ].join(' ')}
+          >
+            <Zap className="h-4 w-4" strokeWidth={2} fill={isDailyFix ? 'currentColor' : 'none'} />
+            Daily Fix
+          </button>
+          <PeriodPicker value={selection} onChange={setSelection} align="end" />
+        </div>
       </div>
+
+      {/* The heartbeat — mood / signal / top asks / flavor for the selected range */}
+      <FleetSummary summary={fleetFix.summary} isLoading={fleetFix.isLoading} />
 
       {/* Fleet-wide numbers — Usage row, then Cost row (each fills its grid) */}
       <div className="mb-3 grid grid-cols-2 gap-3 sm:grid-cols-4">

@@ -4,8 +4,7 @@ import { BotAnalyticsPage } from './components/BotAnalyticsPage'
 import { BotIndexPage } from './components/BotIndexPage'
 import { DashboardShell } from './components/DashboardShell'
 import { FleetPage } from './components/FleetPage'
-import { DailyFixView } from './components/DailyFix'
-import { MasterBotterShell, MasterBotterTabs } from './components/MasterBotterShell'
+import { MasterBotterShell } from './components/MasterBotterShell'
 import { PasswordGate } from './components/PasswordGate'
 import { VoiceReportGrid } from './components/VoiceReportGrid'
 import { VoiceAnalyticsPage } from './components/VoiceAnalyticsPage/VoiceAnalyticsPage'
@@ -58,14 +57,15 @@ function ChannelShell() {
   // Ahhh FAQ It is its own standalone surface — no dashboard chrome.
   if (location.pathname === '/tools/ahhh-faq-it') return <AhhhFaqItTool />
 
-  // Master'Botter — its own clean chrome (not the Botscrew sidebar), with two
-  // tabs: The Daily Fix (daily heartbeat, default at /fleet) and Daily Cost
-  // (the fleet cost view at /fleet/costs).
-  if (location.pathname === '/fleet' || location.pathname === '/fleet/costs')
+  // Master'Botter — one unified fleet dashboard (own clean chrome, not the
+  // Botscrew sidebar). The Daily Fix heartbeat + full usage/cost, driven by the
+  // date picker (All time by default; the "Daily Fix" button jumps to today).
+  // /fleet/costs kept as a redirect for old links.
+  if (location.pathname === '/fleet/costs') return <Navigate to={`/fleet${location.search}`} replace />
+  if (location.pathname === '/fleet')
     return (
       <MasterBotterShell>
-        <MasterBotterTabs />
-        {location.pathname === '/fleet/costs' ? <FleetPage /> : <DailyFixView />}
+        <FleetPage />
       </MasterBotterShell>
     )
 

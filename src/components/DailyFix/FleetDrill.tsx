@@ -20,7 +20,7 @@ import type { ResolvedPeriod } from '../../lib/period'
  */
 
 export interface DrillTarget {
-  dim: 'sentiment' | 'urgency' | 'handover' | 'category' | 'flavor' | 'resolution'
+  dim: 'sentiment' | 'urgency' | 'handover' | 'category' | 'flavor' | 'resolution' | 'outcome'
   value: string
   /** Human label for the header (e.g. "High urgency", "Pricing & Availability"). */
   label: string

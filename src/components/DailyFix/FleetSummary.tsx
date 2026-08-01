@@ -54,6 +54,110 @@ function Drillable({ onClick, className, children }: { onClick?: () => void; cla
   )
 }
 
+// Outcome palette (matches the SQL bucket model in build-fleet-fix-rpc.mjs).
+const OUTCOME = {
+  ai_solved:  { color: '#10B981', label: 'Solved by AI',  sub: 'resolved, no human' },
+  needs_human:{ color: '#F59E0B', label: 'Needed a human', sub: 'handed to a person' },
+  unresolved: { color: '#CBD5E1', label: 'Unresolved',     sub: 'no clear outcome' },
+} as const
+
+/** Segmented donut. Segments render clockwise from 12 o'clock; center holds children. */
+function Donut({ segments, size = 128, stroke = 15, children }: { segments: { value: number; color: string }[]; size?: number; stroke?: number; children?: ReactNode }) {
+  const r = (size - stroke) / 2
+  const circ = 2 * Math.PI * r
+  const total = segments.reduce((s, x) => s + x.value, 0) || 1
+  let acc = 0
+  return (
+    <div className="relative shrink-0" style={{ width: size, height: size }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#F1F5F9" strokeWidth={stroke} />
+        {segments.map((sgm, i) => {
+          const frac = sgm.value / total
+          const dash = Math.max(0, frac * circ - 1) // tiny gap between arcs
+          const off = -acc * circ
+          acc += frac
+          return (
+            <circle
+              key={i} cx={size / 2} cy={size / 2} r={r} fill="none"
+              stroke={sgm.color} strokeWidth={stroke} strokeLinecap="butt"
+              strokeDasharray={`${dash} ${circ - dash}`} strokeDashoffset={off}
+            />
+          )
+        })}
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center">{children}</div>
+    </div>
+  )
+}
+
+/**
+ * The fleet value-proposition card — the single most important thing to know
+ * across every bot: how much the AI resolves with NO human. Hero = % solved by
+ * AI; three drillable slices; the leftover attention signals (negative /
+ * high-urgency) live as small drillable chips in the footer.
+ */
+function WhoSolvedIt({ s, onDrill }: { s: FleetFixSummary; onDrill?: OnDrill }) {
+  const total = s.ai_solved + s.needs_human + s.unresolved_open || 1
+  const aiPct = Math.round((100 * s.ai_solved) / total)
+  const segs = [
+    { key: 'ai_solved', value: s.ai_solved },
+    { key: 'needs_human', value: s.needs_human },
+    { key: 'unresolved', value: s.unresolved_open },
+  ] as const
+  const pct = (n: number) => `${Math.round((100 * n) / total)}%`
+  const drill = (k: keyof typeof OUTCOME) => onDrill && (() => onDrill({ dim: 'outcome', value: k, label: OUTCOME[k].label }))
+
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="mb-3 flex items-baseline justify-between">
+        <h2 className="text-sm font-semibold text-slate-700">Who solved it</h2>
+        <span className="text-xs text-slate-400">AI vs. human, all bots</span>
+      </div>
+      <div className="flex items-center gap-5">
+        <Donut segments={segs.map((x) => ({ value: x.value, color: OUTCOME[x.key].color }))}>
+          <div className="font-display text-2xl font-bold tabular-nums leading-none text-slate-800">{aiPct}%</div>
+          <div className="mt-1 text-[10px] font-medium uppercase tracking-wider text-slate-400">solved by AI</div>
+        </Donut>
+        <div className="min-w-0 flex-1 space-y-1">
+          {segs.map((x) => {
+            const o = OUTCOME[x.key]
+            return (
+              <Drillable key={x.key} className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5" onClick={drill(x.key)}>
+                <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ backgroundColor: o.color }} />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-medium text-slate-700">{o.label}</span>
+                  <span className="block text-[11px] text-slate-400">{o.sub}</span>
+                </span>
+                <span className="shrink-0 text-right">
+                  <span className="block text-sm font-semibold tabular-nums text-slate-800">{fmt(x.value)}</span>
+                  <span className="block text-[11px] tabular-nums text-slate-400">{pct(x.value)}</span>
+                </span>
+              </Drillable>
+            )
+          })}
+        </div>
+      </div>
+      <p className="mt-3 border-t border-slate-100 pt-3 text-xs text-slate-500">
+        <span className="font-semibold text-emerald-600">{fmt(s.ai_solved)}</span> conversations resolved with no human involved — support you didn’t have to staff.
+      </p>
+      {(s.negative > 0 || s.high_urgency > 0) && (
+        <div className="mt-2 flex flex-wrap gap-2">
+          <Drillable className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px]" onClick={onDrill && (() => onDrill({ dim: 'sentiment', value: 'Negative', label: 'Negative conversations' }))}>
+            <span className="h-1.5 w-1.5 rounded-full bg-rose-400" />
+            <span className="tabular-nums font-semibold text-slate-700">{fmt(s.negative)}</span>
+            <span className="text-slate-500">negative</span>
+          </Drillable>
+          <Drillable className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px]" onClick={onDrill && (() => onDrill({ dim: 'urgency', value: 'High', label: 'High urgency' }))}>
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+            <span className="tabular-nums font-semibold text-slate-700">{fmt(s.high_urgency)}</span>
+            <span className="text-slate-500">high urgency</span>
+          </Drillable>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function FleetSummary({ summary, isLoading, onDrill }: { summary: FleetFixSummary | null; isLoading: boolean; onDrill?: OnDrill }) {
   if (isLoading && !summary) {
     return <div className="mb-6 flex min-h-[120px] items-center justify-center rounded-2xl border border-slate-200 bg-white text-sm text-slate-400 shadow-sm">Reading the room…</div>
@@ -93,23 +197,7 @@ export function FleetSummary({ summary, isLoading, onDrill }: { summary: FleetFi
           <MoodBar pos={s.positive} neu={s.neutral} neg={s.negative} onDrill={onDrill} />
           <p className="mt-2 text-xs text-slate-500">Across {fmt(s.substantive)} substantive conversations · {resolvedPct}% resolved.</p>
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="mb-3 text-sm font-semibold text-slate-700">Needs attention</h2>
-          <div className="grid grid-cols-3 gap-3 text-center">
-            <Drillable className="rounded-xl bg-amber-50/60 p-3" onClick={onDrill && (() => onDrill({ dim: 'urgency', value: 'High', label: 'High urgency' }))}>
-              <div className="font-display text-xl font-semibold tabular-nums text-amber-700">{fmt(s.high_urgency)}</div>
-              <div className="mt-0.5 text-[11px] font-medium uppercase tracking-wider text-slate-500">High urgency</div>
-            </Drillable>
-            <Drillable className="rounded-xl bg-rose-50/60 p-3" onClick={onDrill && (() => onDrill({ dim: 'sentiment', value: 'Negative', label: 'Negative conversations' }))}>
-              <div className="font-display text-xl font-semibold tabular-nums text-rose-600">{fmt(s.negative)}</div>
-              <div className="mt-0.5 text-[11px] font-medium uppercase tracking-wider text-slate-500">Negative</div>
-            </Drillable>
-            <Drillable className="rounded-xl bg-botscrew-50/60 p-3" onClick={onDrill && (() => onDrill({ dim: 'handover', value: '', label: 'Wanted a human' }))}>
-              <div className="font-display text-xl font-semibold tabular-nums text-botscrew-700">{fmt(s.wanted_human)}</div>
-              <div className="mt-0.5 text-[11px] font-medium uppercase tracking-wider text-slate-500">Wanted a human</div>
-            </Drillable>
-          </div>
-        </div>
+        <WhoSolvedIt s={s} onDrill={onDrill} />
       </div>
 
       {/* Top asks + flavor */}

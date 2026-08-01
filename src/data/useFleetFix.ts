@@ -18,6 +18,9 @@ export interface FleetFixSummary {
   resolved: number
   partial: number
   unresolved: number
+  ai_solved: number       // outcome: solved by AI, no human
+  needs_human: number     // outcome: pulled in a human (clear handover / escalation)
+  unresolved_open: number // outcome: neither cleanly solved nor escalated
   categories: Record<string, number>
   flavors: Record<string, number>
 }
@@ -55,6 +58,7 @@ export function useFleetFix(range: ResolvedPeriod): { summary: FleetFixSummary |
             substantive: num(r.substantive), positive: num(r.positive), neutral: num(r.neutral), negative: num(r.negative),
             high_urgency: num(r.high_urgency), wanted_human: num(r.wanted_human),
             resolved: num(r.resolved), partial: num(r.partial), unresolved: num(r.unresolved),
+            ai_solved: num(r.ai_solved), needs_human: num(r.needs_human), unresolved_open: num(r.unresolved_open),
             categories: (r.categories as Record<string, number>) ?? {},
             flavors: (r.flavors as Record<string, number>) ?? {},
           },

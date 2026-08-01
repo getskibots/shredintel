@@ -70,10 +70,17 @@ as $fn$
        and case lower(p_dim)
              when 'sentiment'  then ci.sentiment = p_value
              when 'urgency'    then ci.urgency ilike p_value || '%'
-             when 'handover'   then (ci.handover is not null and ci.handover not in ('None', ''))
+             -- handover to a human = Clear Handover / Escalation Required (NOT 'No Handover')
+             when 'handover'   then coalesce(ci.handover,'') in ('Clear Handover','Escalation Required')
              when 'category'   then ci.category = p_value
              when 'flavor'     then ci.flavor = p_value
              when 'resolution' then ci.resolution = p_value
+             -- outcome: the fleet_fix bucket model, mirrored so the donut slices drill 1:1
+             when 'outcome'    then (case
+                 when coalesce(ci.handover,'') in ('Clear Handover','Escalation Required') then 'needs_human'
+                 when ci.resolution = 'Resolved' then 'ai_solved'
+                 else 'unresolved'
+               end) = p_value
              when 'channel'    then true  -- channel filtered by the caller's bot set
              else true
            end
@@ -104,7 +111,7 @@ await c.query('grant execute on function report.fleet_drill(text, text, date, da
 await c.query(`notify pgrst, 'reload schema'`)
 
 // sanity: a few dims over all-time — confirm the sidecar (channel/geo/page/recording) rides along
-for (const [dim, val] of [['flavor', 'furious'], ['urgency', 'High'], ['category', 'Pricing & Availability'], ['handover', ''], ['sentiment', 'Negative']]) {
+for (const [dim, val] of [['outcome', 'ai_solved'], ['outcome', 'needs_human'], ['outcome', 'unresolved'], ['handover', ''], ['sentiment', 'Negative']]) {
   const { rows } = await c.query(
     `select bot_name, channel, topic, city, region, page_path, recording_sid, duration_sec, started_local
        from report.fleet_drill($1,$2,(current_date-730)::date,(current_date-1)::date, 5)`,

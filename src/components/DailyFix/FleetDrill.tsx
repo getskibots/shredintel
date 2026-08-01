@@ -1,16 +1,22 @@
 import { useEffect, useRef, useState } from 'react'
-import { X, Loader2, ChevronRight, Bot, User } from 'lucide-react'
+import { X, Loader2, ChevronRight, Globe, Bot, User, MapPin } from 'lucide-react'
 import { getSupabase } from '../../lib/supabase'
 import { sentimentColors } from '../../lib/chartTheme'
+import { LAYER_COLOR, LAYER_BADGE } from '../../lib/knowledgeLayers'
 import { RichText } from '../shared'
+import { UsDotMap } from '../UsDotMap'
+import { NaDotMap } from '../NaDotMap/NaDotMap'
 import type { ResolvedPeriod } from '../../lib/period'
 
 /**
  * Fleet-wide drill-down: click any aggregate on Master'Botter (a mood segment,
  * a top-ask category, a flavor tag, a needs-attention tile) → the matching
  * conversations ACROSS ALL RESORTS, each labeled with its resort, newest first.
- * Reads report.fleet_drill; opens each transcript via the bot-scoped
- * /api/transcript. Same shape as the per-bot ConversationExplorer, fleet-scoped.
+ * Full parity with the per-bot ConversationExplorer: each row shows its page +
+ * local time; expanding shows the recording (voice), duration, caller geo + a
+ * dot map, then the transcript with per-message knowledge-source badges. Reads
+ * report.fleet_drill (which rides the same chat/voice sidecar views); each
+ * transcript/recording opens via the bot-scoped /api/transcript · /api/recording.
  */
 
 export interface DrillTarget {
@@ -24,16 +30,92 @@ interface DrillRow {
   bot_id: number
   bot_name: string
   conversation_id: number
+  channel: 'voice' | 'chat'
   topic: string | null
   sentiment: string | null
   category: string | null
   day: string
+  started_local: string | null
+  duration_sec: number | null
+  page_path: string | null
+  city: string | null
+  region: string | null
+  country_iso: string | null
+  lat: number | null
+  lon: number | null
+  recording_sid: string | null
 }
-interface Msg { sender: string; text: string }
+interface MsgSource { layer: string; url?: string; label?: string }
+interface Msg { sender: string; text: string; source?: MsgSource }
 
 const sentColor = (s: string | null): string => {
   const k = (s || '').toLowerCase() as keyof typeof sentimentColors
   return sentimentColors[k] || '#94A3B8'
+}
+const layerStyle = (layer: string) => ({
+  ...(LAYER_BADGE[layer] ?? LAYER_BADGE.Instructions),
+  dot: LAYER_COLOR[layer] ?? LAYER_COLOR.Instructions,
+})
+const prettyPage = (p: string) => p.replace(/^www\./, '')
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+// started_local is a tz-less resort-local wall-clock — format from the string parts.
+function fmtStamp(s: string | null, withYear = false): string {
+  const m = s && /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/.exec(s)
+  if (!m) return ''
+  const [, y, mo, d, hh, mm] = m
+  let h = parseInt(hh, 10)
+  const ap = h >= 12 ? 'PM' : 'AM'
+  h = h % 12 || 12
+  return `${MONTHS[+mo - 1]} ${+d}${withYear ? ', ' + y : ''} · ${h}:${mm} ${ap}`
+}
+function fmtDur(sec: number | null): string {
+  if (!sec || sec < 1) return ''
+  if (sec < 60) return `${sec}s`
+  if (sec < 3600) return `${Math.round(sec / 60)} min`
+  return `${(sec / 3600).toFixed(1)} h`
+}
+
+// Text Edits has no admin deep-link — open the list & copy the title to paste into Search.
+function CopyOpenLink({ title, url }: { title: string; url: string }) {
+  const [copied, setCopied] = useState(false)
+  return (
+    <a
+      href={url} target="_blank" rel="noreferrer"
+      title={`Open Text Edits in the admin & copy "${title}" — paste it into the Search box to jump to this edit`}
+      onClick={(e) => { e.stopPropagation(); navigator.clipboard?.writeText(title).catch(() => {}); setCopied(true); window.setTimeout(() => setCopied(false), 6000) }}
+      className="min-w-0 truncate underline decoration-dotted underline-offset-2 hover:opacity-80"
+    >
+      {copied ? '✓ copied — paste into Search' : title}
+    </a>
+  )
+}
+
+function SourceBadge({ source }: { source: MsgSource }) {
+  const st = layerStyle(source.layer)
+  const isTextEdit = source.layer === 'Text Edits'
+  return (
+    <span
+      className={`mt-1 inline-flex max-w-full items-center gap-1.5 rounded-full ${st.bg} px-2 py-0.5 text-[11px] ${st.text}`}
+      title={isTextEdit ? 'Open Text Edits in the admin — the title is copied to your clipboard; paste it into Search to jump to this edit' : (source.url || source.label || source.layer)}
+    >
+      <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: st.dot }} />
+      <span className="font-medium">{source.layer}</span>
+      {source.url ? (
+        isTextEdit && source.label ? (
+          <CopyOpenLink title={source.label} url={source.url} />
+        ) : (
+          <a href={source.url} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="min-w-0 truncate underline decoration-dotted underline-offset-2 hover:opacity-80">
+            {source.label}
+          </a>
+        )
+      ) : source.label ? (
+        <span className="min-w-0 truncate opacity-80">· {source.label}</span>
+      ) : source.layer === 'Instructions' ? (
+        <span className="opacity-70">· no source</span>
+      ) : null}
+    </span>
+  )
 }
 
 export function FleetDrill({ target, range, onClose }: { target: DrillTarget; range: ResolvedPeriod; onClose: () => void }) {
@@ -112,9 +194,23 @@ export function FleetDrill({ target, range, onClose }: { target: DrillTarget; ra
                     >
                       <ChevronRight className={`h-4 w-4 shrink-0 text-slate-400 transition ${openCid === r.conversation_id ? 'rotate-90' : ''}`} />
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[11px] font-semibold uppercase tracking-wider text-botscrew-600">{r.bot_name}</span>
+                        <span className="flex items-center gap-1.5">
+                          <span className="truncate text-[11px] font-semibold uppercase tracking-wider text-botscrew-600">{r.bot_name}</span>
+                          {r.channel === 'voice' && <span className="shrink-0 rounded bg-slate-100 px-1 py-px text-[9px] font-semibold uppercase tracking-wider text-slate-500">Voice</span>}
+                        </span>
                         <span className="block truncate text-sm text-slate-700">{r.topic || `Conversation ${r.conversation_id}`}</span>
+                        {r.page_path && (
+                          <span className="mt-0.5 flex items-center gap-1 text-[11px] text-slate-400" title={r.page_path}>
+                            <Globe className="h-3 w-3 shrink-0" />
+                            <span className="truncate">{prettyPage(r.page_path)}</span>
+                          </span>
+                        )}
                       </span>
+                      {r.started_local && (
+                        <span className="hidden shrink-0 text-[11px] tabular-nums text-slate-400 sm:inline" title={fmtStamp(r.started_local, true)}>
+                          {fmtStamp(r.started_local)}
+                        </span>
+                      )}
                       {r.sentiment && (
                         <span className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ backgroundColor: `${sentColor(r.sentiment)}1f`, color: sentColor(r.sentiment) }}>
                           {r.sentiment}
@@ -123,6 +219,34 @@ export function FleetDrill({ target, range, onClose }: { target: DrillTarget; ra
                     </button>
                     {openCid === r.conversation_id && (
                       <div className="border-t border-slate-100 bg-slate-50/60 px-3 py-3">
+                        {r.channel === 'voice' && r.recording_sid ? (
+                          <div className="mb-3">
+                            <audio controls preload="none" className="h-9 w-full" src={`/api/recording?botId=${r.bot_id}&cid=${r.conversation_id}`}>
+                              Your browser can’t play this recording.
+                            </audio>
+                          </div>
+                        ) : null}
+                        {(fmtDur(r.duration_sec) || r.city) ? (
+                          <div className="mb-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-slate-100 pb-2 text-[11px]">
+                            {fmtDur(r.duration_sec) ? <span className="font-medium text-slate-400">{fmtDur(r.duration_sec)} conversation</span> : null}
+                            {r.city ? (
+                              <span className="inline-flex items-center gap-1 text-slate-500">
+                                <MapPin className="h-3 w-3 shrink-0 text-slate-400" />
+                                <span className="font-medium text-slate-700">{[r.city, r.region].filter(Boolean).join(', ')}</span>
+                                {r.country_iso ? <span className="text-slate-400">· {r.country_iso}</span> : null}
+                              </span>
+                            ) : null}
+                          </div>
+                        ) : null}
+                        {r.lat != null && r.lon != null ? (
+                          <div className="mb-2.5 overflow-hidden rounded-lg border border-slate-100 bg-white">
+                            {r.country_iso && r.country_iso !== 'US' ? (
+                              <NaDotMap points={[{ city: r.city ?? 'Location', lat: r.lat, lon: r.lon, conversations: 1 }]} height={170} />
+                            ) : (
+                              <UsDotMap points={[{ city: r.city ?? 'Location', lat: r.lat, lon: r.lon, conversations: 1 }]} single height={150} />
+                            )}
+                          </div>
+                        ) : null}
                         {loadingT ? (
                           <div className="flex items-center gap-2 text-xs text-slate-500"><Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading transcript…</div>
                         ) : transcript && transcript.length ? (
@@ -137,6 +261,7 @@ export function FleetDrill({ target, range, onClose }: { target: DrillTarget; ra
                                   </span>
                                   <div className={`min-w-0 flex-1 text-sm leading-relaxed ${isUser ? 'font-medium text-slate-900' : 'text-slate-500'}`}>
                                     <RichText text={m.text} />
+                                    {!isUser && m.source && <SourceBadge source={m.source} />}
                                   </div>
                                 </div>
                               )

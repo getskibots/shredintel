@@ -4,6 +4,7 @@ import { ArrowDown, ArrowUp, Bot, Filter, Headphones, LayoutGrid, List, Search, 
 import { useFleetOverview, type FleetBotRow } from '../../data/useFleetOverview'
 import { useFleetFix } from '../../data/useFleetFix'
 import { FleetSummary } from '../DailyFix/FleetSummary'
+import { FleetDrill, type DrillTarget } from '../DailyFix'
 import { verticalMeta } from '../../lib/verticalLabels'
 import { Metric } from '../shared/Metric'
 import { PeriodPicker } from '../PeriodPicker'
@@ -104,6 +105,7 @@ export function FleetPage() {
   const range = resolveSelection(selection)
   const fleetFix = useFleetFix(range)
   const isDailyFix = selection.kind === 'preset' && selection.preset === '1d'
+  const [drill, setDrill] = useState<DrillTarget | null>(null)
   const setSelection = (next: PeriodSelection) => {
     const params = writeSelectionToSearchParams(new URLSearchParams(searchParams), next)
     setSearchParams(params, { replace: true })
@@ -398,7 +400,7 @@ export function FleetPage() {
       </div>
 
       {/* The heartbeat — mood / signal / top asks / flavor for the selected range */}
-      <FleetSummary summary={fleetFix.summary} isLoading={fleetFix.isLoading} />
+      <FleetSummary summary={fleetFix.summary} isLoading={fleetFix.isLoading} onDrill={setDrill} />
 
       {/* Fleet-wide numbers — Usage row, then Cost row (each fills its grid) */}
       <div className="mb-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -711,6 +713,8 @@ export function FleetPage() {
           bot{silent === 1 ? '' : 's'} with no recorded traffic
         </p>
       )}
+
+      {drill && <FleetDrill target={drill} range={range} onClose={() => setDrill(null)} />}
     </div>
   )
 }

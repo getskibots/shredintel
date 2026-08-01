@@ -79,7 +79,10 @@ function ChannelShell() {
             All chat routes collapse into one canonical layout — BotAnalyticsPage.
             Voice stays separate because its data model differs (no page URLs,
             call summaries live in raw.admin_call). */}
-        <Route path="/" element={<BotIndexPage />} />
+        {/* Root: the bot picker, EXCEPT on the Master'Botter deployment where it
+            redirects to The Daily Fix. The picker is always reachable at /bots. */}
+        <Route path="/" element={masterHomeRoute() === '/' ? <BotIndexPage /> : <Navigate to={masterHomeRoute()} replace />} />
+        <Route path="/bots" element={<BotIndexPage />} />
         {/* /fleet (Master'Botter) is handled by an early return above with its
             own standalone chrome — it never reaches this Routes block. */}
         <Route path="/chat" element={<Navigate to="/" replace />} />
@@ -102,6 +105,18 @@ function ChannelShell() {
 // the tool is still reachable there at /#/tools/ahhh-faq-it.
 const isFaqHost = () =>
   typeof window !== 'undefined' && /^faq\./i.test(window.location.hostname)
+
+// On the dedicated Master'Botter deployment, the bare URL should open The Daily
+// Fix, not the "Choose a bot" picker. Fires when VITE_HOME_ROUTE is set (the
+// master Vercel project's env) OR the host is master.* — everywhere else "/"
+// stays the picker, so production and the shared app are unchanged. The picker
+// is always reachable at /bots.
+const masterHomeRoute = (): string => {
+  const env = import.meta.env.VITE_HOME_ROUTE as string | undefined
+  if (env) return env
+  if (typeof window !== 'undefined' && /^master\./i.test(window.location.hostname)) return '/fleet'
+  return '/'
+}
 
 function App() {
   if (isFaqHost()) {

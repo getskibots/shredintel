@@ -7,10 +7,10 @@
  * and stream it back. The client only ever talks to this endpoint — it never
  * sees the Account SID / Auth Token or a raw Twilio URL.
  *
- * Config (Vercel env, server-only): TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN.
- * NOTE: voice bots span two Twilio accounts — this uses the single account in
- * env (bot 248 = AC9271…). A per-bot account map is the follow-up for the
- * 461-495 fleet on the other account.
+ * Account-aware across the WHOLE voice fleet: resolveTwilio() resolves this bot's
+ * Twilio account + token from the Botscrew mirror (raw.admin_twilio_configs), so
+ * every voice bot's recordings play with no per-bot config. Env vars remain a
+ * fallback only.
  *
  * PII: recordings are guest-voice PII → same bot-scoped, authed-proxy posture
  * as /api/transcript (recordings are never anon-readable).

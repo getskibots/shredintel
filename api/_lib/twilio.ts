@@ -1,14 +1,15 @@
 /**
- * Account-aware Twilio credential resolution (multi-account ready).
+ * Account-aware Twilio credential resolution (multi-account, zero per-bot config).
  *
- *   bot_id → account_sid   from report.bot_twilio (GSB-internal config table)
- *   account_sid → token    from env: TWILIO_ACCOUNTS json map ({"AC..":"token"})
- *                          for multi-account, or the single TWILIO_ACCOUNT_SID /
- *                          TWILIO_AUTH_TOKEN today.
+ * PRIMARY: the Botscrew mirror already holds EVERY voice bot's account + token
+ *   bot_id → raw.admin_bot.twilio_configs_id → raw.admin_twilio_configs
+ *            (accountsid + auth_token)
+ * — the same source the cost sync and the transfer ingest use — so /api/recording
+ * works for every voice bot with nothing to seed. GSB owns these Twilio accounts.
  *
- * Falls back to the single-account env when a bot has no config row yet (248's
- * current setup). The token never leaves the server. (Encrypted-in-DB tokens +
- * the admin console are the finalization step; this is the env-token phase.)
+ * FALLBACK (kept for safety): report.bot_twilio (account_sid) + a token from an
+ * encrypted DB column or env (TWILIO_ACCOUNTS json map, or single TWILIO_ACCOUNT_SID
+ * / TWILIO_AUTH_TOKEN). The token never leaves the server.
  */
 import type { Pool } from 'pg'
 import { decryptToken } from './tokenCrypto.js'
@@ -32,6 +33,25 @@ export async function resolveTwilio(
   pool: Pool,
   botId: number,
 ): Promise<{ accountSid: string; token: string } | null> {
+  // PRIMARY: resolve account + token straight from the mirror — complete for the
+  // whole voice fleet, no bot_twilio seeding or env token needed.
+  try {
+    const m = await pool.query(
+      `select t.accountsid, t.auth_token
+         from raw.admin_bot b
+         join raw.admin_twilio_configs t on t.id = b.twilio_configs_id
+        where b.id = $1 and coalesce(t.accountsid, '') <> '' and coalesce(t.auth_token, '') <> ''
+        limit 1`,
+      [botId],
+    )
+    const sid = (m.rows[0]?.accountsid as string | undefined)?.trim()
+    const tok = (m.rows[0]?.auth_token as string | undefined)?.trim()
+    if (sid && tok) return { accountSid: sid, token: tok }
+  } catch {
+    /* mirror not reachable — fall through to the config table / env */
+  }
+
+  // FALLBACK: report.bot_twilio (account) + encrypted-DB or env token.
   let accountSid: string | null = null
   let encToken: string | null = null
   try {

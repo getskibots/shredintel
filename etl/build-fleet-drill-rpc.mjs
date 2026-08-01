@@ -65,19 +65,21 @@ as $fn$
   with hits as (
     select ci.bot_id, ci.conversation_id, ci.topic, ci.sentiment, ci.category, ci.day
       from report.conversation_intel ci
+      left join report.conversation_human ch on ch.conversation_id = ci.conversation_id
      where ci.day between p_from and p_to
        and ci.substantive
        and case lower(p_dim)
              when 'sentiment'  then ci.sentiment = p_value
              when 'urgency'    then ci.urgency ilike p_value || '%'
-             -- handover to a human = Clear Handover / Escalation Required (NOT 'No Handover')
+             -- requested a human = AI-inferred Clear Handover / Escalation Required
              when 'handover'   then coalesce(ci.handover,'') in ('Clear Handover','Escalation Required')
              when 'category'   then ci.category = p_value
              when 'flavor'     then ci.flavor = p_value
              when 'resolution' then ci.resolution = p_value
              -- outcome: the fleet_fix bucket model, mirrored so the donut slices drill 1:1
+             -- got_human is GROUND TRUTH (report.conversation_human), not the inferred handover
              when 'outcome'    then (case
-                 when coalesce(ci.handover,'') in ('Clear Handover','Escalation Required') then 'needs_human'
+                 when coalesce(ch.got_human,false) then 'got_human'
                  when ci.resolution = 'Resolved' then 'ai_solved'
                  else 'unresolved'
                end) = p_value
@@ -111,7 +113,7 @@ await c.query('grant execute on function report.fleet_drill(text, text, date, da
 await c.query(`notify pgrst, 'reload schema'`)
 
 // sanity: a few dims over all-time — confirm the sidecar (channel/geo/page/recording) rides along
-for (const [dim, val] of [['outcome', 'ai_solved'], ['outcome', 'needs_human'], ['outcome', 'unresolved'], ['handover', ''], ['sentiment', 'Negative']]) {
+for (const [dim, val] of [['outcome', 'ai_solved'], ['outcome', 'got_human'], ['outcome', 'unresolved'], ['handover', ''], ['sentiment', 'Negative']]) {
   const { rows } = await c.query(
     `select bot_name, channel, topic, city, region, page_path, recording_sid, duration_sec, started_local
        from report.fleet_drill($1,$2,(current_date-730)::date,(current_date-1)::date, 5)`,

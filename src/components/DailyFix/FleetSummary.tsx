@@ -55,10 +55,12 @@ function Drillable({ onClick, className, children }: { onClick?: () => void; cla
 }
 
 // Outcome palette (matches the SQL bucket model in build-fleet-fix-rpc.mjs).
+// got_human is GROUND TRUTH (a real agent replied / a call transferred), not the
+// AI's inferred handover — see report.conversation_human.
 const OUTCOME = {
-  ai_solved:  { color: '#10B981', label: 'Solved by AI',  sub: 'resolved, no human' },
-  needs_human:{ color: '#F59E0B', label: 'Needed a human', sub: 'handed to a person' },
-  unresolved: { color: '#CBD5E1', label: 'Unresolved',     sub: 'no clear outcome' },
+  ai_solved:  { color: '#10B981', label: 'Solved by AI', sub: 'resolved, no human' },
+  got_human:  { color: '#F59E0B', label: 'Got a human',  sub: 'a real agent stepped in' },
+  unresolved: { color: '#CBD5E1', label: 'Unresolved',   sub: 'no human, not resolved' },
 } as const
 
 /** Segmented donut. Segments render clockwise from 12 o'clock; center holds children. */
@@ -97,11 +99,11 @@ function Donut({ segments, size = 128, stroke = 15, children }: { segments: { va
  * high-urgency) live as small drillable chips in the footer.
  */
 function WhoSolvedIt({ s, onDrill }: { s: FleetFixSummary; onDrill?: OnDrill }) {
-  const total = s.ai_solved + s.needs_human + s.unresolved_open || 1
+  const total = s.ai_solved + s.got_human + s.unresolved_open || 1
   const aiPct = Math.round((100 * s.ai_solved) / total)
   const segs = [
     { key: 'ai_solved', value: s.ai_solved },
-    { key: 'needs_human', value: s.needs_human },
+    { key: 'got_human', value: s.got_human },
     { key: 'unresolved', value: s.unresolved_open },
   ] as const
   const pct = (n: number) => `${Math.round((100 * n) / total)}%`

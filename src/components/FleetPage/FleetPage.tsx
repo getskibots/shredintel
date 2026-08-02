@@ -3,7 +3,9 @@ import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import { ArrowDown, ArrowUp, Bot, DollarSign, Filter, Headphones, LayoutGrid, List, Search, TrendingUp, UserRound, Zap } from 'lucide-react'
 import { useFleetOverview, type FleetBotRow } from '../../data/useFleetOverview'
 import { useFleetFix } from '../../data/useFleetFix'
+import { useFleetTimeseries } from '../../data/useFleetTimeseries'
 import { FleetSummary } from '../DailyFix/FleetSummary'
+import { SeasonRibbon } from './SeasonRibbon'
 import { FleetDrill, type DrillTarget } from '../DailyFix'
 import { verticalMeta } from '../../lib/verticalLabels'
 import { Metric } from '../shared/Metric'
@@ -104,6 +106,7 @@ export function FleetPage() {
   const selection = selectionFromSearchParams(searchParams, { kind: 'preset', preset: 'all' })
   const range = resolveSelection(selection)
   const fleetFix = useFleetFix(range)
+  const timeseries = useFleetTimeseries()
   const isDailyFix = selection.kind === 'preset' && selection.preset === '1d'
   const [drill, setDrill] = useState<DrillTarget | null>(null)
   const setSelection = (next: PeriodSelection) => {
@@ -425,6 +428,17 @@ export function FleetPage() {
           <PeriodPicker value={selection} onChange={setSelection} align="end" />
         </div>
       </div>
+
+      {/* Seasonality ribbon — the fleet's volume + mood over time; drag the window
+          (or Play) to scrub the seasons and set the dashboard's date range. */}
+      {!showCost && (
+        <SeasonRibbon
+          data={timeseries.data}
+          from={range.from}
+          to={range.to}
+          onSelect={(f, t) => setSelection({ kind: 'custom', from: f, to: t })}
+        />
+      )}
 
       {/* The heartbeat — mood / signal / top asks / flavor for the selected range.
           Hidden in cost view, which focuses on spend. */}

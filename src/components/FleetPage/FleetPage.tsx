@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useLocation, useSearchParams } from 'react-router-dom'
-import { ArrowDown, ArrowUp, Bot, Filter, Headphones, LayoutGrid, List, Search, TrendingUp, UserRound, Zap } from 'lucide-react'
+import { ArrowDown, ArrowUp, Bot, DollarSign, Filter, Headphones, LayoutGrid, List, Search, TrendingUp, UserRound, Zap } from 'lucide-react'
 import { useFleetOverview, type FleetBotRow } from '../../data/useFleetOverview'
 import { useFleetFix } from '../../data/useFleetFix'
 import { FleetSummary } from '../DailyFix/FleetSummary'
@@ -108,6 +108,15 @@ export function FleetPage() {
   const [drill, setDrill] = useState<DrillTarget | null>(null)
   const setSelection = (next: PeriodSelection) => {
     const params = writeSelectionToSearchParams(new URLSearchParams(searchParams), next)
+    setSearchParams(params, { replace: true })
+  }
+  // Cost toggle — reveals the cost sections in place (no separate page). URL-addressable
+  // (?view=cost) so it's shareable and survives reload; shares the date range + filters.
+  const showCost = searchParams.get('view') === 'cost'
+  const setShowCost = (on: boolean) => {
+    const params = new URLSearchParams(searchParams)
+    if (on) params.set('view', 'cost')
+    else params.delete('view')
     setSearchParams(params, { replace: true })
   }
 
@@ -253,18 +262,20 @@ export function FleetPage() {
   // hidden on "All time" where every bot reads as "new".
   const hasDelta = hero.prev > 0
 
+  // Table columns follow the toggle: usage columns in overview, cost columns in
+  // cost view. Convs / All time / Active / Trend anchor both.
   const columns: { key: SortKey; label: string; title?: string }[] = [
     { key: 'conversations', label: 'Convs', title: `Conversations opened — ${range.label}` },
-    ...(hasDelta ? [{ key: 'delta' as SortKey, label: 'Δ', title: 'Change in conversations vs the equal-length window before this one' }] : []),
-    { key: 'engaged', label: 'Engaged', title: 'Conversations with at least one real guest message' },
-    { key: 'messages', label: 'Msgs', title: 'All messages, both directions' },
-    ...(hasVoiceCost ? [{ key: 'voice_minutes' as SortKey, label: 'Min', title: 'Voice call minutes this window' }] : []),
-    ...(hasVoiceCost ? [{ key: 'voice_cost_usd' as SortKey, label: 'Twilio', title: 'Twilio telephony — call charges + monthly phone-line rental, this window' }] : []),
-    ...(hasRecCost ? [{ key: 'voice_recording_usd' as SortKey, label: 'Recordings', title: 'Twilio call-recording + storage, allocated to this bot' }] : []),
-    ...(hasAiCost ? [{ key: 'ai_cost_usd' as SortKey, label: 'AI Tokens', title: 'OpenAI token spend for this bot’s project (true per-bot cost)' }] : []),
-    ...(hasTotalCost ? [{ key: 'total_cost_usd' as SortKey, label: 'Total', title: 'Run cost: Twilio + recordings + AI tokens (real billed spend)' }] : []),
-    ...(hasTotalCost ? [{ key: 'cost_per_conv' as SortKey, label: '$/conv', title: 'Total run cost ÷ conversations' }] : []),
-    ...(hasVoiceCost ? [{ key: 'cost_per_min' as SortKey, label: '$/min', title: 'Total run cost ÷ voice minutes' }] : []),
+    ...(!showCost && hasDelta ? [{ key: 'delta' as SortKey, label: 'Δ', title: 'Change in conversations vs the equal-length window before this one' }] : []),
+    ...(!showCost ? [{ key: 'engaged' as SortKey, label: 'Engaged', title: 'Conversations with at least one real guest message' }] : []),
+    ...(!showCost ? [{ key: 'messages' as SortKey, label: 'Msgs', title: 'All messages, both directions' }] : []),
+    ...(showCost && hasVoiceCost ? [{ key: 'voice_minutes' as SortKey, label: 'Min', title: 'Voice call minutes this window' }] : []),
+    ...(showCost && hasVoiceCost ? [{ key: 'voice_cost_usd' as SortKey, label: 'Twilio', title: 'Twilio telephony — call charges + monthly phone-line rental, this window' }] : []),
+    ...(showCost && hasRecCost ? [{ key: 'voice_recording_usd' as SortKey, label: 'Recordings', title: 'Twilio call-recording + storage, allocated to this bot' }] : []),
+    ...(showCost && hasAiCost ? [{ key: 'ai_cost_usd' as SortKey, label: 'AI Tokens', title: 'OpenAI token spend for this bot’s project (true per-bot cost)' }] : []),
+    ...(showCost && hasTotalCost ? [{ key: 'total_cost_usd' as SortKey, label: 'Total', title: 'Run cost: Twilio + recordings + AI tokens (real billed spend)' }] : []),
+    ...(showCost && hasTotalCost ? [{ key: 'cost_per_conv' as SortKey, label: '$/conv', title: 'Total run cost ÷ conversations' }] : []),
+    ...(showCost && hasVoiceCost ? [{ key: 'cost_per_min' as SortKey, label: '$/min', title: 'Total run cost ÷ voice minutes' }] : []),
     { key: 'conv_all', label: 'All time' },
     { key: 'last_active', label: 'Active' },
   ]
@@ -308,18 +319,20 @@ export function FleetPage() {
                 </Link>
               </td>
               <td className="px-3 py-2 text-right tabular-nums font-semibold text-slate-800">{fmt(r.conversations)}</td>
-              {hasDelta && <td className="px-3 py-2 text-right"><DeltaBadge row={r} /></td>}
-              <td className="px-3 py-2 text-right tabular-nums text-slate-600">
-                {fmt(r.engaged)}
-                {r.conversations > 0 && <span className="ml-1 text-[11px] text-slate-400">{Math.round((100 * r.engaged) / r.conversations)}%</span>}
-              </td>
-              <td className="px-3 py-2 text-right tabular-nums text-slate-500">{fmt(r.messages)}</td>
-              {hasVoiceCost && (
+              {!showCost && hasDelta && <td className="px-3 py-2 text-right"><DeltaBadge row={r} /></td>}
+              {!showCost && (
+                <td className="px-3 py-2 text-right tabular-nums text-slate-600">
+                  {fmt(r.engaged)}
+                  {r.conversations > 0 && <span className="ml-1 text-[11px] text-slate-400">{Math.round((100 * r.engaged) / r.conversations)}%</span>}
+                </td>
+              )}
+              {!showCost && <td className="px-3 py-2 text-right tabular-nums text-slate-500">{fmt(r.messages)}</td>}
+              {showCost && hasVoiceCost && (
                 <td className="px-3 py-2 text-right tabular-nums text-slate-500">
                   {r.voice_minutes > 0 ? fmt(Math.round(r.voice_minutes)) : <span className="text-slate-300">—</span>}
                 </td>
               )}
-              {hasVoiceCost && (
+              {showCost && hasVoiceCost && (
                 <td className="px-3 py-2 text-right tabular-nums text-slate-600">
                   {r.voice_cost_usd > 0 ? (
                     <span title={`${fmt(r.voice_calls)} calls · ${fmt(Math.round(r.voice_minutes))} min · usage ${usd(r.voice_cost_usd - r.voice_rental_usd)} + rental ${usd(r.voice_rental_usd)}`}>{usd(r.voice_cost_usd)}</span>
@@ -328,17 +341,17 @@ export function FleetPage() {
                   )}
                 </td>
               )}
-              {hasRecCost && (
+              {showCost && hasRecCost && (
                 <td className="px-3 py-2 text-right tabular-nums text-slate-600">
                   {r.voice_recording_usd > 0 ? usd(r.voice_recording_usd) : <span className="text-slate-300">—</span>}
                 </td>
               )}
-              {hasAiCost && (
+              {showCost && hasAiCost && (
                 <td className="px-3 py-2 text-right tabular-nums text-slate-600">
                   {r.ai_cost_usd > 0 ? usd(r.ai_cost_usd) : <span className="text-slate-300">—</span>}
                 </td>
               )}
-              {hasTotalCost && (
+              {showCost && hasTotalCost && (
                 <td className="px-3 py-2 text-right tabular-nums font-semibold text-slate-800">
                   {r.total_cost_usd > 0 ? (
                     <span title={`Twilio ${usd(r.voice_cost_usd)} + recordings ${usd(r.voice_recording_usd)} + AI tokens ${usd(r.ai_cost_usd)}`}>{usd(r.total_cost_usd)}</span>
@@ -347,12 +360,12 @@ export function FleetPage() {
                   )}
                 </td>
               )}
-              {hasTotalCost && (
+              {showCost && hasTotalCost && (
                 <td className="px-3 py-2 text-right tabular-nums text-slate-600">
                   {r.total_cost_usd > 0 && r.conversations > 0 ? `$${botCostPerConv(r).toFixed(3)}` : <span className="text-slate-300">—</span>}
                 </td>
               )}
-              {hasVoiceCost && (
+              {showCost && hasVoiceCost && (
                 <td className="px-3 py-2 text-right tabular-nums text-slate-600">
                   {r.voice_minutes > 0 && r.total_cost_usd > 0 ? `$${botCostPerMin(r).toFixed(3)}` : <span className="text-slate-300">—</span>}
                 </td>
@@ -383,6 +396,20 @@ export function FleetPage() {
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
+            onClick={() => setShowCost(!showCost)}
+            title="Toggle the cost view — Twilio, OpenAI, and per-bot spend for this window"
+            className={[
+              'inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition',
+              showCost
+                ? 'border-amber-500 bg-amber-500 text-white shadow-sm'
+                : 'border-amber-200 bg-white text-amber-700 hover:border-amber-400',
+            ].join(' ')}
+          >
+            <DollarSign className="h-4 w-4" strokeWidth={2} />
+            Cost
+          </button>
+          <button
+            type="button"
             onClick={() => setSelection({ kind: 'preset', preset: '1d' })}
             title="Jump to the latest complete day — today's fleet heartbeat"
             className={[
@@ -399,8 +426,9 @@ export function FleetPage() {
         </div>
       </div>
 
-      {/* The heartbeat — mood / signal / top asks / flavor for the selected range */}
-      <FleetSummary summary={fleetFix.summary} isLoading={fleetFix.isLoading} onDrill={setDrill} />
+      {/* The heartbeat — mood / signal / top asks / flavor for the selected range.
+          Hidden in cost view, which focuses on spend. */}
+      {!showCost && <FleetSummary summary={fleetFix.summary} isLoading={fleetFix.isLoading} onDrill={setDrill} />}
 
       {/* Fleet-wide numbers — Usage row, then Cost row (each fills its grid) */}
       <div className="mb-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -444,7 +472,7 @@ export function FleetPage() {
           </div>
         </button>
       </div>
-      {(hasBill || hasAiCost || hasTotalCost) && (
+      {showCost && (hasBill || hasAiCost || hasTotalCost) && (
         <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {hasBill && (
             <Metric
@@ -491,7 +519,7 @@ export function FleetPage() {
       )}
 
       {/* ── Insight: Chat vs Voice — volume vs cost by channel ─────────── */}
-      {hasChannelSplit && hasTotalCost && (
+      {showCost && hasChannelSplit && hasTotalCost && (
         <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
             <h2 className="text-sm font-semibold text-slate-700">Chat vs Voice</h2>
@@ -600,7 +628,7 @@ export function FleetPage() {
       )}
 
       {/* ── Insight: Voice telephony — inbound (AI) vs outbound (human handover) ── */}
-      {hasTelephonySplit && (
+      {showCost && hasTelephonySplit && (
         <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
             <h2 className="text-sm font-semibold text-slate-700">Voice: AI-handled vs human handover</h2>

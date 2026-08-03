@@ -24,6 +24,11 @@ import { validEmbedClaims } from '../../lib/embedToken'
  * and paste the result into PASSWORD_HASH below.
  */
 const PASSWORD_HASH = '684e789c00a440e197e44ac882173a459345b0e793d3899313a07649211e361e'
+// Second accepted password for the Botscrew dev-embed test: "botscrew". Same soft
+// gate ("keep randoms out"); retire it when the per-bot token replaces the gate at
+// go-live. Both passwords unlock; whichever matched is what we persist.
+const BOTSCREW_HASH = '9f39d70fa95215936268ddd32ed426fe1b86a39d02f02dc367a8b1f2e3e5f0a5'
+const VALID_HASHES = [PASSWORD_HASH, BOTSCREW_HASH]
 const STORAGE_KEY = 'shredintel_gate_v1'
 
 // Embed token — lets a TRUSTED host (the Botscrew admin iframe) auto-unlock the
@@ -63,7 +68,7 @@ export function PasswordGate({ children }: { children: ReactNode }) {
   // on the /api endpoints (strict mode). See src/lib/embedToken.ts.
   const embedJwtOk = isEmbedMode() && validEmbedClaims() != null
   const initialAuthed = embedJwtOk || (() => {
-    try { return localStorage.getItem(STORAGE_KEY) === PASSWORD_HASH } catch { return false }
+    try { return VALID_HASHES.includes(localStorage.getItem(STORAGE_KEY) ?? '') } catch { return false }
   })()
   const [authed, setAuthed] = useState(initialAuthed)
   // If a host embeds us with ?k=<token>, verify it before rendering anything so
@@ -99,9 +104,9 @@ export function PasswordGate({ children }: { children: ReactNode }) {
     setChecking(true)
     setError(false)
     const hash = await sha256Hex(value)
-    if (hash === PASSWORD_HASH) {
+    if (VALID_HASHES.includes(hash)) {
       try {
-        localStorage.setItem(STORAGE_KEY, PASSWORD_HASH)
+        localStorage.setItem(STORAGE_KEY, hash)
       } catch {
         /* private mode — session-only access is fine */
       }

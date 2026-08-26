@@ -172,9 +172,10 @@ export function writeSelectionToSearchParams(
   sel: PeriodSelection,
 ): URLSearchParams {
   if (sel.kind === 'preset') {
-    // Default preset (7d) is omitted from the URL to keep it clean
-    if (sel.preset === '7d') params.delete('period')
-    else params.set('period', sel.preset)
+    // Always write the preset explicitly. (Previously 7d was omitted as "the
+    // default" — but pages differ: Fleet and Voice default to All time, so an
+    // omitted param made "Last 7 days" silently fall back to the wrong window.)
+    params.set('period', sel.preset)
     params.delete('from')
     params.delete('to')
   } else {

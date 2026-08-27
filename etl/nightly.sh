@@ -46,6 +46,14 @@ echo "── 4/4 refresh matviews ──"
 $NODE refresh.mjs 2>&1 | tail -6
 RC=${PIPESTATUS[0]}; [ "$RC" -eq 0 ] || FAILED="$FAILED refresh"
 
+# Handover transcription — the human/escalation half of NEW transferred calls
+# (Whisper) + voicemail detection. Incremental (pending-only), resumable, hard
+# $-capped. Best-effort: NOT added to FAILED (a Whisper/Twilio hiccup must not
+# false-red the freshness heartbeat). Depends on call_transfers + call_base being
+# current (transfer ingest + the refresh above populate recording_sid).
+echo "── handover transcription (new transfers, best-effort) ──"
+$NODE transcribe-handover.mjs --nightly --cap 20 2>&1 | tail -6
+
 # GA4 site traffic — trigger the Vercel endpoint (it holds the keys + does the
 # decrypt/pull). Best-effort: NOT added to FAILED, so a GA4 hiccup can never
 # false-red the core freshness heartbeat. Response is logged for spot-checking.

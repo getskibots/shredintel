@@ -323,6 +323,72 @@ export function VoiceAnalyticsPage() {
             )}
           </Panel>
 
+          {/* Escalation OUTCOME — did the transfer reach a person or voicemail? The panel
+              above counts "answered", but Twilio marks a voicemail system answering as
+              answered too. This splits it using the Whisper transcript of the human leg,
+              and charts the coverage gap by hour. */}
+          {m.voicemail && m.voicemail.transfers > 0 && (() => {
+            const vm = m.voicemail
+            const reachedPct = Math.max(0, 100 - vm.voicemailPct)
+            const afterHours = vm.byHour.filter((h) => h.hour < 8 || h.hour >= 18)
+            const ahTransfers = afterHours.reduce((a, h) => a + h.transfers, 0)
+            const ahVoicemail = afterHours.reduce((a, h) => a + h.voicemail, 0)
+            const ahPct = ahTransfers > 0 ? Math.round((100 * ahVoicemail) / ahTransfers) : 0
+            return (
+              <Panel
+                className="lg:col-span-12"
+                eyebrow="Service quality"
+                title="Did the escalation reach a person?"
+                description="Twilio marks a call 'answered' even when voicemail picks up. This splits escalations into reached-a-person vs voicemail, read from the transcript of the human leg."
+                action={
+                  <div className="rounded-2xl border border-rose-200 bg-rose-50/70 px-4 py-2 text-right" title="Share of escalations that hit voicemail instead of a person">
+                    <div className="text-[10px] font-semibold uppercase tracking-wider text-rose-700">Voicemail rate</div>
+                    <div className="mt-0.5 font-display text-2xl font-semibold tabular-nums text-rose-700">{formatPercent(vm.voicemailPct)}</div>
+                  </div>
+                }
+              >
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                  <Metric label="Reached a person" value={formatNumber(vm.reached)} subValue={`${formatPercent(reachedPct)} of escalations`} tone="good" />
+                  <Metric label="Hit voicemail" value={formatNumber(vm.voicemail)} subValue={`${formatPercent(vm.voicemailPct)} · left a message`} tone="risk" />
+                  <Metric label="After-hours voicemail" value={formatPercent(ahPct)} subValue={`before 8a / after 6p · ${formatNumber(ahVoicemail)} calls`} tone="warn" />
+                </div>
+
+                <div className="mt-5">
+                  <div className="mb-1.5 flex items-center justify-between">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Escalations — person vs voicemail</span>
+                    <span className="text-[11px] text-slate-400">{formatNumber(vm.transfers)} escalations</span>
+                  </div>
+                  <div className="flex h-3 overflow-hidden rounded-full bg-slate-100">
+                    <div style={{ width: `${reachedPct}%`, background: brand.blue }} title={`Reached a person ${formatNumber(vm.reached)}`} />
+                    <div style={{ width: `${vm.voicemailPct}%`, background: sentimentColors.negative }} title={`Voicemail ${formatNumber(vm.voicemail)}`} />
+                  </div>
+                  <div className="mt-1.5 flex items-center justify-between text-xs">
+                    <span className="font-medium text-botscrew-700">Reached a person {formatPercent(reachedPct)}</span>
+                    <span className="font-medium text-rose-700">{formatPercent(vm.voicemailPct)} voicemail</span>
+                  </div>
+                </div>
+
+                <div className="mt-6">
+                  <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Voicemail by hour — the coverage gap</div>
+                  <ResponsiveContainer width="100%" height={220}>
+                    <BarChart data={vm.byHour}>
+                      <CartesianGrid {...chart.grid} />
+                      <XAxis dataKey="hour" tickFormatter={fmtHour} {...chart.xAxis} interval={1} />
+                      <YAxis {...chart.yAxis} />
+                      <Tooltip {...chart.tooltip} labelFormatter={(h) => `${fmtHour(Number(h))} local`} />
+                      <Bar dataKey="reached" name="Reached a person" stackId="a" fill={brand.blue} isAnimationActive={false} />
+                      <Bar dataKey="voicemail" name="Voicemail" stackId="a" fill={sentimentColors.negative} radius={[4, 4, 0, 0]} isAnimationActive={false} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <p className="mt-4 text-[11px] text-slate-400">
+                  Voicemail is detected from the transcript of the human leg (the partner&apos;s after-hours or all-agents-busy greeting). &ldquo;Reached a person&rdquo; is the remainder and may include a few hold/dropped calls — detection is being refined.
+                </p>
+              </Panel>
+            )
+          })()}
+
           {/* What callers ask about (topics) — mirrors chat's Knowledge band */}
           <Panel
             className="lg:col-span-12"

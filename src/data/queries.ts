@@ -504,6 +504,17 @@ export interface CallInboundStatsRow {
   not_connected: number
 }
 
+/** report.handover_stats(bot,from,to) RPC — escalation outcome (person vs voicemail)
+ *  from the Whisper transcript of the human leg. SECURITY DEFINER: anon gets counts
+ *  only, never transcript text. by_hour is resort-local (only non-empty hours). */
+export interface HandoverHourRow { hour: number; transfers: number; voicemail: number }
+export interface HandoverStats {
+  transfers: number
+  voicemail: number
+  connected: number
+  by_hour: HandoverHourRow[]
+}
+
 export interface VoiceBundle {
   callVolume: CallVolumeRow[]
   callGeo: CallGeoRow[]
@@ -523,6 +534,8 @@ export interface VoiceBundle {
   intelSentiment: IntelBreakdownRow[]
   /** Urgency mix (Low / Medium / High / Escalation Required) — "Needs Attention". */
   intelUrgency: IntelBreakdownRow[]
+  /** Escalation outcome — person vs voicemail (Whisper transcript of the human leg). */
+  handover: HandoverStats | null
 }
 
 /**
@@ -561,7 +574,11 @@ export async function fetchVoiceBundle(
       .schema('report').from('call_caller_stats')
       .select('*').eq('bot_id', botId).maybeSingle() as unknown as Promise<{ data: CallCallerStatsRow | null; error: unknown }>
 
-    const [volume, geo, hours, hand, section, sentiment, urg, callers, stats, transfers, facts, inbound] = await withTimeout(Promise.all([
+    const handoverQ = supabase
+      .schema('report')
+      .rpc('handover_stats', { p_bot_id: botId, p_from: from, p_to: to }) as unknown as Promise<{ data: HandoverStats | null; error: unknown }>
+
+    const [volume, geo, hours, hand, section, sentiment, urg, callers, stats, transfers, facts, inbound, handoverRes] = await withTimeout(Promise.all([
       q<CallVolumeRow>('call_volume'),
       q<CallGeoRow>('call_geo'),
       q<CallHoursRow>('call_hours'),
@@ -574,6 +591,7 @@ export async function fetchVoiceBundle(
       q<CallTransferStatsRow>('call_transfer_stats'),
       q<CallFactsStatsRow>('call_facts_stats'),
       q<CallInboundStatsRow>('call_inbound_stats'),
+      handoverQ,
     ]))
 
     // call_volume is the spine — if it errors, the voice views aren't there → fixtures.
@@ -596,6 +614,7 @@ export async function fetchVoiceBundle(
       intelSection: section.error ? [] : (section.data ?? []),
       intelSentiment: sentiment.error ? [] : (sentiment.data ?? []),
       intelUrgency: urg.error ? [] : (urg.data ?? []),
+      handover: handoverRes.error ? null : (handoverRes.data ?? null),
     }
   } catch (err) {
     // eslint-disable-next-line no-console

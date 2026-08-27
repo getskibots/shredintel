@@ -105,6 +105,15 @@ export interface VoiceMetrics {
   sectionMix: VoiceBreakdown[]
   /** Urgency mix as the "Needs attention" panel shape (Low→Escalation). */
   needsAttention: UrgencyProps
+  /** Escalation outcome — did the transfer reach a PERSON or voicemail (Whisper of the
+   *  human leg). null when no transfers/no transcript. byHour is 0..23 zero-filled. */
+  voicemail: {
+    transfers: number
+    voicemail: number
+    reached: number
+    voicemailPct: number
+    byHour: { hour: number; transfers: number; voicemail: number; reached: number }[]
+  } | null
 }
 
 export const EMPTY_VOICE_METRICS: VoiceMetrics = {
@@ -114,6 +123,7 @@ export const EMPTY_VOICE_METRICS: VoiceMetrics = {
   volumeTrend: [], hours: [], geo: [], callers: null, topCallers: [], transfers: null,
   handoverMix: [], sentimentMix: [], sectionMix: [],
   needsAttention: { segments: [], total: 0, urgent: 0, urgentShare: 0, escalation: 0 },
+  voicemail: null,
 }
 
 const sum = <T,>(rows: T[], f: (r: T) => number): number =>
@@ -238,11 +248,27 @@ export function deriveVoiceMetrics(b: VoiceBundle): VoiceMetrics {
       }
     : null
 
+  const hv = b.handover
+  const voicemail = hv && hv.transfers > 0
+    ? {
+        transfers: hv.transfers,
+        voicemail: hv.voicemail,
+        reached: hv.connected,
+        voicemailPct: Math.round((100 * hv.voicemail) / hv.transfers),
+        byHour: Array.from({ length: 24 }, (_, h) => {
+          const r = hv.by_hour.find((x) => x.hour === h)
+          const t = r?.transfers ?? 0
+          const v = r?.voicemail ?? 0
+          return { hour: h, transfers: t, voicemail: v, reached: t - v }
+        }),
+      }
+    : null
+
   const cs = b.callerStats
   return {
     voiceConvs, connectedCalls, unconnected, abandonPct, engagedCalls, handoverCalls, volumeSource, medianDurSec, avgDurSec, talkSec,
     durationSource, aiTalkSec, humanTalkSec,
-    volumeTrend, hours, geo, transfers,
+    volumeTrend, hours, geo, transfers, voicemail,
     callers: cs
       ? {
           unique: cs.callers,

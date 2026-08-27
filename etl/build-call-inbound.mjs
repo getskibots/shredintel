@@ -49,10 +49,11 @@ await c.connect()
 await c.query("set statement_timeout='300000ms'")
 
 const cfg = (await c.query('select account_sid, auth_token_enc from report.bot_twilio where bot_id=$1', [BOT])).rows[0]
-const acct = cfg?.account_sid
+const _cred = (await c.query(`select t.accountsid, t.auth_token from raw.admin_bot b join raw.admin_twilio_configs t on t.id=b.twilio_configs_id where b.id=$1 and coalesce(t.accountsid,'')<>'' and coalesce(t.auth_token,'')<>'' limit 1`, [BOT])).rows[0]
+const acct = _cred?.accountsid?.trim() || cfg?.account_sid
 if (!acct) { console.error(`No report.bot_twilio row for bot ${BOT}. Connect it in the dashboard first.`); process.exit(1) }
 // Prefer a dashboard-entered token (encrypted in report.bot_twilio); fall back to env.
-const token = decryptToken(cfg?.auth_token_enc) || tokenFor(acct)
+const token = _cred?.auth_token?.trim() || decryptToken(cfg?.auth_token_enc) || tokenFor(acct)
 if (!token) { console.error(`No Twilio token for account ${acct}. Paste it in the dashboard "Connect Twilio" control (needs TWILIO_TOKEN_ENC_KEY set), or add TWILIO_ACCOUNTS json / TWILIO_AUTH_TOKEN to etl/.env.`); process.exit(1) }
 const authHeader = 'Basic ' + Buffer.from(`${acct}:${token}`).toString('base64')
 
@@ -82,6 +83,11 @@ async function twGet(url, tries = 4) {
 }
 async function upsert(rows) {
   if (!rows.length) return
+  // De-dupe by the conflict key (call_sid): a bot's number can appear in >1 format
+  // (e.g. "(888) 664 - 8409" and "+1888…"), so Twilio can return the same call under
+  // both → "ON CONFLICT DO UPDATE cannot affect row a second time" without this.
+  const seen = new Set()
+  rows = rows.filter((r) => (seen.has(r.call_sid) ? false : (seen.add(r.call_sid), true)))
   const tuples = rows.map((_, j) => { const b = j * 6; return `($${b+1},$${b+2},$${b+3},$${b+4},$${b+5},$${b+6})` })
   const flat = []
   rows.forEach((r) => flat.push(r.call_sid, BOT, r.to_number, r.status, r.duration_sec, r.started_at))

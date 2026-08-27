@@ -42,6 +42,21 @@ echo "── 3/4 enrich new conversations ──"
 $NODE enrich-fleet.mjs 2>&1 | tail -20
 RC=${PIPESTATUS[0]}; [ "$RC" -eq 0 ] || FAILED="$FAILED enrich-fleet"
 
+# Voice Twilio ingest — pull NEW calls' ground-truth facts / inbound / transfers from
+# Twilio for the LIVE voice partners (the report.bot_twilio set: 248 Mtn Collective,
+# 252 Sipapu, 491 Bromley). Creds resolve from the Botscrew mirror, so every account
+# works. Resumable (skips already-checked calls) → a nightly run only fetches the day's
+# new calls. call_base + the *_stats matviews are rolled up by the refresh below; the
+# transcription stage after it reads the fresh call_transfers. Best-effort: NOT added to
+# FAILED (a Twilio hiccup must not false-red the heartbeat). New partner live → add its
+# bot id here (and seed report.bot_twilio).
+echo "── voice Twilio ingest (248/252/491, best-effort) ──"
+for VB in 248 252 491; do
+  $NODE build-call-facts.mjs "$VB" 2>&1 | tail -1
+  $NODE build-call-inbound.mjs "$VB" 2>&1 | tail -1
+  $NODE build-call-transfers.mjs "$VB" 2>&1 | tail -1
+done
+
 echo "── 4/4 refresh matviews ──"
 $NODE refresh.mjs 2>&1 | tail -6
 RC=${PIPESTATUS[0]}; [ "$RC" -eq 0 ] || FAILED="$FAILED refresh"

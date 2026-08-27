@@ -42,10 +42,11 @@ await c.connect()
 await c.query("set statement_timeout='120000ms'")
 
 const cfg = (await c.query('select account_sid, auth_token_enc from report.bot_twilio where bot_id=$1', [BOT])).rows[0]
-const acct = cfg?.account_sid
+const _cred = (await c.query(`select t.accountsid, t.auth_token from raw.admin_bot b join raw.admin_twilio_configs t on t.id=b.twilio_configs_id where b.id=$1 and coalesce(t.accountsid,'')<>'' and coalesce(t.auth_token,'')<>'' limit 1`, [BOT])).rows[0]
+const acct = _cred?.accountsid?.trim() || cfg?.account_sid
 if (!acct) { console.error(`No report.bot_twilio row for bot ${BOT}. Run build-bot-twilio.mjs / the Connect Twilio console first.`); process.exit(1) }
 // Prefer a dashboard-entered token (encrypted in report.bot_twilio); fall back to env.
-const token = decryptToken(cfg?.auth_token_enc) || tokenFor(acct)
+const token = _cred?.auth_token?.trim() || decryptToken(cfg?.auth_token_enc) || tokenFor(acct)
 if (!token) { console.error(`No Twilio token for account ${acct}. Paste it in the dashboard "Connect Twilio" control (needs TWILIO_TOKEN_ENC_KEY set), or add TWILIO_ACCOUNTS json / TWILIO_AUTH_TOKEN to etl/.env.`); process.exit(1) }
 const authHeader = 'Basic ' + Buffer.from(`${acct}:${token}`).toString('base64')
 

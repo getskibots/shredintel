@@ -61,9 +61,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!tw.ok) return res.status(502).json({ error: `twilio recording fetch failed (${tw.status})` })
 
     const buf = Buffer.from(await tw.arrayBuffer())
+    const total = buf.length
+
+    // Seekable playback: advertise byte-range support + honor Range requests with a
+    // 206 partial. Without this the browser can't scrub/fast-forward AND some
+    // browsers never establish the clip's duration (the "0:00 / 0:00, play does
+    // nothing" case). We already have the whole file buffered, so we slice it.
     res.setHeader('Content-Type', 'audio/mpeg')
-    res.setHeader('Content-Length', String(buf.length))
+    res.setHeader('Accept-Ranges', 'bytes')
     res.setHeader('Cache-Control', 'private, max-age=3600')
+
+    const range = typeof req.headers.range === 'string' ? req.headers.range : ''
+    const m = /bytes=(\d*)-(\d*)/.exec(range)
+    if (m) {
+      let start = m[1] ? parseInt(m[1], 10) : 0
+      let end = m[2] ? parseInt(m[2], 10) : total - 1
+      if (Number.isNaN(start)) start = 0
+      if (Number.isNaN(end) || end >= total) end = total - 1
+      if (start > end || start >= total) {
+        res.setHeader('Content-Range', `bytes */${total}`)
+        return res.status(416).end()
+      }
+      const chunk = buf.subarray(start, end + 1)
+      res.setHeader('Content-Range', `bytes ${start}-${end}/${total}`)
+      res.setHeader('Content-Length', String(chunk.length))
+      return res.status(206).send(chunk)
+    }
+
+    res.setHeader('Content-Length', String(total))
     return res.status(200).send(buf)
   } catch (e) {
     console.error('[api/recording] failed:', e)

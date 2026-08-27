@@ -315,6 +315,10 @@ export function ConversationExplorer({
                             Your browser can’t play this recording.
                           </audio>
                         </div>
+                      ) : source === 'voice' ? (
+                        <div className="mb-3 text-[11px] text-slate-400">
+                          No recording for this call — typically a short or unconnected call.
+                        </div>
                       ) : null}
                       {(fmtDur(r.duration_sec) || r.city) ? (
                         <div className="mb-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-slate-100 pb-2 text-[11px]">

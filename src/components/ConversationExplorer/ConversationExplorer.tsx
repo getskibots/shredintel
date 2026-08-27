@@ -135,6 +135,9 @@ export function ConversationExplorer({
   const rowRefs = useRef<Map<number, HTMLLIElement>>(new Map())
   const [transcript, setTranscript] = useState<Msg[] | null>(null)
   const [loadingT, setLoadingT] = useState(false)
+  // Voice only: the Whisper transcript of the human/escalation leg (the half the
+  // live transcript misses), fetched from the bot-scoped /api/handover-transcript.
+  const [handover, setHandover] = useState<{ text: string; isVoicemail: boolean; segmentSec: number | null } | null>(null)
 
   const from = p.from ?? range?.from
   const to = p.to ?? range?.to
@@ -204,8 +207,16 @@ export function ConversationExplorer({
   }, [p.botId, p.section, p.layer, p.pinchpoint, p.sentiment, p.urgency, p.funnel_stage, p.topic, p.city, p.day, p.handover, p.hour_local, p.dow, p.coverage, p.user_id, source, from, to])
 
   async function openConv(cid: number) {
-    if (openCid === cid) { setOpenCid(null); setTranscript(null); return }
-    setOpenCid(cid); setTranscript(null); setLoadingT(true)
+    if (openCid === cid) { setOpenCid(null); setTranscript(null); setHandover(null); return }
+    setOpenCid(cid); setTranscript(null); setHandover(null); setLoadingT(true)
+    // Voice: also pull the Whisper transcript of the human/escalation leg (best-effort,
+    // parallel — a call with no transfer just returns handover:null and shows nothing).
+    if (source === 'voice') {
+      fetch(`/api/handover-transcript?botId=${botId}&cid=${cid}`)
+        .then((r) => r.json())
+        .then((d) => setHandover(d?.handover ?? null))
+        .catch(() => setHandover(null))
+    }
     try {
       const res = await fetch(`/api/transcript?botId=${botId}&cid=${cid}`)
       const data = await res.json()
@@ -428,6 +439,18 @@ export function ConversationExplorer({
                       ) : (
                         <div className="text-xs text-slate-400">No transcript available.</div>
                       )}
+                      {handover && handover.text ? (
+                        <div className="mt-3 rounded-lg border border-slate-200 bg-white p-3">
+                          <div className="mb-1.5 flex items-center gap-2">
+                            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Human / escalation leg</span>
+                            {handover.isVoicemail && (
+                              <span className="rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-700">Voicemail</span>
+                            )}
+                            <span className="ml-auto text-[10px] text-slate-400">transcribed · Whisper</span>
+                          </div>
+                          <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700">{handover.text}</p>
+                        </div>
+                      ) : null}
                     </div>
                   )}
                 </li>

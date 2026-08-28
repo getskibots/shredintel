@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { ArrowUpRight } from 'lucide-react'
 import { InfoTip } from './InfoTip'
 
 export interface MetricProps {
@@ -10,6 +11,9 @@ export interface MetricProps {
   title?: string
   /** Extra classes on the tile root (e.g. `lg:col-span-2` to feature a hero). */
   className?: string
+  /** When set, the tile becomes a drill button (hover ring + ↗ cue) that opens
+   *  the underlying conversations/calls. */
+  onClick?: () => void
 }
 
 const toneRing: Record<NonNullable<MetricProps['tone']>, string> = {
@@ -30,9 +34,15 @@ const toneText: Record<NonNullable<MetricProps['tone']>, string> = {
   warn: 'text-amber-700',
 }
 
-export function Metric({ label, value, subValue, tone = 'default', title, className }: MetricProps) {
-  return (
-    <div className={['rounded-2xl border p-4', toneRing[tone], className ?? ''].join(' ')}>
+export function Metric({ label, value, subValue, tone = 'default', title, className, onClick }: MetricProps) {
+  const cls = [
+    'relative rounded-2xl border p-4 text-left',
+    toneRing[tone],
+    onClick ? 'group w-full cursor-pointer transition hover:ring-2 hover:ring-slate-300/70' : '',
+    className ?? '',
+  ].join(' ')
+  const body = (
+    <>
       <div className="flex items-center gap-1 text-[11px] font-medium uppercase tracking-wider text-slate-500">
         {label}
         {title && <InfoTip text={title} />}
@@ -45,9 +55,15 @@ export function Metric({ label, value, subValue, tone = 'default', title, classN
       >
         {value}
       </div>
-      {subValue && (
-        <div className="mt-0.5 text-xs text-slate-500">{subValue}</div>
+      {subValue && <div className="mt-0.5 text-xs text-slate-500">{subValue}</div>}
+      {onClick && (
+        <ArrowUpRight className="pointer-events-none absolute right-2.5 top-2.5 h-3.5 w-3.5 text-slate-300 transition group-hover:text-slate-500" />
       )}
-    </div>
+    </>
+  )
+  return onClick ? (
+    <button type="button" onClick={onClick} className={cls}>{body}</button>
+  ) : (
+    <div className={cls}>{body}</div>
   )
 }

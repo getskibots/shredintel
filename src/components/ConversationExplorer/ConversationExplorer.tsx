@@ -21,7 +21,7 @@ import { NaDotMap } from '../NaDotMap/NaDotMap'
  * comes from the bot-scoped, PII-scrubbed /api/transcript.
  */
 
-interface ConvRow { bot_id: number; conversation_id: number; topic: string | null; sentiment: string | null; day: string; started_local: string | null; duration_sec: number | null; page_path: string | null; city: string | null; region: string | null; country_iso: string | null; lat: number | null; lon: number | null; recording_sid?: string | null }
+interface ConvRow { bot_id: number; conversation_id: number; topic: string | null; sentiment: string | null; day: string; started_local: string | null; duration_sec: number | null; page_path: string | null; city: string | null; region: string | null; country_iso: string | null; lat: number | null; lon: number | null; recording_sid?: string | null; is_voicemail?: boolean | null; transferred?: boolean | null }
 interface MsgSource { layer: string; url?: string; label?: string }
 interface Msg { sender: string; text: string; source?: MsgSource }
 
@@ -153,8 +153,8 @@ export function ConversationExplorer({
       // shape (from_city→city, dur_sec→duration_sec). Same modal + /api/transcript.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let q: any = isVoice
-        ? sb.schema('report').from('call_base')
-            .select('bot_id, conversation_id, topic, sentiment, day, started_local, duration_sec:dur_sec, city:from_city, region:from_region, country_iso:from_country, lat:from_lat, lon:from_lon, recording_sid', { count: 'exact' })
+        ? sb.schema('report').from('call_drill')
+            .select('bot_id, conversation_id, topic, sentiment, day, started_local, duration_sec:dur_sec, city:from_city, region:from_region, country_iso:from_country, lat:from_lat, lon:from_lon, recording_sid, is_voicemail, transferred', { count: 'exact' })
             .eq('bot_id', p.botId)
         // A layer drill lists from conversation_time_layer (conversation_time +
         // the knowledge layer per conversation); everything else from conversation_time.
@@ -174,6 +174,12 @@ export function ConversationExplorer({
         if (p.user_id) q = q.eq('user_id', Number(p.user_id))
         if (p.city) q = q.eq('from_city', p.city)
         if (p.hour_local != null && p.hour_local !== '') q = q.eq('hour_local', Number(p.hour_local))
+        // escalation OUTCOME drills — call_drill's anon-safe booleans: Twilio transfer
+        // truth (transferred) + voicemail-vs-person from the handover transcript.
+        if (p.transferred === 'Escalated') q = q.eq('transferred', true)
+        else if (p.transferred === 'AI resolved') q = q.eq('transferred', false)
+        if (p.voicemail === 'Voicemail') q = q.eq('is_voicemail', true)
+        else if (p.voicemail === 'Reached a person') q = q.eq('is_voicemail', false).eq('transferred', true)
       } else {
         if (p.pinchpoint) q = q.ilike('pinchpoint', p.pinchpoint)
         if (p.funnel_stage) q = q.eq('funnel_stage', p.funnel_stage)
@@ -204,7 +210,7 @@ export function ConversationExplorer({
     })()
     return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [p.botId, p.section, p.layer, p.pinchpoint, p.sentiment, p.urgency, p.funnel_stage, p.topic, p.city, p.day, p.handover, p.hour_local, p.dow, p.coverage, p.user_id, source, from, to])
+  }, [p.botId, p.section, p.layer, p.pinchpoint, p.sentiment, p.urgency, p.funnel_stage, p.topic, p.city, p.day, p.handover, p.transferred, p.voicemail, p.hour_local, p.dow, p.coverage, p.user_id, source, from, to])
 
   async function openConv(cid: number) {
     if (openCid === cid) { setOpenCid(null); setTranscript(null); setHandover(null); return }
@@ -303,6 +309,9 @@ export function ConversationExplorer({
                       <span className="hidden shrink-0 text-[11px] tabular-nums text-slate-400 sm:inline" title={fmtStamp(r.started_local, true)}>
                         {fmtStamp(r.started_local)}
                       </span>
+                    )}
+                    {source === 'voice' && r.is_voicemail && (
+                      <span className="shrink-0 rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-700">Voicemail</span>
                     )}
                     {r.sentiment && (
                       <span

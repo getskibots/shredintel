@@ -266,8 +266,8 @@ export function VoiceAnalyticsPage() {
               return (
                 <>
                   <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                    <Metric label="AI resolved" value={formatNumber(aiResolved)} subValue={`${formatPercent(aiResolvedPct)} · no human`} tone="good" />
-                    <Metric label="Escalated to team" value={formatNumber(escalated)} subValue={`${formatPercent(escalatedPct)} · to 8x8`} tone="accent" />
+                    <Metric label="AI resolved" value={formatNumber(aiResolved)} subValue={`${formatPercent(aiResolvedPct)} · no human`} tone="good" onClick={() => openDrill({ transferred: 'AI resolved' })} />
+                    <Metric label="Escalated to team" value={formatNumber(escalated)} subValue={`${formatPercent(escalatedPct)} · to 8x8`} tone="accent" onClick={() => openDrill({ transferred: 'Escalated' })} />
                     <Metric label="Escalations answered" value={formatPercent(tr.answeredRate)} subValue={`${formatNumber(tr.answered)} picked up`} tone="good" />
                     <Metric label="Avg time with a person" value={fmtDuration(tr.avgHumanSec)} subValue="human leg" />
                   </div>
@@ -279,8 +279,8 @@ export function VoiceAnalyticsPage() {
                       <span className="text-[11px] text-slate-400">{formatNumber(tr.checked)} calls · Twilio truth</span>
                     </div>
                     <div className="flex h-3 overflow-hidden rounded-full bg-slate-100">
-                      <div style={{ width: `${aiResolvedPct}%`, background: brand.blue }} title={`AI resolved ${formatNumber(aiResolved)}`} />
-                      <div style={{ width: `${escalatedPct}%`, background: brand.gold }} title={`Escalated ${formatNumber(escalated)}`} />
+                      <button type="button" onClick={() => openDrill({ transferred: 'AI resolved' })} style={{ width: `${aiResolvedPct}%`, background: brand.blue }} title={`AI resolved ${formatNumber(aiResolved)} — click to view`} className="h-full border-0 p-0 transition hover:opacity-80" />
+                      <button type="button" onClick={() => openDrill({ transferred: 'Escalated' })} style={{ width: `${escalatedPct}%`, background: brand.gold }} title={`Escalated ${formatNumber(escalated)} — click to view`} className="h-full border-0 p-0 transition hover:opacity-80" />
                     </div>
                     <div className="mt-1.5 flex items-center justify-between text-xs">
                       <span className="font-medium text-botscrew-700">AI resolved {formatPercent(aiResolvedPct)}</span>
@@ -348,8 +348,8 @@ export function VoiceAnalyticsPage() {
                 }
               >
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                  <Metric label="Reached a person" value={formatNumber(vm.reached)} subValue={`${formatPercent(reachedPct)} of escalations`} tone="good" />
-                  <Metric label="Hit voicemail" value={formatNumber(vm.voicemail)} subValue={`${formatPercent(vm.voicemailPct)} · left a message`} tone="risk" />
+                  <Metric label="Reached a person" value={formatNumber(vm.reached)} subValue={`${formatPercent(reachedPct)} of escalations`} tone="good" onClick={() => openDrill({ voicemail: 'Reached a person' })} />
+                  <Metric label="Hit voicemail" value={formatNumber(vm.voicemail)} subValue={`${formatPercent(vm.voicemailPct)} · left a message`} tone="risk" onClick={() => openDrill({ voicemail: 'Voicemail' })} />
                   <Metric label="After-hours voicemail" value={formatPercent(ahPct)} subValue={`before 8a / after 6p · ${formatNumber(ahVoicemail)} calls`} tone="warn" />
                 </div>
 
@@ -359,8 +359,8 @@ export function VoiceAnalyticsPage() {
                     <span className="text-[11px] text-slate-400">{formatNumber(vm.transfers)} escalations</span>
                   </div>
                   <div className="flex h-3 overflow-hidden rounded-full bg-slate-100">
-                    <div style={{ width: `${reachedPct}%`, background: brand.blue }} title={`Reached a person ${formatNumber(vm.reached)}`} />
-                    <div style={{ width: `${vm.voicemailPct}%`, background: sentimentColors.negative }} title={`Voicemail ${formatNumber(vm.voicemail)}`} />
+                    <button type="button" onClick={() => openDrill({ voicemail: 'Reached a person' })} style={{ width: `${reachedPct}%`, background: brand.blue }} title={`Reached a person ${formatNumber(vm.reached)} — click to view`} className="h-full border-0 p-0 transition hover:opacity-80" />
+                    <button type="button" onClick={() => openDrill({ voicemail: 'Voicemail' })} style={{ width: `${vm.voicemailPct}%`, background: sentimentColors.negative }} title={`Voicemail ${formatNumber(vm.voicemail)} — click to view`} className="h-full border-0 p-0 transition hover:opacity-80" />
                   </div>
                   <div className="mt-1.5 flex items-center justify-between text-xs">
                     <span className="font-medium text-botscrew-700">Reached a person {formatPercent(reachedPct)}</span>
@@ -376,8 +376,10 @@ export function VoiceAnalyticsPage() {
                       <XAxis dataKey="hour" tickFormatter={fmtHour} {...chart.xAxis} interval={1} />
                       <YAxis {...chart.yAxis} />
                       <Tooltip {...chart.tooltip} labelFormatter={(h) => `${fmtHour(Number(h))} local`} />
-                      <Bar dataKey="reached" name="Reached a person" stackId="a" fill={brand.blue} isAnimationActive={false} />
-                      <Bar dataKey="voicemail" name="Voicemail" stackId="a" fill={sentimentColors.negative} radius={[4, 4, 0, 0]} isAnimationActive={false} />
+                      <Bar dataKey="reached" name="Reached a person" stackId="a" fill={brand.blue} isAnimationActive={false} cursor="pointer"
+                        onClick={(d) => { const h = (d as { payload?: { hour?: number } })?.payload?.hour; if (h != null) openDrill({ hour_local: String(h), voicemail: 'Reached a person' }) }} />
+                      <Bar dataKey="voicemail" name="Voicemail" stackId="a" fill={sentimentColors.negative} radius={[4, 4, 0, 0]} isAnimationActive={false} cursor="pointer"
+                        onClick={(d) => { const h = (d as { payload?: { hour?: number } })?.payload?.hour; if (h != null) openDrill({ hour_local: String(h), voicemail: 'Voicemail' }) }} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>

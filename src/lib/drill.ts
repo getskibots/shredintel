@@ -11,7 +11,7 @@
 /** Contract dimensions a datum can carry, in drill precedence order.
  *  `handover` + `hour_local` are voice-relevant (backed by report.call_base);
  *  `city` doubles as the caller city for voice. */
-export const DRILL_DIMENSIONS = ['section', 'layer', 'pinchpoint', 'sentiment', 'urgency', 'funnel_stage', 'topic', 'handover', 'user_id', 'city', 'hour_local', 'dow', 'day'] as const
+export const DRILL_DIMENSIONS = ['section', 'layer', 'pinchpoint', 'sentiment', 'urgency', 'funnel_stage', 'topic', 'handover', 'transferred', 'voicemail', 'user_id', 'city', 'hour_local', 'dow', 'day'] as const
 export type DrillDimension = (typeof DRILL_DIMENSIONS)[number]
 
 export interface DrillPayload {
@@ -28,6 +28,12 @@ export interface DrillPayload {
   funnel_stage?: string
   topic?: string
   handover?: string
+  /** Voice escalation, Twilio ground truth: 'Escalated' (a real transfer) |
+   *  'AI resolved' (no transfer). Mapped to a boolean filter in the explorer. */
+  transferred?: string
+  /** Voice escalation reach, from the handover transcript: 'Voicemail' |
+   *  'Reached a person'. Mapped to is_voicemail (+ transferred) in the explorer. */
+  voicemail?: string
   /** Voice: one caller (admin_user id, the phone identity) — all their calls. */
   user_id?: string
   city?: string
@@ -51,6 +57,8 @@ export const FIELD_LABELS: Record<string, string> = {
   funnel_stage: 'Funnel stage',
   topic: 'Topic',
   handover: 'Handover need',
+  transferred: 'Escalation',
+  voicemail: 'Escalation outcome',
   user_id: 'Caller',
   city: 'City',
   hour_local: 'Hour of day',

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # ShredIntel nightly pipeline — the whole thing, self-running, on the droplet:
 #   sync (Botscrew → Supabase) → detect verticals for new bots → enrich new
-#   conversations → refresh every matview → GA4 pull (via Vercel) → health gate
-#   + heartbeat.
+#   conversations → refresh every matview → voice Twilio ingest → roll voice stats
+#   → handover transcription → GA4 pull (via Vercel) → health gate + heartbeat.
 # The GA4 pull is a CURL to the Vercel endpoint /api/ga4-cron (best-effort): Vercel
 # holds the OAuth encryption key and does the decrypt + pull, so nothing GA4-secret
 # lives here. Switch-later: rename+rotate the key onto this box and pull locally.
@@ -42,14 +42,18 @@ echo "── 3/4 enrich new conversations ──"
 $NODE enrich-fleet.mjs 2>&1 | tail -20
 RC=${PIPESTATUS[0]}; [ "$RC" -eq 0 ] || FAILED="$FAILED enrich-fleet"
 
+echo "── 4/4 refresh matviews ──"
+$NODE refresh.mjs 2>&1 | tail -6
+RC=${PIPESTATUS[0]}; [ "$RC" -eq 0 ] || FAILED="$FAILED refresh"
+
 # Voice Twilio ingest — pull NEW calls' ground-truth facts / inbound / transfers from
-# Twilio for the LIVE voice partners (the report.bot_twilio set: 248 Mtn Collective,
-# 252 Sipapu, 491 Bromley). Creds resolve from the Botscrew mirror, so every account
-# works. Resumable (skips already-checked calls) → a nightly run only fetches the day's
-# new calls. call_base + the *_stats matviews are rolled up by the refresh below; the
-# transcription stage after it reads the fresh call_transfers. Best-effort: NOT added to
-# FAILED (a Twilio hiccup must not false-red the heartbeat). New partner live → add its
-# bot id here (and seed report.bot_twilio).
+# Twilio for the LIVE voice partners (report.bot_twilio: 248 MC, 252 Sipapu, 491 Bromley).
+# Creds resolve from the Botscrew mirror. Resumable → only the day's new calls.
+# ⚠️ Runs AFTER the refresh above ON PURPOSE: build-call-{facts,transfers} read their
+# work list from report.call_base, so call_base must already carry TODAY's calls or the
+# newest day's transfers are silently missed (and their stats matview lags a day — the
+# 2026-08-28 Bromley "no handover data yesterday" bug). Best-effort: NOT added to FAILED
+# (a Twilio hiccup must not false-red the heartbeat). New partner live → add its bot id.
 echo "── voice Twilio ingest (248/252/491, best-effort) ──"
 for VB in 248 252 491; do
   $NODE build-call-facts.mjs "$VB" 2>&1 | tail -1
@@ -57,15 +61,17 @@ for VB in 248 252 491; do
   $NODE build-call-transfers.mjs "$VB" 2>&1 | tail -1
 done
 
-echo "── 4/4 refresh matviews ──"
-$NODE refresh.mjs 2>&1 | tail -6
-RC=${PIPESTATUS[0]}; [ "$RC" -eq 0 ] || FAILED="$FAILED refresh"
+# Roll the just-ingested transfers/facts into their anon-facing stats matviews. The
+# full refresh above ran BEFORE this ingest, so call_transfer_stats / call_facts_stats
+# need this targeted re-roll to carry today. (call_inbound_stats is rebuilt by
+# build-call-inbound itself; call_base by refresh.mjs above.) Best-effort.
+echo "── roll voice stats matviews ──"
+$NODE refresh-voice-stats.mjs 2>&1 | tail -3
 
 # Handover transcription — the human/escalation half of NEW transferred calls
 # (Whisper) + voicemail detection. Incremental (pending-only), resumable, hard
-# $-capped. Best-effort: NOT added to FAILED (a Whisper/Twilio hiccup must not
-# false-red the freshness heartbeat). Depends on call_transfers + call_base being
-# current (transfer ingest + the refresh above populate recording_sid).
+# $-capped. Runs AFTER the voice ingest so it sees TODAY's transfers. Best-effort:
+# NOT added to FAILED (a Whisper/Twilio hiccup must not false-red the heartbeat).
 echo "── handover transcription (new transfers, best-effort) ──"
 $NODE transcribe-handover.mjs --nightly --cap 20 2>&1 | tail -6
 

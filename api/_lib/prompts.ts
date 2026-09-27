@@ -56,6 +56,13 @@ export const PROMPT_LIBRARY: PromptTemplate[] = [
     description: 'When guests engage off-hours',
     question: 'What share of demand happens outside working hours, and what are the peak day/time buckets?',
   },
+  {
+    id: 'frustration-matrix',
+    label: 'When is each topic most frustrating?',
+    description: 'Topics × day of week, as a heatmap',
+    question:
+      'Cross my busiest knowledge sections against day of week and show the frustrated (negative-sentiment) substantive conversation count in each cell as a matrix — cap to the top 8 sections so it stays readable.',
+  },
 ]
 
 export function systemPrompt(
@@ -97,7 +104,7 @@ The richest sources for guest intelligence:
 - report.outcome_timeline / conversation_depth / sender_mix_stack / demand_heatmap — volume, depth, sender mix, time-of-day.
 - report.page_funnel (bot_id, day, funnel_stage, stage_rank, conversations, negative) — WHERE guest questions ORIGINATE on the resort's website, as an ecommerce funnel. "negative" = frustrated count for that stage. Rising negative share deeper in the funnel (Cart/Checkout) is the key conversion-friction signal — that's where site fixes pay off. ORDER BY stage_rank for funnel order.
 - report.conversation_page — ONE ROW PER conversation with its funnel_stage + page_path (the originating URL as host+path). Use it to read the actual questions from a page/stage, and for stage-sliced breakdowns via report.page_section / report.page_pinchpoint / report.page_sentiment (same shape as intel_* plus funnel_stage, stage_rank) and report.page_topics.
-- report.conversation_time — ONE ROW PER conversation with RESORT-LOCAL time: day, day_local, hour_local (0-23), dow (Mon..Sun), duration_sec — plus section/pinchpoint/sentiment/topic/funnel_stage. Use it for time-of-day / day-of-week questions and to slice any breakdown BY hour_local or dow, in the resort's local calendar. (Filter dates on "day" to reconcile with the dashboard.)
+- report.conversation_time — ONE ROW PER conversation with RESORT-LOCAL time: day, day_local, hour_local (0-23), dow (Mon..Sun), duration_sec — plus section/pinchpoint/sentiment/topic/funnel_stage AND the outcome axes resolution (Resolved|Partial|Unresolved|N/A), revenue (buying posture: At Risk|Browsing|None|…), category, flavor (the conversation "vibe"), page_path (originating URL host+path), city. It is the richest per-conversation table for CROSSING two dimensions (a matrix / heatmap). Use it for time-of-day / day-of-week questions and to slice any breakdown BY hour_local, dow, or any two of those axes, in the resort's local calendar. (Filter dates on "day" to reconcile with the dashboard.)
 
 CONVERSATION VOLUME — three NESTED lenses; pick the right one and NAME it so answers reconcile with the dashboard:
 - SESSIONS = conversation_depth.conversations (= outcome_timeline.total_conversations): every session, INCLUDING unengaged bounces (a bot greeting with no guest reply — often the majority). This is the dashboard's headline "sessions" number and is usually much larger than the rest.
@@ -117,7 +124,7 @@ Rules:
 ${dayRule}
 - ${DATE_AWARENESS}${boundsRule}
 - On report.conversation_intel, add "and substantive" for guest-intelligence questions unless the point is to count excluded chats.
-- CHART SAFETY: any query whose rows become a breakdown/ranking chart MUST return a SMALL ranked set — ORDER BY the measure DESC and LIMIT 12 (or fewer). Prefer low-cardinality dimensions (section, pinchpoint, sentiment) over free-text topic. Only a per-day time series may exceed 12 rows.
+- CHART SAFETY: any query whose rows become a breakdown/ranking chart MUST return a SMALL ranked set — ORDER BY the measure DESC and LIMIT 12 (or fewer). Prefer low-cardinality dimensions (section, pinchpoint, sentiment) over free-text topic. A per-day time series, or a two-dimension MATRIX for a heatmap, may exceed 12 rows — but for a matrix cap EACH dimension to at most ~12 low-cardinality values (top-N by volume; hour_local≤24 and dow≤7 are already bounded), keep the whole matrix under ~100 cells, and GROUP BY both dimensions selecting each under its exact drill-contract name.
 - ${DRILL_CONTRACT}
 - ${TOPIC_LADDER}
 - If the views can't answer the question, say so instead of guessing.
@@ -142,18 +149,31 @@ GROUP BY funnel_stage, stage_rank ORDER BY stage_rank;
 -- what guests on the Checkout page ask about
 SELECT topic, count(*) AS n FROM report.page_topics
 WHERE bot_id = ${botId} AND funnel_stage = 'Checkout'${dayFilter}
-GROUP BY topic ORDER BY n DESC LIMIT 12;${custom}`
+GROUP BY topic ORDER BY n DESC LIMIT 12;
+-- a MATRIX for a heatmap: which topics frustrate on which days (each cell drills;
+-- both dims selected under exact names; the busier axis capped to its top few)
+WITH top_sections AS (
+  SELECT section FROM report.conversation_time
+  WHERE bot_id = ${botId} AND substantive${dayFilter}
+  GROUP BY section ORDER BY count(*) DESC LIMIT 8)
+SELECT section, dow,
+       count(*) FILTER (WHERE sentiment = 'Negative') AS frustrated,
+       count(*) AS conversations
+FROM report.conversation_time
+WHERE bot_id = ${botId} AND substantive AND section IN (SELECT section FROM top_sections)${dayFilter}
+GROUP BY section, dow;${custom}`
 }
 
 export const SQL_INSTRUCTION =
-  'Write ONE Postgres query (SELECT or WITH) that answers the question. If it is a breakdown/ranking, ORDER BY the measure DESC and LIMIT 12, and prefer grouping by a low-cardinality column (section, pinchpoint, sentiment) over the high-cardinality free-text topic. Respond as JSON: {"sql":"..."}. No prose.'
+  'Write ONE Postgres query (SELECT or WITH) that answers the question. If it is a breakdown/ranking, ORDER BY the measure DESC and LIMIT 12, and prefer grouping by a low-cardinality column (section, pinchpoint, sentiment) over the high-cardinality free-text topic. If the question CROSSES two dimensions (a matrix / "by X by Y" / "which X at which Y"), GROUP BY BOTH — each selected under its exact drill-contract name — capping each dimension to its top ~12 values (a WITH clause to pick the busier axis\'s top-N) so the whole matrix stays under ~100 cells; do not collapse it to a single LIMIT. Respond as JSON: {"sql":"..."}. No prose.'
 
 export const ANSWER_INSTRUCTION =
   `You are given the question and the query result rows as JSON. Write a concise answer for a resort manager: one or two sentences, lead with the key insight, plain English, no jargon. Use the EXACT numbers from the rows — never round, truncate, or invent figures; if you cite a count, copy it verbatim from the data.
-Then choose a visualization. Use the simple "chart" hint ONLY for a single-measure ranking or trend. Whenever the rows have TWO OR MORE numeric measures worth comparing, or a natural grouping/series, return a richer Vega-Lite v5 "vegaLite" spec instead — never drop a measure. Give only "mark", "encoding", optional "transform" and short "title"; reference the row column names; DO NOT include "data" (rows are injected).
+Then choose a visualization. Use the simple "chart" hint ONLY for a single-measure ranking or trend. Whenever the rows have TWO OR MORE numeric measures worth comparing, or a natural grouping/series, return a richer Vega-Lite v5 "vegaLite" spec instead — never drop a measure. When the question CROSSES two dimensions ("by X by Y", "which X at which Y / at what hour / on which day", a matrix) and the rows carry two categorical columns + a measure, return a HEATMAP (recipe below) — this is the "pivot" view: it shows the whole grid at once, and every cell opens its conversations. Give only "mark", "encoding", optional "transform" and short "title"; reference the row column names; DO NOT include "data" (rows are injected).
 Recipes:
 - Single categorical ranking → HORIZONTAL bar so labels stay readable: {"mark":"bar","encoding":{"y":{"field":"<category>","type":"nominal","sort":"-x"},"x":{"field":"<count>","type":"quantitative"}}}. Assume the rows are already a small ranked set (≤12).
 - Two measures per category → grouped bars via fold: {"mark":"bar","transform":[{"fold":["total","frustrated"],"as":["metric","value"]}],"encoding":{"x":{"field":"<category>","type":"nominal","sort":"-y"},"y":{"field":"value","type":"quantitative"},"xOffset":{"field":"metric"},"color":{"field":"metric","type":"nominal"}}}.
+- Two categorical dimensions crossed (a matrix) → HEATMAP: {"mark":"rect","encoding":{"y":{"field":"<dimA>","type":"nominal","sort":"-color"},"x":{"field":"<dimB>","type":"nominal"},"color":{"field":"<measure>","type":"quantitative","scale":{"scheme":"reds"}}}}. Put the telling measure on color — the frustrated (negative) count or share when the question is about friction, else the volume. Each row is ONE cell and MUST carry both dimension columns under their exact drill-contract names, so a click opens exactly those conversations.
 - Part-to-whole → stacked bar (color = the part). Multi-series over time → line with color=series. Distribution → bar/area.
 - NEVER put a high-cardinality free-text column (e.g. topic) on an axis without it already being ranked+limited to a handful of rows.
 Finally, propose "followups": up to 3 SHORT next questions a curious manager would ask about THIS result (e.g. drill into the top row, split it by page/stage, compare to the prior period). Each MUST stand on its own — name the section / stage / sentiment / metric explicitly so it is answerable with no prior context — be answerable from the same views, and NOT restate the question just answered. Return [] if none are obviously useful.

@@ -123,7 +123,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // the dashboard's picker. Falls back to the picker window.
     const wm = sql.match(/day\s+between\s+'(\d{4}-\d{2}-\d{2})'\s+and\s+'(\d{4}-\d{2}-\d{2})'/i)
     const usedWindow = wm ? { from: wm[1], to: wm[2] } : (window ?? null)
-    return res.status(200).json({ answer, chart, vegaLite, focus, drill, followups, window: usedWindow, sql, rows: rows.slice(0, 100) })
+    // Return enough rows for a full heatmap matrix (a bounded cross-tab can be
+    // up to ~100 cells); simple rankings stay tiny.
+    return res.status(200).json({ answer, chart, vegaLite, focus, drill, followups, window: usedWindow, sql, rows: rows.slice(0, 300) })
   } catch (e) {
     console.error('[api/ask] failed:', e)
     return res.status(500).json({ error: e instanceof Error ? e.message : 'unknown error' })

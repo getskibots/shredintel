@@ -12,7 +12,7 @@
  * ConversationExplorer reading these same column names.
  */
 export const DRILL_CONTRACT =
-  'DRILL CONTRACT: whenever a query GROUPs BY one of these dimensions, SELECT the column under its EXACT name — never alias it: section, pinchpoint, sentiment, funnel_stage, topic, day. Measures may be aliased freely (count(*) AS conversations, etc.). This is what lets the manager click a chart bar and read the exact conversations behind it.'
+  'DRILL CONTRACT: whenever a query GROUPs BY one of these dimensions, SELECT the column under its EXACT name — never alias it: section, pinchpoint, sentiment, funnel_stage, topic, resolution, revenue, category, flavor, urgency, handover, hour_local, dow, city, day. (One exception: the originating page is column page_path but its drill name is page, so select it as `page_path AS page`.) Measures may be aliased freely (count(*) AS conversations, etc.). This is what lets the manager click a chart mark — including a HEATMAP cell, which carries BOTH of its dimensions — and read the exact conversations behind it.'
 
 /**
  * The topic-zoom ladder: how to descend from an aggregate chart to a single

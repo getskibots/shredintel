@@ -7,10 +7,12 @@ import { formatNumber } from '../../lib/formatters'
 
 /**
  * ExploreCube — the "Rubik's cube": pick any two angles of the conversation data,
- * see the cross-tab as a heatmap (cell = conversations, shaded by how frustrated),
- * click a cell to read exactly those conversations. One component, two channels:
+ * see the cross-tab as a heatmap (cell shaded by how frustrated), click a cell to
+ * read exactly those conversations. One component, two channels:
  *   source="chat"  → report.intel_pivot over conversation_time (page/section rich)
  *   source="voice" → report.voice_pivot over call_drill (hour + escalation/voicemail)
+ * Presets turn the common questions into one click; the measure toggle re-reads the
+ * same cells as volume, share-frustrated, or count-frustrated (all from one fetch).
  */
 const DIMS_CHAT: { value: string; label: string }[] = [
   { value: 'section', label: 'Topic (section)' },
@@ -53,6 +55,30 @@ const CUBE_TO_PAYLOAD: Record<string, keyof DrillPayload> = {
   transferred: 'transferred', voicemail: 'voicemail',
 }
 
+type Measure = 'count' | 'negpct' | 'negcount'
+const MEASURES: { value: Measure; label: string }[] = [
+  { value: 'count', label: 'Volume' },
+  { value: 'negpct', label: '% frustrated' },
+  { value: 'negcount', label: '# frustrated' },
+]
+
+type Preset = { label: string; a: string; b: string; m: Measure }
+// One-click views built from the questions people actually ask the cube. Each is just
+// (row, column, measure) — the same controls, pre-set. Kept per-channel so voice offers
+// escalation/voicemail and chat offers page/funnel.
+const PRESETS_CHAT: Preset[] = [
+  { label: 'Ready to book × what they asked', a: 'revenue', b: 'section', m: 'count' },
+  { label: 'Frustration by page × hour', a: 'page', b: 'hour', m: 'negpct' },
+  { label: 'Blockers × page', a: 'pinchpoint', b: 'page', m: 'negcount' },
+  { label: 'Resolution × buying intent', a: 'resolution', b: 'revenue', m: 'count' },
+]
+const PRESETS_VOICE: Preset[] = [
+  { label: 'Escalation × voicemail', a: 'transferred', b: 'voicemail', m: 'count' },
+  { label: 'Ready to book × resolution', a: 'revenue', b: 'resolution', m: 'count' },
+  { label: 'Topic × escalation', a: 'section', b: 'transferred', m: 'negcount' },
+  { label: 'Frustration by topic × hour', a: 'section', b: 'hour', m: 'negpct' },
+]
+
 function shortVal(v: string): string {
   if (v === '(none)' || v === '') return '—'
   if (v.includes('/')) { const p = v.replace(/^[^/]*/, ''); return (p || v).length > 22 ? (p || v).slice(0, 22) + '…' : (p || v) }
@@ -72,11 +98,13 @@ export function ExploreCube({
 }) {
   const isVoice = source === 'voice'
   const DIMS = isVoice ? DIMS_VOICE : DIMS_CHAT
+  const PRESETS = isVoice ? PRESETS_VOICE : PRESETS_CHAT
   const noun = isVoice ? 'calls' : 'chats'
   const labelFor = (v: string) => DIMS.find((d) => d.value === v)?.label ?? v
 
   const [dimA, setDimA] = useState('section')
   const [dimB, setDimB] = useState(isVoice ? 'hour' : 'page')
+  const [measure, setMeasure] = useState<Measure>('count')
   const [cells, setCells] = useState<PivotCell[] | null>(null)
   const [drill, setDrill] = useState<DrillPayload | null>(null)
 
@@ -110,15 +138,32 @@ export function ExploreCube({
     setDrill({ botId, from: range.from, to: range.to, ...extra } as DrillPayload)
   }
 
+  const applyPreset = (p: Preset) => { setDimA(p.a); setDimB(p.b); setMeasure(p.m) }
+  const activePreset = PRESETS.find((p) => p.a === dimA && p.b === dimB && p.m === measure)
+
   const oneDim = dimB === dimA
+  const measureLabel = MEASURES.find((x) => x.value === measure)?.label ?? ''
 
   return (
     <Panel
       className={className}
       eyebrow="Explore"
       title="Pivot cube"
-      description={`Cross any two angles of your ${noun}. Each cell is the number of ${noun}; redder means more frustrated. Click a cell to read exactly those conversations.`}
+      description={`Cross any two angles of your ${noun}. Shading = share frustrated; the number is ${measureLabel.toLowerCase()}. Click a cell to read exactly those conversations.`}
     >
+      <div className="mb-3 flex flex-wrap gap-1.5">
+        {PRESETS.map((p) => (
+          <button key={p.label} type="button" onClick={() => applyPreset(p)}
+            className={`rounded-full border px-2.5 py-1 text-xs font-medium transition ${
+              activePreset?.label === p.label
+                ? 'border-slate-800 bg-slate-800 text-white'
+                : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+            }`}>
+            {p.label}
+          </button>
+        ))}
+      </div>
+
       <div className="mb-4 flex flex-wrap items-center gap-2 text-sm">
         <span className="text-slate-500">Rows</span>
         <select value={dimA} onChange={(e) => setDimA(e.target.value)}
@@ -131,6 +176,16 @@ export function ExploreCube({
           className="rounded-lg border border-slate-200 bg-white px-2 py-1 font-medium text-slate-700">
           {DIMS.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}
         </select>
+        <span className="ml-auto inline-flex overflow-hidden rounded-lg border border-slate-200 text-xs">
+          {MEASURES.map((x) => (
+            <button key={x.value} type="button" onClick={() => setMeasure(x.value)}
+              className={`px-2.5 py-1 font-medium transition ${
+                measure === x.value ? 'bg-slate-800 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'
+              }`}>
+              {x.label}
+            </button>
+          ))}
+        </span>
       </div>
 
       {!grid ? (
@@ -160,14 +215,20 @@ export function ExploreCube({
                     const negPct = Math.round((100 * c.negative) / c.conversations)
                     const opacity = Math.min(0.88, (c.negative / c.conversations) * 2.2)
                     const dark = opacity > 0.5
+                    const primary = measure === 'negpct' ? `${negPct}%` : measure === 'negcount' ? formatNumber(c.negative) : formatNumber(c.conversations)
+                    // secondary context line: for volume show frustration %, for the frustration
+                    // measures show how many of how many so a big % on a tiny cell is obvious.
+                    const secondary = measure === 'count'
+                      ? (negPct >= 15 ? `${negPct}%` : null)
+                      : `of ${formatNumber(c.conversations)}`
                     return (
                       <td key={b} className="p-0">
                         <button type="button" onClick={() => openCell(a, b)}
-                          title={`${shortVal(a)} × ${shortVal(b)}\n${formatNumber(c.conversations)} ${noun} · ${negPct}% frustrated — click to read`}
+                          title={`${shortVal(a)} × ${shortVal(b)}\n${formatNumber(c.conversations)} ${noun} · ${formatNumber(c.negative)} frustrated (${negPct}%) — click to read`}
                           className="flex h-10 w-16 flex-col items-center justify-center rounded transition hover:ring-2 hover:ring-slate-400"
                           style={{ background: `rgba(225, 29, 72, ${opacity})` }}>
-                          <span className={`font-semibold tabular-nums ${dark ? 'text-white' : 'text-slate-700'}`}>{formatNumber(c.conversations)}</span>
-                          {negPct >= 15 && <span className={`text-[9px] leading-none ${dark ? 'text-white/85' : 'text-rose-600'}`}>{negPct}%</span>}
+                          <span className={`font-semibold tabular-nums ${dark ? 'text-white' : 'text-slate-700'}`}>{primary}</span>
+                          {secondary && <span className={`text-[9px] leading-none ${dark ? 'text-white/85' : measure === 'count' ? 'text-rose-600' : 'text-slate-500'}`}>{secondary}</span>}
                         </button>
                       </td>
                     )
@@ -177,7 +238,7 @@ export function ExploreCube({
             </tbody>
           </table>
           <p className="mt-3 text-[11px] text-slate-400">
-            Cell = {noun} · shading = share frustrated (negative sentiment) · top {grid.rows.length}×{grid.cols.length} by volume · click a cell to read those {noun}.
+            Number = {measureLabel.toLowerCase()} · shading = share frustrated (negative sentiment) · top {grid.rows.length}×{grid.cols.length} by volume · click a cell to read those {noun}.
           </p>
         </div>
       )}

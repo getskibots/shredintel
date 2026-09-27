@@ -180,6 +180,13 @@ export function ConversationExplorer({
         else if (p.transferred === 'AI resolved') q = q.eq('transferred', false)
         if (p.voicemail === 'Voicemail') q = q.eq('is_voicemail', true)
         else if (p.voicemail === 'Reached a person') q = q.eq('is_voicemail', false).eq('transferred', true)
+        else if (p.voicemail === 'No transfer') q = q.eq('transferred', false)
+        // voice cube AI axes — call_drill carries these per call too.
+        if (p.resolution) q = q.eq('resolution', p.resolution)
+        if (p.revenue) q = q.eq('revenue', p.revenue)
+        if (p.category) q = q.eq('category', p.category)
+        if (p.flavor) q = q.eq('flavor', p.flavor)
+        if (p.pinchpoint) q = q.eq('pinchpoint', p.pinchpoint)
       } else {
         if (p.pinchpoint) q = q.ilike('pinchpoint', p.pinchpoint)
         if (p.funnel_stage) q = q.eq('funnel_stage', p.funnel_stage)

@@ -18,6 +18,7 @@ import { resolveSelection, type PeriodSelection } from '../../lib/period'
 import { useVoiceCallAnalytics, type VoiceBreakdown } from '../../data/useVoiceCallAnalytics'
 import { useAvailableBots } from '../../data/useAnalytics'
 import { ConversationExplorer } from '../ConversationExplorer/ConversationExplorer'
+import { ExploreCube } from '../ExploreCube'
 import { TwilioConnect } from '../TwilioConnect/TwilioConnect'
 import { ChannelToggle } from '../ChannelToggle/ChannelToggle'
 import { omniGroupByKey } from '../../lib/omniGroups'
@@ -390,6 +391,10 @@ export function VoiceAnalyticsPage() {
               </Panel>
             )
           })()}
+
+          {/* Explore — the pivot cube for voice: any two of topic/sentiment/outcome/
+              buying-intent × hour/escalation/voicemail → heatmap → the actual calls. */}
+          <ExploreCube botId={botId} range={askRange} source="voice" className="lg:col-span-12" />
 
           {/* What callers ask about (topics) — mirrors chat's Knowledge band */}
           <Panel

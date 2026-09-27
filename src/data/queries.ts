@@ -653,12 +653,13 @@ export async function fetchIntelPivot(
   to: string,
   dimA: string,
   dimB: string | null,
+  rpc: 'intel_pivot' | 'voice_pivot' = 'intel_pivot',
 ): Promise<PivotCell[]> {
   const supabase = getSupabase()
   if (!supabase) return []
   const { data, error } = (await supabase
     .schema('report')
-    .rpc('intel_pivot', { p_bot: botId, p_from: from, p_to: to, p_dim_a: dimA, p_dim_b: dimB ?? null })) as unknown as {
+    .rpc(rpc, { p_bot: botId, p_from: from, p_to: to, p_dim_a: dimA, p_dim_b: dimB ?? null })) as unknown as {
     data: PivotCell[] | null
     error: unknown
   }

@@ -8,10 +8,11 @@ import { formatNumber } from '../../lib/formatters'
 /**
  * ExploreCube — the "Rubik's cube": pick any two angles of the conversation data,
  * see the cross-tab as a heatmap (cell = conversations, shaded by how frustrated),
- * click a cell to read exactly those chats. Powered by the report.intel_pivot RPC
- * (anon-safe cross-tab over report.conversation_time) + the shared drill.
+ * click a cell to read exactly those conversations. One component, two channels:
+ *   source="chat"  → report.intel_pivot over conversation_time (page/section rich)
+ *   source="voice" → report.voice_pivot over call_drill (hour + escalation/voicemail)
  */
-const DIMS: { value: string; label: string }[] = [
+const DIMS_CHAT: { value: string; label: string }[] = [
   { value: 'section', label: 'Topic (section)' },
   { value: 'page', label: 'Page' },
   { value: 'sentiment', label: 'Sentiment' },
@@ -27,6 +28,21 @@ const DIMS: { value: string; label: string }[] = [
   { value: 'dow', label: 'Day of week' },
   { value: 'city', label: 'City' },
 ]
+const DIMS_VOICE: { value: string; label: string }[] = [
+  { value: 'section', label: 'Topic (section)' },
+  { value: 'sentiment', label: 'Sentiment' },
+  { value: 'transferred', label: 'Escalation' },
+  { value: 'voicemail', label: 'Reached vs voicemail' },
+  { value: 'resolution', label: 'Resolution' },
+  { value: 'revenue', label: 'Buying intent' },
+  { value: 'urgency', label: 'Urgency' },
+  { value: 'handover', label: 'Handover need' },
+  { value: 'pinchpoint', label: 'Conversion blocker' },
+  { value: 'category', label: 'Category' },
+  { value: 'flavor', label: 'Vibe' },
+  { value: 'hour', label: 'Hour of day' },
+  { value: 'city', label: 'Caller city' },
+]
 
 // cube dim name → the DrillPayload field it filters on (mostly identical; hour→hour_local).
 const CUBE_TO_PAYLOAD: Record<string, keyof DrillPayload> = {
@@ -34,9 +50,8 @@ const CUBE_TO_PAYLOAD: Record<string, keyof DrillPayload> = {
   revenue: 'revenue', pinchpoint: 'pinchpoint', urgency: 'urgency', handover: 'handover',
   category: 'category', flavor: 'flavor', funnel_stage: 'funnel_stage',
   hour: 'hour_local', dow: 'dow', city: 'city',
+  transferred: 'transferred', voicemail: 'voicemail',
 }
-
-const labelFor = (v: string) => DIMS.find((d) => d.value === v)?.label ?? v
 
 function shortVal(v: string): string {
   if (v === '(none)' || v === '') return '—'
@@ -47,24 +62,31 @@ function shortVal(v: string): string {
 export function ExploreCube({
   botId,
   range,
+  source = 'chat',
   className,
 }: {
   botId: number
   range: { from: string; to: string; label?: string }
+  source?: 'chat' | 'voice'
   className?: string
 }) {
+  const isVoice = source === 'voice'
+  const DIMS = isVoice ? DIMS_VOICE : DIMS_CHAT
+  const noun = isVoice ? 'calls' : 'chats'
+  const labelFor = (v: string) => DIMS.find((d) => d.value === v)?.label ?? v
+
   const [dimA, setDimA] = useState('section')
-  const [dimB, setDimB] = useState('page')
+  const [dimB, setDimB] = useState(isVoice ? 'hour' : 'page')
   const [cells, setCells] = useState<PivotCell[] | null>(null)
   const [drill, setDrill] = useState<DrillPayload | null>(null)
 
   useEffect(() => {
     let cancelled = false
     setCells(null)
-    fetchIntelPivot(botId, range.from, range.to, dimA, dimB === dimA ? null : dimB)
+    fetchIntelPivot(botId, range.from, range.to, dimA, dimB === dimA ? null : dimB, isVoice ? 'voice_pivot' : 'intel_pivot')
       .then((c) => { if (!cancelled) setCells(c) })
     return () => { cancelled = true }
-  }, [botId, range.from, range.to, dimA, dimB])
+  }, [botId, range.from, range.to, dimA, dimB, isVoice])
 
   const grid = useMemo(() => {
     if (!cells) return null
@@ -95,7 +117,7 @@ export function ExploreCube({
       className={className}
       eyebrow="Explore"
       title="Pivot cube"
-      description="Cross any two angles of your conversations. Each cell is the number of chats; redder means more frustrated. Click a cell to read exactly those conversations."
+      description={`Cross any two angles of your ${noun}. Each cell is the number of ${noun}; redder means more frustrated. Click a cell to read exactly those conversations.`}
     >
       <div className="mb-4 flex flex-wrap items-center gap-2 text-sm">
         <span className="text-slate-500">Rows</span>
@@ -114,7 +136,7 @@ export function ExploreCube({
       {!grid ? (
         <div className="py-14 text-center text-sm text-slate-400">Crunching the cube…</div>
       ) : grid.rows.length === 0 ? (
-        <div className="py-14 text-center text-sm text-slate-400">No conversations for this range.</div>
+        <div className="py-14 text-center text-sm text-slate-400">No {noun} for this range.</div>
       ) : (
         <div className="overflow-x-auto">
           <table className="border-separate border-spacing-1 text-xs">
@@ -141,7 +163,7 @@ export function ExploreCube({
                     return (
                       <td key={b} className="p-0">
                         <button type="button" onClick={() => openCell(a, b)}
-                          title={`${shortVal(a)} × ${shortVal(b)}\n${formatNumber(c.conversations)} chats · ${negPct}% frustrated — click to read`}
+                          title={`${shortVal(a)} × ${shortVal(b)}\n${formatNumber(c.conversations)} ${noun} · ${negPct}% frustrated — click to read`}
                           className="flex h-10 w-16 flex-col items-center justify-center rounded transition hover:ring-2 hover:ring-slate-400"
                           style={{ background: `rgba(225, 29, 72, ${opacity})` }}>
                           <span className={`font-semibold tabular-nums ${dark ? 'text-white' : 'text-slate-700'}`}>{formatNumber(c.conversations)}</span>
@@ -155,13 +177,13 @@ export function ExploreCube({
             </tbody>
           </table>
           <p className="mt-3 text-[11px] text-slate-400">
-            Cell = conversations · shading = share frustrated (negative sentiment) · top {grid.rows.length}×{grid.cols.length} by volume · click a cell to read those chats.
+            Cell = {noun} · shading = share frustrated (negative sentiment) · top {grid.rows.length}×{grid.cols.length} by volume · click a cell to read those {noun}.
           </p>
         </div>
       )}
 
       {drill && (
-        <ConversationExplorer botId={botId} source="chat" payload={drill} range={{ from: range.from, to: range.to }} onClose={() => setDrill(null)} />
+        <ConversationExplorer botId={botId} source={source} payload={drill} range={{ from: range.from, to: range.to }} onClose={() => setDrill(null)} />
       )}
     </Panel>
   )

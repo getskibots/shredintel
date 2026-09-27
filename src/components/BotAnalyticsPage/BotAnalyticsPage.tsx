@@ -24,7 +24,6 @@ import { useBotAnalytics, useAvailableBots } from '../../data/useAnalytics'
 import { useGA4 } from '../../data/useGA4'
 import { GA4TrafficCard } from '../GA4TrafficCard/GA4TrafficCard'
 import { GA4PageOpportunity } from '../GA4PageOpportunity/GA4PageOpportunity'
-import { ExploreCube } from '../ExploreCube'
 import {
   resolveSelection,
   selectionFromSearchParams,
@@ -129,12 +128,6 @@ export function BotAnalyticsPage() {
               <ConversationCounts {...f.conversationCounts} />
               {/* Site-traffic denominator (Google Analytics) — only for GA4-connected bots */}
               {ga4.data && <GA4TrafficCard summary={ga4.data} botSessions={f.conversationCounts.sessions} />}
-            </section>
-
-            {/* Explore — the pivot cube: cross any two angles of the conversation
-                data, read any cell. The one place to ask an unscripted question. */}
-            <section id="explore" className="scroll-mt-40">
-              <ExploreCube botId={botId} range={askRange} />
             </section>
 
             {/* 2 — Sales & conversion: where guests get stuck (by page) + what blocks

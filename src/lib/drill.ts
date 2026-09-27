@@ -11,7 +11,7 @@
 /** Contract dimensions a datum can carry, in drill precedence order.
  *  `handover` + `hour_local` are voice-relevant (backed by report.call_base);
  *  `city` doubles as the caller city for voice. */
-export const DRILL_DIMENSIONS = ['section', 'layer', 'pinchpoint', 'sentiment', 'urgency', 'funnel_stage', 'topic', 'handover', 'transferred', 'voicemail', 'user_id', 'city', 'hour_local', 'dow', 'day'] as const
+export const DRILL_DIMENSIONS = ['section', 'layer', 'pinchpoint', 'sentiment', 'resolution', 'revenue', 'category', 'flavor', 'urgency', 'funnel_stage', 'page', 'topic', 'handover', 'transferred', 'voicemail', 'user_id', 'city', 'hour_local', 'dow', 'day'] as const
 export type DrillDimension = (typeof DRILL_DIMENSIONS)[number]
 
 export interface DrillPayload {
@@ -26,6 +26,13 @@ export interface DrillPayload {
   sentiment?: string
   urgency?: string
   funnel_stage?: string
+  /** Cube dims (conversation_time): AI outcome, buying posture, universal category,
+   *  the "vibe" flavor axis, and the site page the chat started on. */
+  resolution?: string
+  revenue?: string
+  category?: string
+  flavor?: string
+  page?: string
   topic?: string
   handover?: string
   /** Voice escalation, Twilio ground truth: 'Escalated' (a real transfer) |
@@ -55,6 +62,11 @@ export const FIELD_LABELS: Record<string, string> = {
   sentiment: 'Sentiment',
   urgency: 'Urgency',
   funnel_stage: 'Funnel stage',
+  resolution: 'Resolution',
+  revenue: 'Buying intent',
+  category: 'Category',
+  flavor: 'Vibe',
+  page: 'Page',
   topic: 'Topic',
   handover: 'Handover need',
   transferred: 'Escalation',

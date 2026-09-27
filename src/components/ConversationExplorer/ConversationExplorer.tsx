@@ -192,6 +192,13 @@ export function ConversationExplorer({
         else if (p.coverage === 'after') q = q.or('isodow.gte.6,hour_local.lt.9,hour_local.gt.17')
         // conversations that used a given knowledge layer (from conversation_time_layer)
         if (p.layer) q = q.eq('layer', p.layer)
+        // Cube dims — conversation_time carries these per conversation (the Explore
+        // pivot builds a drill from whichever two axes the cell sits on).
+        if (p.resolution) q = q.eq('resolution', p.resolution)
+        if (p.revenue) q = q.eq('revenue', p.revenue)
+        if (p.category) q = q.eq('category', p.category)
+        if (p.flavor) q = q.eq('flavor', p.flavor)
+        if (p.page) q = q.eq('page_path', p.page)
       }
       if (from && to) q = q.gte('day', from).lte('day', to)
       // Each drill is a single pure category — when the drill target is a sentiment,
@@ -210,7 +217,7 @@ export function ConversationExplorer({
     })()
     return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [p.botId, p.section, p.layer, p.pinchpoint, p.sentiment, p.urgency, p.funnel_stage, p.topic, p.city, p.day, p.handover, p.transferred, p.voicemail, p.hour_local, p.dow, p.coverage, p.user_id, source, from, to])
+  }, [p.botId, p.section, p.layer, p.pinchpoint, p.sentiment, p.resolution, p.revenue, p.category, p.flavor, p.page, p.urgency, p.funnel_stage, p.topic, p.city, p.day, p.handover, p.transferred, p.voicemail, p.hour_local, p.dow, p.coverage, p.user_id, source, from, to])
 
   async function openConv(cid: number) {
     if (openCid === cid) { setOpenCid(null); setTranscript(null); setHandover(null); return }

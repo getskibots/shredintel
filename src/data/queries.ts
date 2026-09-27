@@ -640,3 +640,34 @@ export function periodDates(period: '7d' | '30d' | '90d' | '180d' | 'all'):
   const iso = (d: Date) => d.toISOString().slice(0, 10)
   return { from: iso(from), to: iso(to) }
 }
+
+/** report.intel_pivot(bot,from,to,dimA,dimB) — the Explore CUBE engine: cross-tab any
+ *  two whitelisted dimensions of report.conversation_time for one bot + window.
+ *  Anon-safe (counts + negative only, SECURITY DEFINER). Long-format cells; the panel
+ *  pivots + colors them. dimB null → a 1-D breakdown. */
+export interface PivotCell { a: string; b: string; conversations: number; negative: number }
+
+export async function fetchIntelPivot(
+  botId: number,
+  from: string,
+  to: string,
+  dimA: string,
+  dimB: string | null,
+): Promise<PivotCell[]> {
+  const supabase = getSupabase()
+  if (!supabase) return []
+  const { data, error } = (await supabase
+    .schema('report')
+    .rpc('intel_pivot', { p_bot: botId, p_from: from, p_to: to, p_dim_a: dimA, p_dim_b: dimB ?? null })) as unknown as {
+    data: PivotCell[] | null
+    error: unknown
+  }
+  if (error) {
+    // eslint-disable-next-line no-console
+    console.warn('[shredintel] intel_pivot failed', error)
+    return []
+  }
+  return (data ?? []).map((r) => ({
+    a: r.a, b: r.b, conversations: Number(r.conversations), negative: Number(r.negative),
+  }))
+}

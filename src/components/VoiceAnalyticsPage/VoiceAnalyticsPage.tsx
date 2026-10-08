@@ -24,6 +24,7 @@ import { omniGroupByKey } from '../../lib/omniGroups'
 import { NaDotMap } from '../NaDotMap/NaDotMap'
 import { NeedsAttention } from '../NeedsAttention'
 import { AskBar } from '../AskBar'
+import { ExecutiveSummary } from '../ExecutiveSummary'
 import { RealtimeAgent } from '../RealtimeAgent'
 import { useShredPulse } from '../ShreddingOverlay'
 import { type DrillPayload } from '../../lib/drill'
@@ -178,6 +179,9 @@ export function VoiceAnalyticsPage() {
         </Panel>
       ) : (
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-12 lg:items-start">
+          {/* Executive summary — one click (or voice) brief for this window */}
+          <ExecutiveSummary botId={botId} range={askRange} className="lg:col-span-12" />
+
           {/* KPIs + volume trend */}
           <Panel
             className="lg:col-span-12"

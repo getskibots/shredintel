@@ -17,6 +17,7 @@ import { GuestLocations } from '../GuestLocations'
 import { GuestIdentitySplit } from '../GuestIdentitySplit'
 import { PeriodPicker } from '../PeriodPicker'
 import { RealtimeAgent } from '../RealtimeAgent'
+import { ExecutiveSummary } from '../ExecutiveSummary'
 import { ChannelToggle } from '../ChannelToggle/ChannelToggle'
 import { omniGroupByKey } from '../../lib/omniGroups'
 import { ShreddingOverlay, useShredPulse } from '../ShreddingOverlay'
@@ -128,6 +129,13 @@ export function BotAnalyticsPage() {
               <ConversationCounts {...f.conversationCounts} />
               {/* Site-traffic denominator (Google Analytics) — only for GA4-connected bots */}
               {ga4.data && <GA4TrafficCard summary={ga4.data} botSessions={f.conversationCounts.sessions} />}
+            </section>
+
+            {/* Executive summary — one click (or a voice command) turns the window
+                into a decision-ready brief: narrative + the key metric cards, each
+                drillable to the real conversations, and shareable as a document. */}
+            <section id="summary" className="scroll-mt-40">
+              <ExecutiveSummary botId={botId} range={askRange} />
             </section>
 
             {/* 2 — Sales & conversion: where guests get stuck (by page) + what blocks

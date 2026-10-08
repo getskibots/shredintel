@@ -197,6 +197,28 @@ export function RealtimeAgent({ botId, range, selection, onSelectionChange, shre
     }
   }
 
+  // Executive summary: a FIXED metric battery (/api/summary) → a set of cards
+  // appended to the report. We speak only the narrative (cards[0]); the rest
+  // render on screen, drillable like any other card.
+  async function runSummary(from?: string, to?: string): Promise<string> {
+    setBusy(true)
+    try {
+      const res = await fetch('/api/summary', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ botId, from: from ?? rangeRef.current?.from, to: to ?? rangeRef.current?.to, label: rangeRef.current?.label }),
+      })
+      const data = await res.json()
+      const newCards = Array.isArray(data.cards) ? (data.cards as ReportCard[]) : []
+      if (newCards.length) setCards((c) => [...c, ...newCards])
+      setSaved(false)
+      return JSON.stringify({ narrative: newCards[0]?.answer || data.error || 'Could not build the summary.' })
+    } catch (e) {
+      return JSON.stringify({ error: e instanceof Error ? e.message : 'summary failed' })
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function connect() {
     setStatus('connecting'); setError(null); setCards([]); setCaption(''); setSaved(false); setDrill(null); setDrillPayload(null); setEnded(false)
     idRef.current = newReportId()
@@ -262,6 +284,13 @@ export function RealtimeAgent({ botId, range, selection, onSelectionChange, shre
         if (value) setDrill({ dim, value, label: String(args.label || value), from, to })
         dc.send(JSON.stringify({ type: 'conversation.item.create', item: { type: 'function_call_output', call_id: msg.call_id, output: JSON.stringify({ ok: !!value, note: value ? 'Opened the matching conversations on the manager’s screen.' : 'No value provided.' }) } }))
         dc.send(JSON.stringify({ type: 'response.create' }))
+      } else if (msg.name === 'executive_summary') {
+        ;(async () => {
+          const iso = (v: unknown) => (/^\d{4}-\d{2}-\d{2}$/.test(String(v)) ? String(v) : undefined)
+          const output = await runSummary(iso(args.from), iso(args.to))
+          dc.send(JSON.stringify({ type: 'conversation.item.create', item: { type: 'function_call_output', call_id: msg.call_id, output } }))
+          dc.send(JSON.stringify({ type: 'response.create' }))
+        })()
       }
     }
 

@@ -70,6 +70,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 required: ['dimension', 'value'],
               },
             },
+            {
+              type: 'function',
+              name: 'executive_summary',
+              description:
+                "Build a full EXECUTIVE SUMMARY of the resort for the current (or a named) period: volume, how guests felt, what they came for, revenue at risk, conversion blockers, and what changed versus the prior period. Call this when the manager asks for a 'summary', 'overview', 'recap', 'executive summary', 'the big picture', or 'how are we doing'. It renders the full brief on their screen as cards; speak ONLY the short top-line narrative it returns.",
+              parameters: {
+                type: 'object',
+                properties: {
+                  from: { type: 'string', description: 'Optional start date YYYY-MM-DD (resort-local). ONLY when they name a period — resolve it from today. Omit to use the dashboard\'s current range.' },
+                  to: { type: 'string', description: 'Optional inclusive end date YYYY-MM-DD. Omit with `from` to use the dashboard\'s range.' },
+                },
+              },
+            },
           ],
         },
       }),
